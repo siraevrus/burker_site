@@ -1,0 +1,353 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { products } from "@/lib/data";
+import { Product } from "@/lib/types";
+import Image from "next/image";
+
+export default function AdminPage() {
+  const [productList, setProductList] = useState<Product[]>(products);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+
+  const handleDelete = (id: string) => {
+    if (confirm("Вы уверены, что хотите удалить этот товар?")) {
+      setProductList(productList.filter((p) => p.id !== id));
+    }
+  };
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setIsAddingNew(false);
+  };
+
+  const handleAddNew = () => {
+    setEditingProduct(null);
+    setIsAddingNew(true);
+  };
+
+  const handleSave = (product: Product) => {
+    if (isAddingNew) {
+      setProductList([...productList, product]);
+      setIsAddingNew(false);
+    } else {
+      setProductList(
+        productList.map((p) => (p.id === product.id ? product : p))
+      );
+      setEditingProduct(null);
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingProduct(null);
+    setIsAddingNew(false);
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Админ-панель</h1>
+        <div className="flex gap-4">
+          <Link
+            href="/"
+            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            На сайт
+          </Link>
+          <button
+            onClick={handleAddNew}
+            className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800"
+          >
+            Добавить товар
+          </button>
+        </div>
+      </div>
+
+      {/* Форма добавления/редактирования */}
+      {(isAddingNew || editingProduct) && (
+        <ProductForm
+          product={editingProduct}
+          onSave={handleSave}
+          onCancel={handleCancel}
+          isNew={isAddingNew}
+        />
+      )}
+
+      {/* Список товаров */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Изображение
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Название
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Коллекция
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Цена
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Скидка
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Действия
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {productList.map((product) => (
+              <tr key={product.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="w-16 h-16 relative bg-gray-100 rounded-md overflow-hidden">
+                    <Image
+                      src="/Isabell_gold_burgundy_1.webp"
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm font-medium text-gray-900">
+                    {product.name}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-500">{product.collection}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    €{product.price.toFixed(2)}
+                  </div>
+                  {product.originalPrice > product.price && (
+                    <div className="text-xs text-gray-500 line-through">
+                      €{product.originalPrice.toFixed(2)}
+                    </div>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{product.discount}%</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button
+                    onClick={() => handleEdit(product)}
+                    className="text-blue-600 hover:text-blue-900 mr-4"
+                  >
+                    Редактировать
+                  </button>
+                  <button
+                    onClick={() => handleDelete(product.id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    Удалить
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// Компонент формы для добавления/редактирования товара
+function ProductForm({
+  product,
+  onSave,
+  onCancel,
+  isNew,
+}: {
+  product: Product | null;
+  onSave: (product: Product) => void;
+  onCancel: () => void;
+  isNew: boolean;
+}) {
+  const [formData, setFormData] = useState<Product>(
+    product || {
+      id: "",
+      name: "",
+      collection: "",
+      price: 0,
+      originalPrice: 0,
+      discount: 0,
+      colors: [],
+      images: [],
+      inStock: true,
+    }
+  );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isNew) {
+      formData.id = formData.name.toLowerCase().replace(/\s+/g, "-");
+    }
+    onSave(formData);
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+      <h2 className="text-2xl font-bold mb-6">
+        {isNew ? "Добавить товар" : "Редактировать товар"}
+      </h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Название
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Коллекция
+            </label>
+            <input
+              type="text"
+              value={formData.collection}
+              onChange={(e) =>
+                setFormData({ ...formData, collection: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Оригинальная цена (€)
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={formData.originalPrice}
+              onChange={(e) => {
+                const originalPrice = parseFloat(e.target.value) || 0;
+                const discount = formData.originalPrice > 0
+                  ? Math.round(
+                      ((originalPrice - formData.price) / originalPrice) * 100
+                    )
+                  : 0;
+                setFormData({
+                  ...formData,
+                  originalPrice,
+                  discount: discount > 0 ? discount : formData.discount,
+                });
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Цена со скидкой (€)
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={formData.price}
+              onChange={(e) => {
+                const price = parseFloat(e.target.value) || 0;
+                const discount = formData.originalPrice > 0
+                  ? Math.round(
+                      ((formData.originalPrice - price) / formData.originalPrice) * 100
+                    )
+                  : 0;
+                setFormData({
+                  ...formData,
+                  price,
+                  discount: discount > 0 ? discount : formData.discount,
+                });
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Скидка (%)
+            </label>
+            <input
+              type="number"
+              value={formData.discount}
+              onChange={(e) => {
+                const discount = parseInt(e.target.value) || 0;
+                const price = formData.originalPrice > 0
+                  ? formData.originalPrice * (1 - discount / 100)
+                  : formData.price;
+                setFormData({
+                  ...formData,
+                  discount,
+                  price,
+                });
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Автоматически рассчитывается при изменении цен
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Цвета (через запятую)
+            </label>
+            <input
+              type="text"
+              value={formData.colors.join(", ")}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  colors: e.target.value.split(",").map((c) => c.trim()),
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
+          <div>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.inStock}
+                onChange={(e) =>
+                  setFormData({ ...formData, inStock: e.target.checked })
+                }
+                className="mr-2"
+              />
+              <span className="text-sm font-medium text-gray-700">
+                В наличии
+              </span>
+            </label>
+          </div>
+        </div>
+        <div className="flex gap-4 pt-4">
+          <button
+            type="submit"
+            className="px-6 py-2 bg-black text-white rounded-md hover:bg-gray-800"
+          >
+            Сохранить
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Отмена
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
