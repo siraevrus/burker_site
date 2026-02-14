@@ -212,7 +212,18 @@ export default function ProductPage({
 
         {/* Правая часть - Информация о товаре */}
         <div className="lg:sticky lg:top-24 lg:self-start">
-          <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
+          <h1
+            className="mb-2 product-title"
+            style={{
+              fontFamily: '"Open Sans", sans-serif',
+              fontSize: "39.19px",
+              fontWeight: 400,
+              lineHeight: "39.19px",
+              color: "rgb(0, 0, 0)",
+            }}
+          >
+            {product.name}
+          </h1>
 
           {/* Рейтинг */}
           <div className="flex items-center gap-2 mb-4">
