@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useStore } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import { products } from "@/lib/data";
+import { getTopBannerText } from "@/lib/topBanner";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -15,29 +16,57 @@ export default function Header() {
   const [headerHeight, setHeaderHeight] = useState(0);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [topBannerText, setTopBannerText] = useState("КУПИТЕ СЕЙЧАС, ПЛАТИТЕ ПОТОМ С KLARNA • Бесплатная доставка от 39 €");
   const cartItemsCount = useStore((state) => state.getCartItemsCount());
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    const updateHeaderHeight = () => {
-      const header = document.querySelector("header");
-      if (header) {
-        setHeaderHeight(header.offsetHeight);
+    // Загружаем текст верхней строки
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("top_banner_text");
+      if (stored) {
+        setTopBannerText(stored);
       }
-    };
+      
+      // Слушаем изменения в localStorage
+      const handleStorageChange = () => {
+        const updated = localStorage.getItem("top_banner_text");
+        if (updated) {
+          setTopBannerText(updated);
+        }
+      };
+      window.addEventListener("storage", handleStorageChange);
+      
+      // Также проверяем изменения каждую секунду (для обновления в той же вкладке)
+      const interval = setInterval(() => {
+        const updated = localStorage.getItem("top_banner_text");
+        if (updated && updated !== topBannerText) {
+          setTopBannerText(updated);
+        }
+      }, 1000);
 
-    window.addEventListener("scroll", handleScroll);
-    updateHeaderHeight();
-    window.addEventListener("resize", updateHeaderHeight);
-    
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", updateHeaderHeight);
-    };
-  }, []);
+      const handleScroll = () => {
+        setIsScrolled(window.scrollY > 10);
+      };
+
+      const updateHeaderHeight = () => {
+        const header = document.querySelector("header");
+        if (header) {
+          setHeaderHeight(header.offsetHeight);
+        }
+      };
+
+      window.addEventListener("scroll", handleScroll);
+      updateHeaderHeight();
+      window.addEventListener("resize", updateHeaderHeight);
+      
+      return () => {
+        window.removeEventListener("storage", handleStorageChange);
+        clearInterval(interval);
+        window.removeEventListener("scroll", handleScroll);
+        window.removeEventListener("resize", updateHeaderHeight);
+      };
+    }
+  }, [topBannerText]);
 
   const collections = [
     "Diana",
@@ -66,9 +95,7 @@ export default function Header() {
         }}
       >
         <div className="container mx-auto px-4">
-          <p className="text-gray-900">
-            КУПИТЕ СЕЙЧАС, ПЛАТИТЕ ПОТОМ С KLARNA • Бесплатная доставка от 39 €
-          </p>
+          <p className="text-gray-900">{topBannerText}</p>
         </div>
       </div>
 

@@ -47,21 +47,13 @@ export default function AdminPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Админ-панель</h1>
-        <div className="flex gap-4">
-          <Link
-            href="/"
-            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            На сайт
-          </Link>
-          <button
-            onClick={handleAddNew}
-            className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800"
-          >
-            Добавить товар
-          </button>
-        </div>
+        <h1 className="text-3xl font-bold">Управление продуктами</h1>
+        <button
+          onClick={handleAddNew}
+          className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800"
+        >
+          Добавить товар
+        </button>
       </div>
 
       {/* Форма добавления/редактирования */}

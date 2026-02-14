@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard/ProductCard";
+import PromoBannerGallery from "@/components/PromoBanner/PromoBanner";
 import { products } from "@/lib/data";
 import { motion } from "framer-motion";
 
@@ -27,27 +28,8 @@ export default function Home() {
 
   return (
     <div>
-      {/* Hero Section - Valentine's Sale */}
-      <section className="bg-gradient-to-r from-pink-100 to-red-100" style={{ height: "701px" }}>
-        <div className="container mx-auto px-4 text-center h-full flex flex-col items-center justify-center">
-          <motion.h1
-            className="text-5xl md:text-6xl font-bold mb-4"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            VALENTINE&apos;S SALE
-          </motion.h1>
-          <motion.p
-            className="text-xl mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-          >
-            ЧАСЫ • УКРАШЕНИЯ
-          </motion.p>
-        </div>
-      </section>
+      {/* Promo Banner Gallery */}
+      <PromoBannerGallery />
 
       {/* Бестселлеры */}
       <section className="py-16">
