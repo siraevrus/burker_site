@@ -33,21 +33,17 @@ export default function ProductPageClient({
   const addToCart = useStore((state) => state.addToCart);
 
   // Используем реальные изображения из product.images
-  // Если изображений меньше 9, заполняем оставшиеся последним изображением или заглушкой
   const getProductImages = () => {
-    const images = product.images && product.images.length > 0 ? product.images : ["/Isabell_gold_burgundy_1.webp"];
-    const fallbackImage = images[images.length - 1];
+    const images = product.images && product.images.length > 0 
+      ? product.images 
+      : ["/Isabell_gold_burgundy_1.webp"];
     
-    // Создаем массив из 9 изображений
-    const result = [];
-    for (let i = 0; i < 9; i++) {
-      result.push({
-        id: i,
-        src: images[i] || fallbackImage,
-        alt: `${product.name} - изображение ${i + 1}`,
-      });
-    }
-    return result;
+    // Возвращаем только реальные изображения
+    return images.map((src, index) => ({
+      id: index,
+      src: src,
+      alt: `${product.name} - изображение ${index + 1}`,
+    }));
   };
   
   const productImages = getProductImages();
