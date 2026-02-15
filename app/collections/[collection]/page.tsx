@@ -4,6 +4,7 @@ import {
   getJewelryProducts,
   getJewelryBySubcategory 
 } from "@/lib/products";
+import { Product } from "@/lib/types";
 import CollectionPageClient from "./CollectionPageClient";
 
 // Маппинг URL на subcategory для часов
