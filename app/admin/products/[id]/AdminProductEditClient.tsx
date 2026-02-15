@@ -21,10 +21,49 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
     description: product.description || "",
   });
   const [images, setImages] = useState<string[]>(product.images || []);
+  const [uploading, setUploading] = useState(false);
 
   const handleDeleteImage = (index: number) => {
     if (confirm("Удалить это изображение?")) {
       setImages(images.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    
+    try {
+      // Загружаем все выбранные файлы
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch("/api/admin/products/upload-image", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to upload file");
+        }
+
+        const data = await response.json();
+        return data.url;
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+      setImages([...images, ...uploadedUrls]);
+      
+      // Очищаем input
+      e.target.value = "";
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      alert("Ошибка при загрузке изображений");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -149,20 +188,75 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-medium mb-4">Изображения ({images.length})</h3>
+              
+              {/* Форма загрузки */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">
+                  Загрузить изображения
+                </label>
+                <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center hover:border-gray-400 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className={`cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors ${
+                      uploading ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                  >
+                    {uploading ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Загрузка...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span>Выбрать файлы</span>
+                      </>
+                    )}
+                  </label>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Можно выбрать несколько изображений
+                  </p>
+                </div>
+              </div>
+
+              {/* Список изображений */}
               {images.length > 0 ? (
                 <div className="space-y-2 max-h-96 overflow-y-auto border border-gray-200 rounded-md p-3">
                   {images.map((img, index) => (
                     <div key={index} className="border-b border-gray-200 pb-2 last:border-b-0">
                       <div className="flex items-start gap-2">
                         <span className="text-xs font-medium text-gray-500 min-w-[20px]">{index + 1}.</span>
-                        <a 
-                          href={img} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-600 hover:underline break-all flex-1"
-                        >
-                          {img}
-                        </a>
+                        <div className="flex-1">
+                          <a 
+                            href={img} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:underline break-all block"
+                          >
+                            {img}
+                          </a>
+                          {img.startsWith("/products/") && (
+                            <img 
+                              src={img} 
+                              alt={`Preview ${index + 1}`}
+                              className="mt-2 max-w-full h-20 object-cover rounded border border-gray-200"
+                            />
+                          )}
+                        </div>
                         <button
                           type="button"
                           onClick={() => handleDeleteImage(index)}
