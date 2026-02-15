@@ -9,13 +9,17 @@ export default function AdminTopBannerPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    setText(getTopBannerText());
+    const loadText = async () => {
+      const loaded = await getTopBannerText();
+      setText(loaded);
+    };
+    loadText();
   }, []);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    saveTopBannerText(text);
+    await saveTopBannerText(text);
     setIsSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);

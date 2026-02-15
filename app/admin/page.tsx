@@ -1,25 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { products } from "@/lib/data";
 import { Product } from "@/lib/types";
 import Image from "next/image";
 
 export default function AdminPage() {
-  const [productList, setProductList] = useState<Product[]>(products);
+  const [productList, setProductList] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const response = await fetch("/api/products");
+        if (response.ok) {
+          const data = await response.json();
+          setProductList(data.products || []);
+        }
+      } catch (error) {
+        console.error("Error loading products:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadProducts();
+  }, []);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("Вы уверены, что хотите удалить этот товар?")) {
-      setProductList(productList.filter((p) => p.id !== id));
+      try {
+        const response = await fetch(`/api/admin/products/${id}`, {
+          method: "DELETE",
+        });
+        if (response.ok) {
+          setProductList(productList.filter((p) => p.id !== id));
+        } else {
+          alert("Ошибка при удалении товара");
+        }
+      } catch (error) {
+        console.error("Error deleting product:", error);
+        alert("Ошибка при удалении товара");
+      }
     }
   };
 
   const handleEdit = (product: Product) => {
-    setEditingProduct(product);
-    setIsAddingNew(false);
+    window.location.href = `/admin/products/${product.id}`;
   };
 
   const handleAddNew = () => {
@@ -27,15 +55,32 @@ export default function AdminPage() {
     setIsAddingNew(true);
   };
 
-  const handleSave = (product: Product) => {
-    if (isAddingNew) {
-      setProductList([...productList, product]);
-      setIsAddingNew(false);
-    } else {
-      setProductList(
-        productList.map((p) => (p.id === product.id ? product : p))
-      );
-      setEditingProduct(null);
+  const handleSave = async (product: Product) => {
+    try {
+      const response = await fetch("/api/admin/products", {
+        method: isAddingNew ? "POST" : "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(product),
+      });
+      if (response.ok) {
+        const updatedProduct = await response.json();
+        if (isAddingNew) {
+          setProductList([...productList, updatedProduct]);
+          setIsAddingNew(false);
+        } else {
+          setProductList(
+            productList.map((p) => (p.id === product.id ? updatedProduct : p))
+          );
+          setEditingProduct(null);
+        }
+      } else {
+        alert("Ошибка при сохранении товара");
+      }
+    } catch (error) {
+      console.error("Error saving product:", error);
+      alert("Ошибка при сохранении товара");
     }
   };
 
@@ -67,8 +112,11 @@ export default function AdminPage() {
       )}
 
       {/* Список товаров */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="w-full">
+      {isLoading ? (
+        <div className="text-center py-8">Загрузка товаров...</div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -81,10 +129,16 @@ export default function AdminPage() {
                 Коллекция
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Подкатегория
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Цена
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Скидка
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Бестселлер
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Действия
@@ -97,7 +151,7 @@ export default function AdminPage() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="w-16 h-16 relative bg-gray-100 rounded-md overflow-hidden">
                     <Image
-                      src="/Isabell_gold_burgundy_1.webp"
+                      src={product.images && product.images.length > 0 ? product.images[0] : "/Isabell_gold_burgundy_1.webp"}
                       alt={product.name}
                       fill
                       className="object-cover"
@@ -113,6 +167,9 @@ export default function AdminPage() {
                   <div className="text-sm text-gray-500">{product.collection}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-500">{product.subcategory || "—"}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
                     €{product.price.toFixed(2)}
                   </div>
@@ -124,6 +181,15 @@ export default function AdminPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">{product.discount}%</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {product.bestseller ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      ✓ Да
+                    </span>
+                  ) : (
+                    <span className="text-sm text-gray-400">—</span>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
@@ -143,7 +209,8 @@ export default function AdminPage() {
             ))}
           </tbody>
         </table>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

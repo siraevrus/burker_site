@@ -1,7 +1,10 @@
 export interface Product {
   id: string;
+  bodyId?: string; // body_id из JSON для использования в URL
   name: string;
   collection: string; // Macy, Olivia, Julia, etc.
+  subcategory?: string; // Подкатегория из JSON (Diana, Sophie, Браслеты, и т.д.)
+  bestseller?: boolean; // Флаг бестселлера из JSON
   price: number;
   originalPrice: number;
   discount: number; // процент скидки
@@ -37,3 +40,11 @@ export type Collection =
   | "all";
 
 export type Color = "золото" | "серебро" | "розовое золото" | "all";
+
+export interface PromoBanner {
+  id: string;
+  image: string;
+  productLink: string;
+  title?: string;
+  subtitle?: string;
+}

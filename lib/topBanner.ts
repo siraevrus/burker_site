@@ -1,15 +1,21 @@
-// Функция для получения текста верхней строки из localStorage
-export function getTopBannerText(): string {
-  if (typeof window === "undefined") {
-    return "КУПИТЕ СЕЙЧАС, ПЛАТИТЕ ПОТОМ С KLARNA • Бесплатная доставка от 39 €";
-  }
-  const stored = localStorage.getItem("top_banner_text");
-  return stored || "КУПИТЕ СЕЙЧАС, ПЛАТИТЕ ПОТОМ С KLARNA • Бесплатная доставка от 39 €";
+import { prisma } from "./db";
+
+// Получить текст верхней строки
+export async function getTopBannerText(): Promise<string> {
+  const banner = await prisma.topBanner.findUnique({
+    where: { id: "single" },
+  });
+  return banner?.text || "";
 }
 
-// Функция для сохранения текста верхней строки в localStorage
-export function saveTopBannerText(text: string): void {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("top_banner_text", text);
-  }
+// Сохранить текст верхней строки
+export async function saveTopBannerText(text: string): Promise<void> {
+  await prisma.topBanner.upsert({
+    where: { id: "single" },
+    update: { text },
+    create: {
+      id: "single",
+      text,
+    },
+  });
 }

@@ -96,6 +96,16 @@ export default function AdminLayout({
                 >
                   Верхняя строка
                 </a>
+                <a
+                  href="/admin/import"
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    pathname === "/admin/import"
+                      ? "bg-black text-white"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Импорт товаров
+                </a>
               </div>
             </div>
             <div className="flex items-center gap-4">

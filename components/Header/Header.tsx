@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useStore } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
-import { products } from "@/lib/data";
+import { Product } from "@/lib/types";
 import { getTopBannerText } from "@/lib/topBanner";
 
 export default function Header() {
@@ -16,8 +16,25 @@ export default function Header() {
   const [headerHeight, setHeaderHeight] = useState(0);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [topBannerText, setTopBannerText] = useState("КУПИТЕ СЕЙЧАС, ПЛАТИТЕ ПОТОМ С KLARNA • Бесплатная доставка от 39 €");
+  const [topBannerText, setTopBannerText] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
   const cartItemsCount = useStore((state) => state.getCartItemsCount());
+
+  useEffect(() => {
+    // Загружаем товары из БД
+    const loadProducts = async () => {
+      try {
+        const response = await fetch("/api/products");
+        if (response.ok) {
+          const data = await response.json();
+          setProducts(data.products || []);
+        }
+      } catch (error) {
+        console.error("Error loading products:", error);
+      }
+    };
+    loadProducts();
+  }, []);
 
   useEffect(() => {
     // Загружаем текст верхней строки
@@ -148,56 +165,49 @@ export default function Header() {
                           </Link>
                         ))}
                         <Link
-                          href="/collections/olivia"
+                          href="/collections/olivia-petite"
                           className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
                         >
                           Olivia Petite
                         </Link>
                         <Link
-                          href="/collections/macy"
+                          href="/collections/macy-petite"
                           className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
                         >
                           Macy Petite
                         </Link>
                         <Link
-                          href="/collections/isabell"
+                          href="/collections/isabell-petite"
                           className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
                         >
                           Isabell Petite
                         </Link>
                         <Link
-                          href="/collections/ruby"
+                          href="/collections/ruby-petite"
                           className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
                         >
                           Ruby Petite
                         </Link>
                       </div>
 
-                      {/* Правый блок - 4 продукта */}
+                      {/* Правый блок - 4 ссылки на коллекции */}
                       <div className="grid grid-cols-4 gap-3">
-                        {products
-                          .filter((p) => p.collection !== "Украшения")
-                          .slice(0, 4)
-                          .map((product) => (
-                            <Link
-                              key={product.id}
-                              href={`/product/${product.id}`}
-                              className="group"
-                            >
-                              <div className="relative mb-2 bg-gray-100 rounded-lg overflow-hidden" style={{ height: "360px", width: "100%" }}>
-                                <Image
-                                  src="/Isabell_gold_burgundy_1.webp"
-                                  alt={product.name}
-                                  fill
-                                  className="object-cover group-hover:scale-110 transition-transform duration-300"
-                                  sizes="(max-width: 768px) 100vw, 360px"
-                                />
-                              </div>
-                              <p className="text-xs font-medium group-hover:text-gray-600 transition-colors">
-                                {product.collection.toUpperCase()} &gt;
-                              </p>
-                            </Link>
-                          ))}
+                        {["Diana", "Isabell", "Julia", "Macy"].map((collectionName) => (
+                          <Link
+                            key={collectionName}
+                            href={`/collections/${collectionName.toLowerCase()}`}
+                            className="group"
+                          >
+                            <div className="relative mb-2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{ height: "360px", width: "100%" }}>
+                              <span className="text-2xl font-semibold text-gray-700 group-hover:text-black transition-colors">
+                                {collectionName}
+                              </span>
+                            </div>
+                            <p className="text-xs font-medium group-hover:text-gray-600 transition-colors">
+                              {collectionName.toUpperCase()} &gt;
+                            </p>
+                          </Link>
+                        ))}
                       </div>
                       </div>
                     </div>
@@ -265,12 +275,12 @@ export default function Header() {
                           .map((product) => (
                             <Link
                               key={product.id}
-                              href={`/product/${product.id}`}
+                              href={`/product/${product.bodyId || product.id}`}
                               className="group"
                             >
                               <div className="relative mb-2 bg-gray-100 rounded-lg overflow-hidden" style={{ height: "360px", width: "100%" }}>
                                 <Image
-                                  src="/Isabell_gold_burgundy_1.webp"
+                                  src={product.images && product.images.length > 0 ? product.images[0] : "/Isabell_gold_burgundy_1.webp"}
                                   alt={product.name}
                                   fill
                                   className="object-cover group-hover:scale-110 transition-transform duration-300"

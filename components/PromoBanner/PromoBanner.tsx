@@ -12,22 +12,19 @@ export default function PromoBannerGallery() {
   const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
-    // Загружаем баннеры из localStorage
-    setBanners(getPromoBanners());
-
-    // Слушаем изменения в localStorage
-    const handleStorageChange = () => {
-      setBanners(getPromoBanners());
+    // Загружаем баннеры из БД
+    const loadBanners = async () => {
+      const loaded = await getPromoBanners();
+      setBanners(loaded);
     };
-    window.addEventListener("storage", handleStorageChange);
+    loadBanners();
     
-    // Также проверяем изменения каждую секунду (для обновления в той же вкладке)
+    // Проверяем изменения каждые 5 секунд
     const interval = setInterval(() => {
-      setBanners(getPromoBanners());
-    }, 1000);
+      loadBanners();
+    }, 5000);
 
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
       clearInterval(interval);
     };
   }, []);

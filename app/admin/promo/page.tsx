@@ -10,14 +10,18 @@ export default function AdminPromoPage() {
   const [isAddingNew, setIsAddingNew] = useState(false);
 
   useEffect(() => {
-    setBanners(getPromoBanners());
+    const loadBanners = async () => {
+      const loaded = await getPromoBanners();
+      setBanners(loaded);
+    };
+    loadBanners();
   }, []);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("Вы уверены, что хотите удалить этот баннер?")) {
       const updated = banners.filter((b) => b.id !== id);
       setBanners(updated);
-      savePromoBanners(updated);
+      await savePromoBanners(updated);
     }
   };
 
@@ -31,7 +35,7 @@ export default function AdminPromoPage() {
     setIsAddingNew(true);
   };
 
-  const handleSave = (banner: PromoBanner) => {
+  const handleSave = async (banner: PromoBanner) => {
     let updated: PromoBanner[];
     if (isAddingNew) {
       updated = [...banners, banner];
@@ -39,7 +43,7 @@ export default function AdminPromoPage() {
       updated = banners.map((b) => (b.id === banner.id ? banner : b));
     }
     setBanners(updated);
-    savePromoBanners(updated);
+    await savePromoBanners(updated);
     setEditingBanner(null);
     setIsAddingNew(false);
   };
@@ -49,7 +53,7 @@ export default function AdminPromoPage() {
     setIsAddingNew(false);
   };
 
-  const handleReorder = (index: number, direction: "up" | "down") => {
+  const handleReorder = async (index: number, direction: "up" | "down") => {
     const newBanners = [...banners];
     const newIndex = direction === "up" ? index - 1 : index + 1;
     if (newIndex >= 0 && newIndex < banners.length) {
@@ -58,7 +62,7 @@ export default function AdminPromoPage() {
         newBanners[index],
       ];
       setBanners(newBanners);
-      savePromoBanners(newBanners);
+      await savePromoBanners(newBanners);
     }
   };
 
@@ -202,12 +206,12 @@ function BannerForm({
       // Загружаем файл на сервер
       setIsUploading(true);
       try {
-        const formData = new FormData();
-        formData.append("file", file);
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", file);
 
         const response = await fetch("/api/upload-promo", {
           method: "POST",
-          body: formData,
+          body: uploadFormData,
         });
 
         if (!response.ok) {

@@ -48,9 +48,9 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       {/* Product Image */}
       <div className="relative w-full aspect-square overflow-hidden">
-        <Link href={`/product/${product.id}`}>
+        <Link href={`/product/${product.bodyId || product.id}`}>
           <Image
-            src="/Isabell_gold_burgundy_1.webp"
+            src={product.images && product.images.length > 0 ? product.images[0] : "/Isabell_gold_burgundy_1.webp"}
             alt={product.name}
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -84,7 +84,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       {/* Product Info */}
       <div className="p-5">
-        <Link href={`/product/${product.id}`}>
+        <Link href={`/product/${product.bodyId || product.id}`}>
           <h3 className="font-semibold text-base mb-3 text-gray-900 line-clamp-2 text-center hover:text-gray-600 transition-colors">
             {product.name}
           </h3>

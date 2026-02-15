@@ -13,7 +13,6 @@ export default function CartPage() {
 
   const totalPrice = getTotalPrice();
   const freeShippingThreshold = 39;
-  const remainingForFreeShipping = Math.max(0, freeShippingThreshold - totalPrice);
 
   if (cart.length === 0) {
     return (
@@ -36,21 +35,6 @@ export default function CartPage() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Корзина</h1>
 
-      {/* Free shipping banner */}
-      {totalPrice >= freeShippingThreshold ? (
-        <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-6">
-          <p className="text-green-800 font-semibold">
-            Поздравляем! Вы получили бесплатную доставку
-          </p>
-        </div>
-      ) : (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
-          <p className="text-yellow-800">
-            Потратьте €{remainingForFreeShipping.toFixed(2)} больше для
-            бесплатной доставки!
-          </p>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart Items */}
@@ -67,7 +51,7 @@ export default function CartPage() {
                 {/* Product Image */}
                 <div className="w-full sm:w-24 h-24 bg-gray-200 rounded-md flex-shrink-0 relative overflow-hidden">
                   <Image
-                    src="/Isabell_gold_burgundy_1.webp"
+                    src={item.images && item.images.length > 0 ? item.images[0] : "/Isabell_gold_burgundy_1.webp"}
                     alt={item.name}
                     fill
                     className="object-cover"

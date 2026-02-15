@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id              String   @id @default(cuid())
+  bodyId          String?  @unique // body_id из JSON для использования в URL
+  name            String
+  collection      String
+  subcategory     String?  // Подкатегория из JSON (Diana, Sophie, Браслеты, и т.д.)
+  bestseller      Boolean  @default(false) // Флаг бестселлера из JSON
+  price           Float
+  originalPrice   Float
+  discount        Int
+  colors          String   // JSON array as string: ["золото", "серебро"]
+  images          String   // JSON array as string: ["/image1.jpg", "/image2.jpg"]
+  inStock         Boolean  @default(true)
+  variant         String?
+  rating          Float?
+  reviewsCount    Int?
+  description     String?
+  specifications  String?  // JSON object as string
+  relatedProducts String?  // JSON array as string
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model PromoBanner {
+  id          String   @id @default(cuid())
+  image       String
+  productLink String
+  title       String?
+  subtitle    String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Page {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  content   String
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TopBanner {
+  id        String   @id @default("single")
+  text      String
+  updatedAt DateTime @updatedAt
+}
