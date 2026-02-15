@@ -35,7 +35,7 @@ export default async function CollectionPage({
   params: Promise<{ collection: string }>;
 }) {
   const { collection } = await params;
-  let products;
+  let products: Product[];
 
   // Обработка специальных случаев
   if (collection === "watches") {
