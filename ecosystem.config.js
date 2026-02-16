@@ -1,0 +1,21 @@
+module.exports = {
+  apps: [
+    {
+      name: "burker-watches",
+      script: "npm",
+      args: "start",
+      cwd: "/var/www/burker-watches.ru",
+      interpreter: "/root/.nvm/versions/node/v24.13.1/bin/node",
+      env: {
+        NODE_ENV: "production",
+        PORT: 3010,
+      },
+      error_file: "/root/.pm2/logs/burker-watches-error.log",
+      out_file: "/root/.pm2/logs/burker-watches-out.log",
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      merge_logs: true,
+      autorestart: true,
+      max_memory_restart: "1G",
+    },
+  ],
+};

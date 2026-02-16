@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getUserOrders, getOrdersByEmail } from "@/lib/orders";
+import { Order } from "@/lib/types";
 
 export async function GET(request: Request) {
   try {
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
       );
     }
 
-    let orders;
+    let orders: Order[];
     if (currentUser) {
       orders = await getUserOrders(currentUser.userId);
     } else if (email) {
