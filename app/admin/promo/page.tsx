@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { PromoBanner, getPromoBanners, savePromoBanners } from "@/lib/promoBanners";
+import { PromoBanner } from "@/lib/types";
 
 export default function AdminPromoPage() {
   const [banners, setBanners] = useState<PromoBanner[]>([]);
@@ -11,8 +11,15 @@ export default function AdminPromoPage() {
 
   useEffect(() => {
     const loadBanners = async () => {
-      const loaded = await getPromoBanners();
-      setBanners(loaded);
+      try {
+        const response = await fetch("/api/promo-banners");
+        if (response.ok) {
+          const data = await response.json();
+          setBanners(data.banners || []);
+        }
+      } catch (error) {
+        console.error("Error loading banners:", error);
+      }
     };
     loadBanners();
   }, []);
@@ -21,7 +28,19 @@ export default function AdminPromoPage() {
     if (confirm("Вы уверены, что хотите удалить этот баннер?")) {
       const updated = banners.filter((b) => b.id !== id);
       setBanners(updated);
-      await savePromoBanners(updated);
+      try {
+        const response = await fetch("/api/promo-banners", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ banners: updated }),
+        });
+        if (!response.ok) {
+          throw new Error("Ошибка при сохранении");
+        }
+      } catch (error) {
+        console.error("Error saving banners:", error);
+        alert("Ошибка при сохранении. Попробуйте еще раз.");
+      }
     }
   };
 
@@ -43,9 +62,21 @@ export default function AdminPromoPage() {
       updated = banners.map((b) => (b.id === banner.id ? banner : b));
     }
     setBanners(updated);
-    await savePromoBanners(updated);
-    setEditingBanner(null);
-    setIsAddingNew(false);
+    try {
+      const response = await fetch("/api/promo-banners", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ banners: updated }),
+      });
+      if (!response.ok) {
+        throw new Error("Ошибка при сохранении");
+      }
+      setEditingBanner(null);
+      setIsAddingNew(false);
+    } catch (error) {
+      console.error("Error saving banners:", error);
+      alert("Ошибка при сохранении. Попробуйте еще раз.");
+    }
   };
 
   const handleCancel = () => {
@@ -62,7 +93,19 @@ export default function AdminPromoPage() {
         newBanners[index],
       ];
       setBanners(newBanners);
-      await savePromoBanners(newBanners);
+      try {
+        const response = await fetch("/api/promo-banners", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ banners: newBanners }),
+        });
+        if (!response.ok) {
+          throw new Error("Ошибка при сохранении");
+        }
+      } catch (error) {
+        console.error("Error saving banners:", error);
+        alert("Ошибка при сохранении. Попробуйте еще раз.");
+      }
     }
   };
 

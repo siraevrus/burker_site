@@ -25,3 +25,32 @@ export async function GET() {
     );
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const { banners }: { banners: PromoBanner[] } = await request.json();
+    
+    // Удаляем все существующие баннеры
+    await prisma.promoBanner.deleteMany();
+
+    // Создаем новые баннеры
+    await prisma.promoBanner.createMany({
+      data: banners.map((banner, index) => ({
+        id: banner.id,
+        image: banner.image,
+        productLink: banner.productLink,
+        title: banner.title,
+        subtitle: banner.subtitle,
+        order: index,
+      })),
+    });
+    
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("Save promo banners error:", error);
+    return NextResponse.json(
+      { error: error.message || "Ошибка при сохранении промоблоков" },
+      { status: 500 }
+    );
+  }
+}
