@@ -100,6 +100,7 @@ export default function PromoBannerGallery() {
                   fill
                   className="object-cover"
                   priority={currentIndex === 0}
+                  unoptimized={currentBanner.image.startsWith('/promo/')}
                 />
               )}
               {(currentBanner.title || currentBanner.subtitle) && (

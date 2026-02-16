@@ -17,7 +17,15 @@ export async function POST(request: NextRequest) {
 
     // Создаем уникальное имя файла
     const timestamp = Date.now();
-    const filename = `promo-${timestamp}-${file.name}`;
+    // Очищаем имя файла от спецсимволов и кириллицы, оставляем только расширение
+    const originalName = file.name;
+    const extension = originalName.split('.').pop() || 'png';
+    // Убираем все небезопасные символы из имени
+    const sanitizedName = originalName
+      .replace(/[^a-zA-Z0-9.-]/g, '_')
+      .replace(/_{2,}/g, '_')
+      .substring(0, 50); // Ограничиваем длину
+    const filename = `promo-${timestamp}-${sanitizedName}.${extension}`;
     
     // Путь к папке public/promo
     const publicDir = join(process.cwd(), "public", "promo");

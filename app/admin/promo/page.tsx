@@ -144,12 +144,21 @@ export default function AdminPromoPage() {
                 className="border border-gray-200 rounded-lg p-4 flex items-center gap-4"
               >
                 <div className="relative w-32 h-32 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
-                  <Image
-                    src={banner.image}
-                    alt={banner.title || "Banner"}
-                    fill
-                    className="object-cover"
-                  />
+                  {banner.image.startsWith("data:image") ? (
+                    <img
+                      src={banner.image}
+                      alt={banner.title || "Banner"}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src={banner.image}
+                      alt={banner.title || "Banner"}
+                      fill
+                      className="object-cover"
+                      unoptimized={banner.image.startsWith('/promo/')}
+                    />
+                  )}
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg mb-1">
@@ -331,6 +340,7 @@ function BannerForm({
                   alt="Current"
                   fill
                   className="object-contain border border-gray-300 rounded-md"
+                  unoptimized={formData.image.startsWith('/promo/')}
                 />
               )}
             </div>
