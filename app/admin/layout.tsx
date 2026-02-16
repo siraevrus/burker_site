@@ -60,7 +60,7 @@ export default function AdminLayout({
                   href="/admin"
                   className={`px-4 py-2 rounded-md transition-colors ${
                     pathname === "/admin"
-                      ? "bg-black text-white"
+                      ? "bg-gray-600 text-white"
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
@@ -70,7 +70,7 @@ export default function AdminLayout({
                   href="/admin/pages"
                   className={`px-4 py-2 rounded-md transition-colors ${
                     pathname === "/admin/pages"
-                      ? "bg-black text-white"
+                      ? "bg-gray-600 text-white"
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
@@ -80,7 +80,7 @@ export default function AdminLayout({
                   href="/admin/promo"
                   className={`px-4 py-2 rounded-md transition-colors ${
                     pathname === "/admin/promo"
-                      ? "bg-black text-white"
+                      ? "bg-gray-600 text-white"
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
@@ -90,7 +90,7 @@ export default function AdminLayout({
                   href="/admin/top-banner"
                   className={`px-4 py-2 rounded-md transition-colors ${
                     pathname === "/admin/top-banner"
-                      ? "bg-black text-white"
+                      ? "bg-gray-600 text-white"
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
@@ -100,11 +100,31 @@ export default function AdminLayout({
                   href="/admin/import"
                   className={`px-4 py-2 rounded-md transition-colors ${
                     pathname === "/admin/import"
-                      ? "bg-black text-white"
+                      ? "bg-gray-600 text-white"
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
                   Импорт товаров
+                </a>
+                <a
+                  href="/admin/orders"
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    pathname === "/admin/orders"
+                      ? "bg-gray-600 text-white"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Заказы
+                </a>
+                <a
+                  href="/admin/users"
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    pathname === "/admin/users"
+                      ? "bg-gray-600 text-white"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Пользователи
                 </a>
               </div>
             </div>

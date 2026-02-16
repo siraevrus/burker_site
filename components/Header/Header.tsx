@@ -6,7 +6,6 @@ import Image from "next/image";
 import { useStore } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product } from "@/lib/types";
-import { getTopBannerText } from "@/lib/topBanner";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -19,6 +18,9 @@ export default function Header() {
   const [topBannerText, setTopBannerText] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const cartItemsCount = useStore((state) => state.getCartItemsCount());
+  const user = useStore((state) => state.user);
+  const loadUser = useStore((state) => state.loadUser);
+  const logout = useStore((state) => state.logout);
 
   useEffect(() => {
     // Загружаем товары из БД
@@ -34,32 +36,27 @@ export default function Header() {
       }
     };
     loadProducts();
-  }, []);
+    
+    // Загружаем данные пользователя
+    loadUser();
+  }, [loadUser]);
 
   useEffect(() => {
-    // Загружаем текст верхней строки
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("top_banner_text");
-      if (stored) {
-        setTopBannerText(stored);
+    // Загружаем текст верхней строки через API
+    const loadTopBanner = async () => {
+      try {
+        const response = await fetch("/api/admin/top-banner");
+        if (response.ok) {
+          const data = await response.json();
+          setTopBannerText(data.text || "");
+        }
+      } catch (error) {
+        console.error("Error loading top banner:", error);
       }
-      
-      // Слушаем изменения в localStorage
-      const handleStorageChange = () => {
-        const updated = localStorage.getItem("top_banner_text");
-        if (updated) {
-          setTopBannerText(updated);
-        }
-      };
-      window.addEventListener("storage", handleStorageChange);
-      
-      // Также проверяем изменения каждую секунду (для обновления в той же вкладке)
-      const interval = setInterval(() => {
-        const updated = localStorage.getItem("top_banner_text");
-        if (updated && updated !== topBannerText) {
-          setTopBannerText(updated);
-        }
-      }, 1000);
+    };
+    loadTopBanner();
+    
+    if (typeof window !== "undefined") {
 
       const handleScroll = () => {
         setIsScrolled(window.scrollY > 10);
@@ -77,13 +74,11 @@ export default function Header() {
       window.addEventListener("resize", updateHeaderHeight);
       
       return () => {
-        window.removeEventListener("storage", handleStorageChange);
-        clearInterval(interval);
         window.removeEventListener("scroll", handleScroll);
         window.removeEventListener("resize", updateHeaderHeight);
       };
     }
-  }, [topBannerText]);
+  }, []);
 
   const collections = [
     "Diana",
@@ -322,21 +317,56 @@ export default function Header() {
                 />
               </svg>
             </button>
-            <Link href="/account" className="hidden md:block" aria-label="Аккаунт">
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-            </Link>
+            {user ? (
+              <div className="hidden md:flex items-center gap-4">
+                <Link href="/orders" className="text-sm hover:text-gray-600">
+                  Заказы
+                </Link>
+                <div className="relative group">
+                  <button className="flex items-center gap-2 hover:text-gray-600">
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    <span className="text-sm">{user.firstName || user.email}</span>
+                  </button>
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                    <div className="py-2">
+                      <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
+                        {user.email}
+                      </div>
+                      <button
+                        onClick={logout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
+                      >
+                        Выйти
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="hidden md:flex items-center gap-4">
+                <Link href="/login" className="text-sm hover:text-gray-600">
+                  Войти
+                </Link>
+                <Link
+                  href="/register"
+                  className="text-sm bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors"
+                >
+                  Регистрация
+                </Link>
+              </div>
+            )}
             <Link href="/cart" className="relative" aria-label="Корзина">
               <svg
                 className="w-6 h-6"
@@ -472,6 +502,43 @@ export default function Header() {
                 </div>
               )}
             </div>
+            {user ? (
+              <>
+                <Link
+                  href="/orders"
+                  className="block py-2 hover:text-gray-600"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Мои заказы
+                </Link>
+                <button
+                  onClick={() => {
+                    logout();
+                    setIsMenuOpen(false);
+                  }}
+                  className="block py-2 text-red-600 hover:text-red-800 w-full text-left"
+                >
+                  Выйти
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="block py-2 hover:text-gray-600"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Войти
+                </Link>
+                <Link
+                  href="/register"
+                  className="block py-2 hover:text-gray-600"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Регистрация
+                </Link>
+              </>
+            )}
           </div>
         )}
       </div>

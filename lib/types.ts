@@ -48,3 +48,79 @@ export interface PromoBanner {
   title?: string;
   subtitle?: string;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  emailVerified: boolean;
+  createdAt: Date;
+}
+
+export interface OrderItem {
+  id: string;
+  orderId: string;
+  productId: string;
+  productName: string;
+  productPrice: number;
+  selectedColor: string;
+  quantity: number;
+}
+
+export interface Order {
+  id: string;
+  userId?: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  middleName: string; // Отчество
+  phone: string;
+  address: string;
+  cdekAddress: string; // Адрес ПВЗ СДЕК
+  city?: string;
+  postalCode?: string;
+  country?: string;
+  comment?: string;
+  // Данные для таможенного оформления
+  inn: string; // ИНН
+  passportSeries: string; // Серия паспорта
+  passportNumber: string; // Номер паспорта
+  passportIssueDate: string; // Дата выдачи паспорта
+  passportIssuedBy: string; // Кем выдан паспорт
+  status: string;
+  totalAmount: number;
+  shippingCost: number;
+  items: OrderItem[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  user?: User;
+  error?: string;
+  requiresVerification?: boolean;
+  userId?: string;
+}
+
+export interface CheckoutFormData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  middleName: string; // Отчество
+  phone: string;
+  address: string;
+  cdekAddress: string; // Адрес ПВЗ СДЕК
+  city?: string;
+  postalCode?: string;
+  country?: string;
+  comment?: string;
+  // Данные для таможенного оформления
+  inn: string; // ИНН
+  passportSeries: string; // Серия паспорта
+  passportNumber: string; // Номер паспорта
+  passportIssueDate: string; // Дата выдачи паспорта
+  passportIssuedBy: string; // Кем выдан паспорт
+}

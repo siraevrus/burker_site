@@ -1,17 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getTopBannerText, saveTopBannerText } from "@/lib/topBanner";
 
 export default function AdminTopBannerPage() {
   const [text, setText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadText = async () => {
-      const loaded = await getTopBannerText();
-      setText(loaded);
+      try {
+        const response = await fetch("/api/admin/top-banner");
+        if (response.ok) {
+          const data = await response.json();
+          setText(data.text || "");
+        }
+      } catch (error) {
+        console.error("Error loading top banner:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     loadText();
   }, []);
@@ -19,10 +28,28 @@ export default function AdminTopBannerPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    await saveTopBannerText(text);
-    setIsSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    try {
+      const response = await fetch("/api/admin/top-banner", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }),
+      });
+
+      if (response.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      } else {
+        const data = await response.json();
+        alert(data.error || "Ошибка при сохранении");
+      }
+    } catch (error) {
+      console.error("Error saving top banner:", error);
+      alert("Ошибка при сохранении");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
 

@@ -59,3 +59,77 @@ model TopBanner {
   text      String
   updatedAt DateTime @updatedAt
 }
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String   // bcrypt hash
+  emailVerified Boolean  @default(false)
+  firstName     String?
+  lastName      String?
+  phone         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  orders             Order[]
+  emailVerifications EmailVerification[]
+}
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  email     String
+  code      String   // 6-значный код
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  user      User?    @relation(fields: [email], references: [email], onDelete: Cascade)
+  
+  @@index([email])
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  userId          String?     // null для гостевых заказов
+  email           String      // обязательное поле
+  firstName       String
+  lastName        String      // обязательное поле
+  middleName      String      // Отчество (обязательное поле)
+  phone           String
+  address         String      // адрес доставки
+  cdekAddress     String      // Адрес ПВЗ СДЕК (обязательное поле)
+  city            String?
+  postalCode      String?
+  country         String?     @default("Россия")
+  comment         String?     // комментарий к заказу
+  
+  // Данные для таможенного оформления
+  inn             String      // ИНН (обязательное поле)
+  passportSeries  String     // Серия паспорта (обязательное поле)
+  passportNumber  String     // Номер паспорта (обязательное поле)
+  passportIssueDate String   // Дата выдачи паспорта (обязательное поле)
+  passportIssuedBy String    // Кем выдан паспорт (обязательное поле)
+  
+  status          String      @default("pending") // pending, confirmed, shipped, delivered, cancelled
+  totalAmount     Float
+  shippingCost    Float       @default(5.0)
+  
+  items           OrderItem[]
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model OrderItem {
+  id            String   @id @default(cuid())
+  orderId       String
+  productId     String
+  productName   String   // snapshot на момент заказа
+  productPrice  Float    // snapshot цены
+  selectedColor String
+  quantity      Int
+  
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}

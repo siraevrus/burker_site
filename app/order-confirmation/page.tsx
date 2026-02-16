@@ -1,0 +1,205 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import Link from "next/link";
+import { Order } from "@/lib/types";
+
+function OrderConfirmationContent() {
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get("id");
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (orderId) {
+      fetch(`/api/orders/${orderId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.order) {
+            setOrder(data.order);
+          }
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [orderId]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <p>Загрузка...</p>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-2xl mx-auto text-center">
+          <h1 className="text-3xl font-bold mb-4">Заказ не найден</h1>
+          <Link
+            href="/"
+            className="inline-block bg-black text-white px-8 py-3 rounded-md hover:bg-gray-800 transition-colors"
+          >
+            Вернуться на главную
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-16">
+      <div className="max-w-2xl mx-auto">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg
+              className="w-8 h-8 text-green-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold mb-2">Заказ успешно оформлен!</h1>
+          <p className="text-gray-600">
+            Номер заказа: <strong>#{order.id}</strong>
+          </p>
+        </div>
+
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <p className="text-sm text-blue-800">
+            Мы отправили подтверждение заказа на ваш email. Мы свяжемся с вами
+            в ближайшее время для подтверждения заказа.
+          </p>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4">Детали заказа</h2>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Email:</span>
+              <span className="font-medium">{order.email}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Имя:</span>
+              <span className="font-medium">
+                {order.firstName} {order.middleName || ""} {order.lastName || ""}
+              </span>
+            </div>
+            {order.phone && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Телефон:</span>
+                <span className="font-medium">{order.phone}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-gray-600">Адрес:</span>
+              <span className="font-medium text-right">{order.address}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Адрес ПВЗ СДЕК:</span>
+              <span className="font-medium text-right">{order.cdekAddress}</span>
+            </div>
+            <div className="border-t border-gray-200 pt-2 mt-2">
+              <p className="text-sm font-semibold text-gray-700 mb-2">Данные для таможенного оформления:</p>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">ИНН:</span>
+              <span className="font-medium">{order.inn}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Паспорт:</span>
+              <span className="font-medium">
+                {order.passportSeries} {order.passportNumber}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Дата выдачи:</span>
+              <span className="font-medium">{order.passportIssueDate}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Кем выдан:</span>
+              <span className="font-medium text-right">{order.passportIssuedBy}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Статус:</span>
+              <span className="font-medium capitalize">{order.status}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4">Товары</h2>
+          <div className="space-y-3">
+            {order.items.map((item) => (
+              <div key={item.id} className="flex justify-between border-b border-gray-200 pb-3 last:border-b-0">
+                <div>
+                  <p className="font-medium">{item.productName}</p>
+                  <p className="text-sm text-gray-600">
+                    Цвет: {item.selectedColor} × {item.quantity}
+                  </p>
+                </div>
+                <p className="font-semibold">
+                  €{(item.productPrice * item.quantity).toFixed(2)}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="flex justify-between mb-2">
+              <span>Доставка:</span>
+              <span>
+                {order.shippingCost === 0 ? (
+                  <span className="text-green-600">Бесплатно</span>
+                ) : (
+                  <span>€{order.shippingCost.toFixed(2)}</span>
+                )}
+              </span>
+            </div>
+            <div className="flex justify-between text-xl font-bold">
+              <span>Итого:</span>
+              <span>€{order.totalAmount.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-4 justify-center">
+          <Link
+            href="/"
+            className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors"
+          >
+            Вернуться на главную
+          </Link>
+          <Link
+            href="/orders"
+            className="border border-gray-300 px-6 py-3 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            Мои заказы
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function OrderConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-16 text-center">
+        <p>Загрузка...</p>
+      </div>
+    }>
+      <OrderConfirmationContent />
+    </Suspense>
+  );
+}

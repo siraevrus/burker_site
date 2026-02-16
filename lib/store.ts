@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { CartItem, Collection, Color } from "./types";
+import { CartItem, Collection, Color, User } from "./types";
 
 interface Store {
   cart: CartItem[];
@@ -7,6 +7,7 @@ interface Store {
     collection: Collection;
     color: Color;
   };
+  user: User | null;
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -14,6 +15,10 @@ interface Store {
   setColorFilter: (color: Color) => void;
   getTotalPrice: () => number;
   getCartItemsCount: () => number;
+  setUser: (user: User | null) => void;
+  clearCart: () => void;
+  loadUser: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 export const useStore = create<Store>((set, get) => ({
@@ -22,6 +27,7 @@ export const useStore = create<Store>((set, get) => ({
     collection: "all",
     color: "all",
   },
+  user: null,
   addToCart: (item) => {
     const existingItem = get().cart.find(
       (cartItem) => cartItem.id === item.id && cartItem.selectedColor === item.selectedColor
@@ -67,5 +73,34 @@ export const useStore = create<Store>((set, get) => ({
   },
   getCartItemsCount: () => {
     return get().cart.reduce((total, item) => total + item.quantity, 0);
+  },
+  setUser: (user) => {
+    set({ user });
+  },
+  clearCart: () => {
+    set({ cart: [] });
+  },
+  loadUser: async () => {
+    try {
+      const response = await fetch("/api/auth/me");
+      const data = await response.json();
+      if (data.user) {
+        set({ user: data.user });
+      } else {
+        set({ user: null });
+      }
+    } catch (error) {
+      console.error("Error loading user:", error);
+      set({ user: null });
+    }
+  },
+  logout: async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      set({ user: null, cart: [] });
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   },
 }));

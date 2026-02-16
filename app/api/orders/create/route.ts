@@ -1,0 +1,133 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
+import { createOrder } from "@/lib/orders";
+import { sendOrderConfirmation, sendAdminOrderNotification } from "@/lib/email";
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const {
+      email,
+      firstName,
+      lastName,
+      middleName,
+      phone,
+      address,
+      cdekAddress,
+      city,
+      postalCode,
+      country,
+      comment,
+      inn,
+      passportSeries,
+      passportNumber,
+      passportIssueDate,
+      passportIssuedBy,
+      items,
+    } = body;
+
+    // Валидация обязательных полей
+    if (
+      !email ||
+      !firstName ||
+      !lastName ||
+      !middleName ||
+      !phone ||
+      !address ||
+      !cdekAddress ||
+      !inn ||
+      !passportSeries ||
+      !passportNumber ||
+      !passportIssueDate ||
+      !passportIssuedBy ||
+      !items ||
+      items.length === 0
+    ) {
+      return NextResponse.json(
+        { error: "Заполните все обязательные поля" },
+        { status: 400 }
+      );
+    }
+
+    // Получение текущего пользователя (может быть null для гостевых заказов)
+    const currentUser = await getCurrentUser();
+
+    // Расчет суммы товаров
+    const itemsTotal = items.reduce(
+      (sum: number, item: any) => sum + item.productPrice * item.quantity,
+      0
+    );
+
+    // Расчет стоимости доставки
+    const freeShippingThreshold = 39;
+    const shippingCost = itemsTotal >= freeShippingThreshold ? 0 : 5.0;
+    const totalAmount = itemsTotal + shippingCost;
+
+    // Создание заказа
+    const order = await createOrder({
+      userId: currentUser?.userId,
+      email: email.toLowerCase(),
+      firstName,
+      lastName,
+      middleName,
+      phone,
+      address,
+      cdekAddress,
+      city,
+      postalCode,
+      country: country || "Россия",
+      comment,
+      inn,
+      passportSeries,
+      passportNumber,
+      passportIssueDate,
+      passportIssuedBy,
+      items: items.map((item: any) => ({
+        productId: item.productId,
+        productName: item.productName,
+        productPrice: item.productPrice,
+        selectedColor: item.selectedColor,
+        quantity: item.quantity,
+      })),
+      totalAmount,
+      shippingCost,
+    });
+
+    // Отправка email уведомлений
+    try {
+      await sendOrderConfirmation(order.email, order.id, {
+        firstName: order.firstName,
+        totalAmount: order.totalAmount,
+        items: order.items.map((item) => ({
+          name: item.productName,
+          quantity: item.quantity,
+          price: item.productPrice * item.quantity,
+        })),
+      });
+
+      await sendAdminOrderNotification(order.id, {
+        email: order.email,
+        firstName: order.firstName,
+        phone: order.phone,
+        address: order.address,
+        totalAmount: order.totalAmount,
+        itemsCount: order.items.length,
+      });
+    } catch (emailError) {
+      console.error("Error sending order emails:", emailError);
+      // Не прерываем создание заказа из-за ошибки email
+    }
+
+    return NextResponse.json({
+      success: true,
+      order,
+    });
+  } catch (error: any) {
+    console.error("Create order error:", error);
+    return NextResponse.json(
+      { error: error.message || "Ошибка при создании заказа" },
+      { status: 500 }
+    );
+  }
+}
