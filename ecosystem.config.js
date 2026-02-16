@@ -2,13 +2,13 @@ module.exports = {
   apps: [
     {
       name: "burker-watches",
-      script: "npm",
-      args: "start",
+      script: "/root/.nvm/versions/node/v24.13.1/bin/node",
+      args: "node_modules/.bin/next start",
       cwd: "/var/www/burker-watches.ru",
-      interpreter: "/root/.nvm/versions/node/v24.13.1/bin/node",
       env: {
         NODE_ENV: "production",
         PORT: 3010,
+        PATH: "/root/.nvm/versions/node/v24.13.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
       },
       error_file: "/root/.pm2/logs/burker-watches-error.log",
       out_file: "/root/.pm2/logs/burker-watches-out.log",

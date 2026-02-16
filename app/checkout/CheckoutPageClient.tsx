@@ -54,7 +54,14 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                 </Link>
               </div>
             )}
-            <CheckoutForm user={user || undefined} />
+            <CheckoutForm 
+              user={user ? {
+                email: user.email,
+                firstName: user.firstName ?? undefined,
+                lastName: user.lastName ?? undefined,
+                phone: user.phone ?? undefined,
+              } : undefined} 
+            />
           </div>
         </div>
 
