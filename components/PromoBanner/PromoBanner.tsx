@@ -93,6 +93,13 @@ export default function PromoBannerGallery() {
                   alt={currentBanner.title || "Promo banner"}
                   className="absolute inset-0 w-full h-full object-cover"
                 />
+              ) : currentBanner.image.startsWith('/promo/') ? (
+                // Для локальных файлов используем обычный img, чтобы избежать проблем с оптимизацией
+                <img
+                  src={currentBanner.image}
+                  alt={currentBanner.title || "Promo banner"}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               ) : (
                 <Image
                   src={currentBanner.image}
@@ -100,7 +107,6 @@ export default function PromoBannerGallery() {
                   fill
                   className="object-cover"
                   priority={currentIndex === 0}
-                  unoptimized={currentBanner.image.startsWith('/promo/')}
                 />
               )}
               {(currentBanner.title || currentBanner.subtitle) && (

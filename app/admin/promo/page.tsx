@@ -144,7 +144,7 @@ export default function AdminPromoPage() {
                 className="border border-gray-200 rounded-lg p-4 flex items-center gap-4"
               >
                 <div className="relative w-32 h-32 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
-                  {banner.image.startsWith("data:image") ? (
+                  {banner.image.startsWith("data:image") || banner.image.startsWith('/promo/') ? (
                     <img
                       src={banner.image}
                       alt={banner.title || "Banner"}
@@ -156,7 +156,6 @@ export default function AdminPromoPage() {
                       alt={banner.title || "Banner"}
                       fill
                       className="object-cover"
-                      unoptimized={banner.image.startsWith('/promo/')}
                     />
                   )}
                 </div>
@@ -334,13 +333,18 @@ function BannerForm({
                   alt="Current"
                   className="w-full h-full object-contain border border-gray-300 rounded-md"
                 />
+              ) : formData.image.startsWith('/promo/') ? (
+                <img
+                  src={formData.image}
+                  alt="Current"
+                  className="w-full h-full object-contain border border-gray-300 rounded-md"
+                />
               ) : (
                 <Image
                   src={formData.image}
                   alt="Current"
                   fill
                   className="object-contain border border-gray-300 rounded-md"
-                  unoptimized={formData.image.startsWith('/promo/')}
                 />
               )}
             </div>
