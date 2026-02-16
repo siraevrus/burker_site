@@ -2,10 +2,9 @@ module.exports = {
   apps: [
     {
       name: "burker-watches",
-      script: "npm",
-      args: "start",
+      script: "/root/.nvm/versions/node/v24.13.1/bin/node",
+      args: "/var/www/burker-watches.ru/node_modules/.bin/next start",
       cwd: "/var/www/burker-watches.ru",
-      interpreter: "/root/.nvm/versions/node/v24.13.1/bin/node",
       env: {
         NODE_ENV: "production",
         PORT: 3010,
