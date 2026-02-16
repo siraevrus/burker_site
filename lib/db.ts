@@ -1,5 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 
+// Защита от выполнения в браузере
+if (typeof window !== "undefined") {
+  throw new Error(
+    "PrismaClient is unable to run in this browser environment. " +
+    "Please ensure that Prisma is only imported in server-side code."
+  );
+}
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
