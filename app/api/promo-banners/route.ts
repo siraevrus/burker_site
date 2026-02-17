@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { PromoBanner } from "@/lib/types";
 
+export const runtime = 'nodejs';
+export const maxDuration = 30;
+
 export async function GET() {
   try {
     const dbBanners = await prisma.promoBanner.findMany({
@@ -28,7 +31,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { banners }: { banners: PromoBanner[] } = await request.json();
+    // Увеличиваем лимит размера тела запроса для больших изображений в base64
+    const body = await request.json();
+    const { banners }: { banners: PromoBanner[] } = body;
     
     // Удаляем все существующие баннеры
     await prisma.promoBanner.deleteMany();
