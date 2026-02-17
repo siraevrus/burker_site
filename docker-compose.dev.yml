@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=file:./prisma/dev.db
+      - PORT=3000
+    volumes:
+      # Монтируем весь код для hot reload
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+      - ./prisma/dev.db:/app/prisma/dev.db
+      - ./public/promo:/app/public/promo
+    command: npm run dev
+    restart: unless-stopped
