@@ -16,14 +16,17 @@ cd "$PROJECT_DIR" || exit 1
 echo "📥 Получаем изменения из Git..."
 git pull origin main
 
-echo "📦 Устанавливаем зависимости..."
-npm install --production
+echo "📦 Устанавливаем зависимости (включая dev для сборки)..."
+npm install
 
 echo "🔨 Генерируем Prisma Client..."
 npx prisma generate
 
 echo "🏗️ Собираем проект..."
 npm run build
+
+echo "🧹 Удаляем dev-зависимости после сборки..."
+npm prune --production
 
 echo "🔄 Перезапускаем приложение через PM2..."
 pm2 restart burker-watches || pm2 start npm --name "burker-watches" -- start
