@@ -76,7 +76,7 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                 <div className="flex items-center gap-6 flex-1">
                   <div className="text-left">
                     <div className="text-lg font-bold text-gray-900">
-                      Заказ #{order.id.slice(0, 8)}
+                      Заказ #{order.orderNumber || order.id.slice(0, 8)}
                     </div>
                     <div className="text-sm text-gray-500 mt-1">
                       {new Date(order.createdAt).toLocaleDateString("ru-RU", {

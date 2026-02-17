@@ -241,7 +241,7 @@ export default function AdminUsersPage() {
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="font-medium">
-                            Заказ #{order.id.slice(0, 8)}
+                            Заказ #{order.orderNumber || order.id.slice(0, 8)}
                           </p>
                           <p className="text-sm text-gray-600">
                             {new Date(order.createdAt).toLocaleString("ru-RU")}

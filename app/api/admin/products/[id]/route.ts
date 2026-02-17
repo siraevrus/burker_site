@@ -26,6 +26,7 @@ export async function PUT(
       originalPrice: parseFloat(body.originalPrice) || 0,
       discount: parseInt(body.discount) || 0,
       inStock: Boolean(body.inStock),
+      disabled: Boolean(body.disabled),
       description: body.description || null,
     };
 

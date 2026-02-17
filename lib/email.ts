@@ -48,7 +48,7 @@ export async function sendVerificationCode(
  */
 export async function sendOrderConfirmation(
   email: string,
-  orderId: string,
+  orderNumber: string,
   orderData: {
     firstName: string;
     totalAmount: number;
@@ -58,7 +58,7 @@ export async function sendOrderConfirmation(
   console.log("\n" + "=".repeat(60));
   console.log("📦 ПОДТВЕРЖДЕНИЕ ЗАКАЗА");
   console.log("=".repeat(60));
-  console.log(`Заказ #${orderId}`);
+  console.log(`Заказ #${orderNumber}`);
   console.log(`Email: ${email}`);
   console.log(`Имя: ${orderData.firstName}`);
   console.log(`Сумма: €${orderData.totalAmount.toFixed(2)}`);
@@ -80,7 +80,7 @@ export async function sendOrderConfirmation(
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #333;">Спасибо за ваш заказ!</h2>
       <p>Здравствуйте, ${orderData.firstName}!</p>
-      <p>Ваш заказ <strong>#${orderId}</strong> успешно принят и находится в обработке.</p>
+      <p>Ваш заказ <strong>#${orderNumber}</strong> успешно принят и находится в обработке.</p>
       
       <h3 style="color: #333; margin-top: 30px;">Детали заказа:</h3>
       <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
@@ -110,7 +110,7 @@ export async function sendOrderConfirmation(
 
   const result = await sendEmailViaMailopost(
     email,
-    `Заказ #${orderId} принят`,
+    `Заказ #${orderNumber} принят`,
     html
   );
 
@@ -121,6 +121,7 @@ export async function sendOrderConfirmation(
  * Отправка уведомления админу о новом заказе
  */
 export async function sendAdminOrderNotification(
+  orderNumber: string,
   orderId: string,
   orderData: {
     email: string;
@@ -134,7 +135,7 @@ export async function sendAdminOrderNotification(
   console.log("\n" + "=".repeat(60));
   console.log("🔔 УВЕДОМЛЕНИЕ АДМИНУ О НОВОМ ЗАКАЗЕ");
   console.log("=".repeat(60));
-  console.log(`Заказ #${orderId}`);
+  console.log(`Заказ #${orderNumber}`);
   console.log(`Email: ${orderData.email}`);
   console.log(`Имя: ${orderData.firstName}`);
   console.log(`Телефон: ${orderData.phone}`);
@@ -150,20 +151,20 @@ export async function sendAdminOrderNotification(
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #333;">Новый заказ #${orderId}</h2>
+      <h2 style="color: #333;">Новый заказ #${orderNumber}</h2>
       <p><strong>Email:</strong> ${orderData.email}</p>
       <p><strong>Имя:</strong> ${orderData.firstName}</p>
       <p><strong>Телефон:</strong> ${orderData.phone}</p>
       <p><strong>Адрес:</strong> ${orderData.address}</p>
       <p><strong>Количество товаров:</strong> ${orderData.itemsCount}</p>
       <p><strong>Сумма заказа:</strong> €${orderData.totalAmount.toFixed(2)}</p>
-      <p><a href="${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/admin/orders/${orderId}" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #A13D42; color: white; text-decoration: none; border-radius: 5px;">Просмотреть заказ</a></p>
+      <p><a href="${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/admin/orders/${orderId}" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #A13D42; color: white; text-decoration: none; border-radius: 5px;">Просмотреть заказ #${orderNumber}</a></p>
     </div>
   `;
 
   const result = await sendEmailViaMailopost(
     ADMIN_EMAIL,
-    `Новый заказ #${orderId}`,
+    `Новый заказ #${orderNumber}`,
     html
   );
 

@@ -11,6 +11,7 @@ export interface Product {
   colors: string[]; // золото, серебро, розовое золото
   images: string[];
   inStock: boolean;
+  disabled?: boolean; // Отключенный товар не отображается на сайте
   variant?: string; // Petite, обычная
   rating?: number; // рейтинг от 1 до 5
   reviewsCount?: number; // количество отзывов
@@ -71,6 +72,7 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
+  orderNumber?: string; // Читаемый номер заказа: burker_YYYYMMDDHHmmss_userId_orderId_XXX
   userId?: string;
   email: string;
   firstName: string;

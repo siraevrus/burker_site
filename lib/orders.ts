@@ -1,10 +1,37 @@
 import { prisma } from "./db";
 import { Order, OrderItem } from "./types";
 
+/**
+ * Генерирует читаемый номер заказа в формате:
+ * burker_YYYYMMDDHHmmss_userId_orderId_XXX
+ * 
+ * @param userId - ID пользователя или null для гостевых заказов
+ * @param orderId - ID заказа (cuid)
+ * @param orderCount - порядковый номер заказа в системе (начиная с 1)
+ * @returns номер заказа в формате burker_YYYYMMDDHHmmss_userId_orderId_XXX
+ */
+function generateOrderNumber(userId: string | null | undefined, orderId: string, orderCount: number): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+  
+  const dateTime = `${year}${month}${day}${hours}${minutes}${seconds}`;
+  const userIdPart = userId || "guest";
+  const orderIdPart = orderId.slice(0, 8); // Первые 8 символов cuid
+  const sequentialNumber = String(orderCount).padStart(3, "0"); // 001, 002, 003...
+  
+  return `burker_${dateTime}_${userIdPart}_${orderIdPart}_${sequentialNumber}`;
+}
+
 // Преобразование данных из БД в формат Order
 function mapOrderFromDb(dbOrder: any): Order {
   return {
     id: dbOrder.id,
+    orderNumber: dbOrder.orderNumber || undefined,
     userId: dbOrder.userId || undefined,
     email: dbOrder.email,
     firstName: dbOrder.firstName,
@@ -145,6 +172,7 @@ export async function createOrder(orderData: {
     orderDataForCreate.userId = orderData.userId;
   }
 
+  // Создаем заказ сначала без orderNumber
   const order = await prisma.order.create({
     data: orderDataForCreate,
     include: {
@@ -152,5 +180,19 @@ export async function createOrder(orderData: {
     },
   });
 
-  return mapOrderFromDb(order);
+  // Получаем общее количество заказов в системе для порядкового номера
+  const orderCount = await prisma.order.count();
+  const sequentialNumber = orderCount;
+  
+  // Генерируем номер заказа с реальным orderId
+  const orderNumber = generateOrderNumber(order.userId, order.id, sequentialNumber);
+  
+  // Обновляем заказ с номером
+  const updatedOrder = await prisma.order.update({
+    where: { id: order.id },
+    data: { orderNumber },
+    include: { items: true },
+  });
+
+  return mapOrderFromDb(updatedOrder);
 }

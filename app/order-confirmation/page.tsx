@@ -72,7 +72,7 @@ function OrderConfirmationContent() {
           </div>
           <h1 className="text-3xl font-bold mb-2">Заказ успешно оформлен!</h1>
           <p className="text-gray-600">
-            Номер заказа: <strong>#{order.id}</strong>
+            Номер заказа: <strong>#{order.orderNumber || order.id}</strong>
           </p>
         </div>
 

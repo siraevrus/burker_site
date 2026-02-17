@@ -17,6 +17,7 @@ function mapProductFromDbRaw(dbProduct: any): Product {
     colors: JSON.parse(dbProduct.colors || "[]"),
     images: JSON.parse(dbProduct.images || "[]"),
     inStock: dbProduct.inStock,
+    disabled: dbProduct.disabled || false,
     variant: dbProduct.variant || undefined,
     rating: dbProduct.rating || undefined,
     reviewsCount: dbProduct.reviewsCount || undefined,
@@ -43,8 +44,22 @@ function mapProductFromDbWithRates(dbProduct: any, rates: ExchangeRates): Produc
   return product;
 }
 
-// Получить все товары
+// Получить все товары (для сайта, без отключенных)
 export async function getAllProducts(): Promise<Product[]> {
+  const [dbProducts, rates] = await Promise.all([
+    prisma.product.findMany({
+      where: {
+        disabled: { not: true },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    getExchangeRates(),
+  ]);
+  return dbProducts.map((p) => mapProductFromDbWithRates(p, rates));
+}
+
+// Получить все товары для админ-панели (включая отключенные)
+export async function getAllProductsForAdmin(): Promise<Product[]> {
   const [dbProducts, rates] = await Promise.all([
     prisma.product.findMany({
       orderBy: { createdAt: "desc" },
@@ -77,7 +92,10 @@ export async function getProductsByCollection(
 ): Promise<Product[]> {
   const [dbProducts, rates] = await Promise.all([
     prisma.product.findMany({
-      where: { collection },
+      where: {
+        collection,
+        disabled: { not: true },
+      },
       orderBy: { createdAt: "desc" },
     }),
     getExchangeRates(),
@@ -99,6 +117,7 @@ export async function getBestsellers(limit: number = 8): Promise<Product[]> {
     prisma.product.findMany({
       where: {
         bestseller: true,
+        disabled: { not: true },
       },
       orderBy: { createdAt: "desc" },
       take: limit,
@@ -116,6 +135,7 @@ export async function getProductsOnSale(): Promise<Product[]> {
         discount: {
           gt: 0,
         },
+        disabled: { not: true },
       },
       orderBy: { discount: "desc" },
     }),
@@ -130,6 +150,7 @@ export async function getProductsBySubcategory(subcategory: string): Promise<Pro
     prisma.product.findMany({
       where: {
         subcategory: subcategory,
+        disabled: { not: true },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -146,6 +167,7 @@ export async function getWatchesProducts(): Promise<Product[]> {
         collection: {
           not: "Украшения",
         },
+        disabled: { not: true },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -163,6 +185,7 @@ export async function getWatchesBySubcategory(subcategory: string): Promise<Prod
           not: "Украшения",
         },
         subcategory: subcategory,
+        disabled: { not: true },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -177,6 +200,7 @@ export async function getJewelryProducts(): Promise<Product[]> {
     prisma.product.findMany({
       where: {
         collection: "Украшения",
+        disabled: { not: true },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -192,6 +216,7 @@ export async function getJewelryBySubcategory(subcategory: string): Promise<Prod
       where: {
         collection: "Украшения",
         subcategory: subcategory,
+        disabled: { not: true },
       },
       orderBy: { createdAt: "desc" },
     }),

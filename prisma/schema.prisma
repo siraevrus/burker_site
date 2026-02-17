@@ -24,6 +24,7 @@ model Product {
   colors          String   // JSON array as string: ["золото", "серебро"]
   images          String   // JSON array as string: ["/image1.jpg", "/image2.jpg"]
   inStock         Boolean  @default(true)
+  disabled        Boolean  @default(false) // Отключенный товар не отображается на сайте
   variant         String?
   rating          Float?
   reviewsCount    Int?
@@ -91,6 +92,7 @@ model EmailVerification {
 
 model Order {
   id              String      @id @default(cuid())
+  orderNumber     String?     @unique // Читаемый номер заказа: burker_YYYYMMDDHHmmss_userId_orderId_XXX
   userId          String?     // null для гостевых заказов
   email           String      // обязательное поле
   firstName       String

@@ -12,7 +12,7 @@ export default function AdminPage() {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const response = await fetch("/api/products");
+        const response = await fetch("/api/admin/products");
         if (response.ok) {
           const data = await response.json();
           setProductList(data.products || []);
@@ -89,6 +89,33 @@ export default function AdminPage() {
     setIsAddingNew(false);
   };
 
+  const handleToggleDisabled = async (product: Product) => {
+    try {
+      const newDisabled = !product.disabled;
+      const response = await fetch(`/api/admin/products/${product.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...product,
+          disabled: newDisabled,
+        }),
+      });
+      if (response.ok) {
+        const updatedProduct = await response.json();
+        setProductList(
+          productList.map((p) => (p.id === product.id ? updatedProduct : p))
+        );
+      } else {
+        alert("Ошибка при изменении статуса товара");
+      }
+    } catch (error) {
+      console.error("Error toggling disabled status:", error);
+      alert("Ошибка при изменении статуса товара");
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
@@ -141,6 +168,9 @@ export default function AdminPage() {
                 Бестселлер
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Статус
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Действия
               </th>
             </tr>
@@ -191,6 +221,18 @@ export default function AdminPage() {
                     <span className="text-sm text-gray-400">—</span>
                   )}
                 </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <button
+                    onClick={() => handleToggleDisabled(product)}
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                      product.disabled
+                        ? "bg-red-100 text-red-800 hover:bg-red-200"
+                        : "bg-green-100 text-green-800 hover:bg-green-200"
+                    }`}
+                  >
+                    {product.disabled ? "Отключен" : "Активен"}
+                  </button>
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
                     onClick={() => handleEdit(product)}
@@ -238,6 +280,7 @@ function ProductForm({
       colors: [],
       images: [],
       inStock: true,
+      disabled: false,
     }
   );
 
@@ -387,6 +430,21 @@ function ProductForm({
               />
               <span className="text-sm font-medium text-gray-700">
                 В наличии
+              </span>
+            </label>
+          </div>
+          <div>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.disabled || false}
+                onChange={(e) =>
+                  setFormData({ ...formData, disabled: e.target.checked })
+                }
+                className="mr-2"
+              />
+              <span className="text-sm font-medium text-gray-700">
+                Товар отключен (не отображается на сайте)
               </span>
             </label>
           </div>

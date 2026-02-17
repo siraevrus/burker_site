@@ -67,6 +67,8 @@ export async function importProducts(jsonData: any[]): Promise<ImportResult> {
           description: productData.description,
           specifications: productData.specifications,
           updatedAt: productData.updatedAt,
+          // Сохраняем текущее значение disabled из базы данных
+          disabled: existingProduct.disabled ?? false,
         };
         
         // Добавляем bodyId только если он не null
@@ -93,6 +95,7 @@ export async function importProducts(jsonData: any[]): Promise<ImportResult> {
           colors: productData.colors,
           images: productData.images,
           inStock: productData.inStock,
+          disabled: false, // По умолчанию новые товары активны
           variant: productData.variant,
           description: productData.description,
           specifications: productData.specifications,

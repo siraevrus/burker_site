@@ -117,7 +117,8 @@ export async function POST(request: NextRequest) {
 
     // Отправка email уведомлений
     try {
-      await sendOrderConfirmation(order.email, order.id, {
+      const orderNumber = order.orderNumber || order.id;
+      await sendOrderConfirmation(order.email, orderNumber, {
         firstName: order.firstName,
         totalAmount: order.totalAmount,
         items: order.items.map((item) => ({
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
         })),
       });
 
-      await sendAdminOrderNotification(order.id, {
+      await sendAdminOrderNotification(orderNumber, order.id, {
         email: order.email,
         firstName: order.firstName,
         phone: order.phone,

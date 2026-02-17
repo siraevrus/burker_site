@@ -18,6 +18,7 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
     price: product.price,
     originalPrice: product.originalPrice,
     inStock: product.inStock,
+    disabled: product.disabled || false,
     description: product.description || "",
   });
   const [images, setImages] = useState<string[]>(product.images || []);
@@ -180,6 +181,19 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
               />
               <label htmlFor="inStock" className="text-sm font-medium">
                 В наличии
+              </label>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="disabled"
+                checked={formData.disabled}
+                onChange={(e) => setFormData({ ...formData, disabled: e.target.checked })}
+                className="w-4 h-4"
+              />
+              <label htmlFor="disabled" className="text-sm font-medium">
+                Товар отключен (не отображается на сайте)
               </label>
             </div>
           </div>
