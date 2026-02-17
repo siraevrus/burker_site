@@ -14,9 +14,19 @@ export async function GET(request: NextRequest) {
   const city = searchParams.get("city")?.trim().toLowerCase() || null;
   const type = searchParams.get("type") || null; // PVZ | POSTAMAT | пусто = все
 
-  if (!process.env.CDEK_CLIENT_ID || !process.env.CDEK_CLIENT_SECRET) {
+  const clientId = process.env.CDEK_CLIENT_ID;
+  const clientSecret = process.env.CDEK_CLIENT_SECRET;
+  
+  if (!clientId || !clientSecret) {
+    console.error("[CDEK API] Missing environment variables:", {
+      hasClientId: !!clientId,
+      hasClientSecret: !!clientSecret,
+    });
     return NextResponse.json(
-      { error: "Сервис ПВЗ временно недоступен. Настройте CDEK_CLIENT_ID и CDEK_CLIENT_SECRET." },
+      { 
+        error: "Сервис ПВЗ временно недоступен. Настройте CDEK_CLIENT_ID и CDEK_CLIENT_SECRET в переменных окружения.",
+        details: "Проверьте файл .env на сервере или переменные окружения PM2."
+      },
       { status: 503 }
     );
   }
@@ -28,8 +38,12 @@ export async function GET(request: NextRequest) {
 
   const rawList = await fetchCdekDeliveryPoints();
   if (rawList === null) {
+    console.error("[CDEK API] Failed to fetch delivery points. Check server logs for details.");
     return NextResponse.json(
-      { error: "Не удалось получить список ПВЗ. Проверьте учётные данные СДЭК." },
+      { 
+        error: "Не удалось получить список ПВЗ. Проверьте учётные данные СДЭК.",
+        details: "Проверьте логи сервера (pm2 logs burker-watches) для деталей ошибки."
+      },
       { status: 503 }
     );
   }

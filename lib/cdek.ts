@@ -17,6 +17,12 @@ export async function getCdekAccessToken(): Promise<string | null> {
   const clientSecret = process.env.CDEK_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
+    console.error("[CDEK] Missing credentials:", {
+      hasClientId: !!clientId,
+      hasClientSecret: !!clientSecret,
+      clientIdLength: clientId?.length || 0,
+      clientSecretLength: clientSecret?.length || 0,
+    });
     return null;
   }
 
@@ -41,21 +47,33 @@ export async function getCdekAccessToken(): Promise<string | null> {
 
   if (!res.ok) {
     const text = await res.text();
-    console.error("CDEK OAuth error:", res.status, text);
+    console.error("[CDEK] OAuth error:", {
+      status: res.status,
+      statusText: res.statusText,
+      response: text,
+      url: CDEK_OAUTH_URL,
+    });
     return null;
   }
 
-  const data = (await res.json()) as {
-    access_token: string;
-    token_type: string;
-    expires_in: number;
-  };
+  let data;
+  try {
+    data = (await res.json()) as {
+      access_token: string;
+      token_type: string;
+      expires_in: number;
+    };
+  } catch (error) {
+    console.error("[CDEK] Failed to parse OAuth response:", error);
+    return null;
+  }
 
   tokenCache = {
     access_token: data.access_token,
     expires_at: now + (data.expires_in ?? 3600),
   };
 
+  console.log("[CDEK] OAuth token obtained successfully, expires in:", data.expires_in, "seconds");
   return data.access_token;
 }
 
@@ -106,25 +124,48 @@ export interface CdekDeliveryPoint {
  */
 export async function fetchCdekDeliveryPoints(): Promise<CdekDeliveryPointRaw[] | null> {
   const token = await getCdekAccessToken();
-  if (!token) return null;
+  if (!token) {
+    console.error("[CDEK] Cannot fetch delivery points: no access token");
+    return null;
+  }
 
   const url = `${CDEK_BASE_URL}/deliverypoints`;
+  console.log("[CDEK] Fetching delivery points from:", url, "token:", token.substring(0, 20) + "...");
+  
   const res = await fetch(url, {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${token}`, // Отправляем полный токен
       "Content-Type": "application/json",
     },
   });
 
   if (!res.ok) {
     const text = await res.text();
-    console.error("CDEK deliverypoints error:", res.status, text);
+    console.error("[CDEK] Delivery points error:", {
+      status: res.status,
+      statusText: res.statusText,
+      response: text,
+      url,
+    });
     return null;
   }
 
-  const data = await res.json();
-  return Array.isArray(data) ? data : [];
+  let data;
+  try {
+    data = await res.json();
+  } catch (error) {
+    console.error("[CDEK] Failed to parse delivery points response:", error);
+    return null;
+  }
+
+  if (!Array.isArray(data)) {
+    console.error("[CDEK] Unexpected delivery points response format:", typeof data);
+    return null;
+  }
+
+  console.log("[CDEK] Successfully fetched", data.length, "delivery points");
+  return data;
 }
 
 /**
