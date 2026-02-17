@@ -2,8 +2,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Устанавливаем OpenSSL для Prisma
-RUN apk add --no-cache openssl1.1-compat
+# Устанавливаем OpenSSL и библиотеки для Prisma
+RUN apk add --no-cache openssl openssl-dev libc6-compat
 
 # Копируем файлы зависимостей
 COPY package.json package-lock.json* ./

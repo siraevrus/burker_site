@@ -1,8 +1,8 @@
 # Используем официальный образ Node.js
 FROM node:20-alpine AS base
 
-# Устанавливаем OpenSSL для Prisma
-RUN apk add --no-cache openssl1.1-compat
+# Устанавливаем OpenSSL и библиотеки для Prisma
+RUN apk add --no-cache openssl openssl-dev libc6-compat
 
 # Устанавливаем зависимости только для установки пакетов
 FROM base AS deps
