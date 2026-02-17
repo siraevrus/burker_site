@@ -63,7 +63,7 @@ export default function CartPage() {
                 {/* Product Image */}
                 <Link 
                   href={`/product/${item.bodyId || item.id}`}
-                  className="w-full sm:w-24 h-24 bg-gray-200 rounded-md flex-shrink-0 relative overflow-hidden hover:opacity-90 transition-opacity cursor-pointer"
+                  className="w-24 h-24 sm:w-24 sm:h-24 bg-gray-200 rounded-md flex-shrink-0 relative overflow-hidden hover:opacity-90 transition-opacity cursor-pointer"
                 >
                   <Image
                     src={item.images && item.images.length > 0 ? item.images[0] : "/Isabell_gold_burgundy_1.webp"}
