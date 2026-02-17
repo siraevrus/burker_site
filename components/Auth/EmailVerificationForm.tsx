@@ -14,8 +14,6 @@ export default function EmailVerificationForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [devCode, setDevCode] = useState<string | null>(null);
-  const [loadingCode, setLoadingCode] = useState(false);
 
   const handleCodeChange = (index: number, value: string) => {
     if (value.length > 1) return;
@@ -100,39 +98,12 @@ export default function EmailVerificationForm() {
         return;
       }
 
-      alert("Код отправлен повторно. Проверьте консоль сервера или используйте кнопку 'Получить код' ниже.");
+      alert("Код отправлен повторно. Проверьте консоль сервера.");
       setResending(false);
     } catch (error) {
       console.error("Resend error:", error);
       setError("Ошибка при отправке кода");
       setResending(false);
-    }
-  };
-
-  const handleGetCode = async () => {
-    setLoadingCode(true);
-    setError("");
-
-    try {
-      const response = await fetch(`/api/auth/get-verification-code?email=${encodeURIComponent(email)}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Не удалось получить код");
-        setLoadingCode(false);
-        return;
-      }
-
-      setDevCode(data.code);
-      // Автоматически заполняем поля кода
-      const codeArray = data.code.split("");
-      setCode(codeArray);
-    } catch (error) {
-      console.error("Get code error:", error);
-      setError("Ошибка при получении кода");
-      setLoadingCode(false);
-    } finally {
-      setLoadingCode(false);
     }
   };
 
@@ -159,24 +130,6 @@ export default function EmailVerificationForm() {
         <p className="text-xs text-gray-500 mb-4">
           В режиме разработки проверьте консоль сервера для получения кода
         </p>
-      </div>
-
-      {/* Кнопка для получения кода в режиме разработки */}
-      <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-        <button
-          type="button"
-          onClick={handleGetCode}
-          disabled={loadingCode}
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loadingCode ? "Загрузка..." : "📋 Получить код верификации"}
-        </button>
-        {devCode && (
-          <div className="mt-3 text-center">
-            <p className="text-xs text-gray-600 mb-1">Код верификации:</p>
-            <p className="text-2xl font-bold text-blue-600">{devCode}</p>
-          </div>
-        )}
       </div>
 
       {error && (
