@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
+import { calculateShipping } from "@/lib/shipping";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
@@ -24,7 +25,7 @@ export default function CartPage() {
   }, [customsHintProductId]);
 
   const totalPrice = getTotalPrice();
-  const freeShippingThreshold = 39;
+  const { totalWeight, totalCost: shippingCost } = calculateShipping(cart);
 
   if (cart.length === 0) {
     return (
@@ -158,11 +159,7 @@ export default function CartPage() {
               <div className="flex justify-between">
                 <span>Доставка</span>
                 <span>
-                  {totalPrice >= freeShippingThreshold ? (
-                    <span className="text-green-600">Бесплатно</span>
-                  ) : (
-                    <span>500 ₽</span>
-                  )}
+                  {totalWeight.toFixed(1)} кг / {shippingCost.toFixed(0)} ₽
                 </span>
               </div>
             </div>
@@ -170,9 +167,7 @@ export default function CartPage() {
               <div className="flex justify-between text-xl font-bold">
                 <span>Всего</span>
                 <span>
-                  {(
-                    totalPrice + (totalPrice >= freeShippingThreshold ? 0 : 500)
-                  ).toFixed(0)} ₽
+                  {(totalPrice + shippingCost).toFixed(0)} ₽
                 </span>
               </div>
             </div>

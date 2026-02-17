@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { createOrder } from "@/lib/orders";
 import { sendOrderConfirmation, sendAdminOrderNotification } from "@/lib/email";
+import { calculateShipping } from "@/lib/shipping";
 
 export async function POST(request: NextRequest) {
   try {
@@ -60,9 +61,27 @@ export async function POST(request: NextRequest) {
       0
     );
 
-    // Расчет стоимости доставки
-    const freeShippingThreshold = 39;
-    const shippingCost = itemsTotal >= freeShippingThreshold ? 0 : 5.0;
+    // Расчет стоимости доставки на основе веса и категории товаров
+    // Преобразуем items в формат CartItem для функции calculateShipping
+    const cartItems = items.map((item: any) => ({
+      id: item.productId,
+      collection: item.collection || "", // Используем переданную collection или пустую строку
+      quantity: item.quantity,
+      price: item.productPrice,
+      name: item.productName,
+      selectedColor: item.selectedColor,
+      // Остальные поля не нужны для расчета доставки
+      bodyId: undefined,
+      subcategory: undefined,
+      bestseller: false,
+      originalPrice: item.productPrice,
+      discount: 0,
+      colors: [],
+      images: [],
+      inStock: true,
+    }));
+    
+    const { totalCost: shippingCost } = calculateShipping(cartItems);
     const totalAmount = itemsTotal + shippingCost;
 
     // Создание заказа

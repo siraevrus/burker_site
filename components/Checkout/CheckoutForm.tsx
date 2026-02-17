@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { CheckoutFormData } from "@/lib/types";
+import { calculateShipping } from "@/lib/shipping";
 import Link from "next/link";
 
 interface CdekPoint {
@@ -90,8 +91,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
   };
 
   const totalPrice = getTotalPrice();
-  const freeShippingThreshold = 39;
-  const shippingCost = totalPrice >= freeShippingThreshold ? 0 : 5.0;
+  const { totalWeight, totalCost: shippingCost } = calculateShipping(cart);
   const finalTotal = totalPrice + shippingCost;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -127,6 +127,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
         productPrice: item.price,
         selectedColor: item.selectedColor,
         quantity: item.quantity,
+        collection: item.collection, // Для расчета доставки
       }));
 
       const response = await fetch("/api/orders/create", {
@@ -442,11 +443,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
           <div className="flex justify-between">
             <span>Доставка</span>
             <span>
-              {shippingCost === 0 ? (
-                <span className="text-green-600">Бесплатно</span>
-              ) : (
-                <span>{shippingCost.toFixed(0)} ₽</span>
-              )}
+              {totalWeight.toFixed(1)} кг / {shippingCost.toFixed(0)} ₽
             </span>
           </div>
           <div className="flex justify-between text-xl font-bold border-t border-gray-200 pt-2">
