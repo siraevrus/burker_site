@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 
-export default function LoginForm() {
+interface LoginFormProps {
+  onSwitchToRegister?: () => void;
+}
+
+export default function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
   const router = useRouter();
   const loadUser = useStore((state) => state.loadUser);
   const [formData, setFormData] = useState({
@@ -113,12 +117,18 @@ export default function LoginForm() {
         {loading ? "Вход..." : "Войти"}
       </button>
 
-      <p className="text-sm text-center text-gray-600">
-        Нет аккаунта?{" "}
-        <Link href="/register" className="text-black hover:underline">
-          Зарегистрироваться
-        </Link>
-      </p>
+      {onSwitchToRegister && (
+        <p className="text-sm text-center text-gray-600 mt-4">
+          Нет аккаунта?{" "}
+          <button
+            type="button"
+            onClick={onSwitchToRegister}
+            className="text-black hover:underline"
+          >
+            Зарегистрироваться
+          </button>
+        </p>
+      )}
     </form>
   );
 }

@@ -162,7 +162,7 @@ export default function EmailVerificationForm() {
         {loading ? "Проверка..." : "Подтвердить"}
       </button>
 
-      <div className="text-center space-y-2">
+      <div className="text-center">
         <button
           type="button"
           onClick={handleResend}
@@ -171,9 +171,6 @@ export default function EmailVerificationForm() {
         >
           {resending ? "Отправка..." : "Отправить код повторно"}
         </button>
-        <p className="text-xs text-gray-500">
-          Код также будет выведен в консоль сервера
-        </p>
       </div>
     </form>
   );

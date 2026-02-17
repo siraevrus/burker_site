@@ -8,7 +8,7 @@ function getMailopostConfig() {
     apiUrl: process.env.MAILOPOST_API_URL || "https://api.mailopost.ru/v1",
     apiToken: process.env.MAILOPOST_API_TOKEN || "",
     fromEmail: process.env.MAILOPOST_FROM_EMAIL || "noreply@burker-watches.ru",
-    fromName: process.env.MAILOPOST_FROM_NAME || "BurkerRussia",
+    fromName: process.env.MAILOPOST_FROM_NAME || "Burker Watches",
   };
 }
 

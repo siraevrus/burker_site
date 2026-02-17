@@ -116,7 +116,7 @@ export default function Header() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="text-2xl font-bold">
-            BurkerRussia
+            Burker Watches
           </Link>
 
           {/* Desktop Navigation */}
@@ -359,12 +359,6 @@ export default function Header() {
                 <Link href="/login" className="text-sm hover:text-gray-600">
                   Войти
                 </Link>
-                <Link
-                  href="/register"
-                  className="text-sm bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors"
-                >
-                  Регистрация
-                </Link>
               </div>
             )}
             <Link href="/cart" className="relative" aria-label="Корзина">
@@ -522,22 +516,13 @@ export default function Header() {
                 </button>
               </>
             ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="block py-2 hover:text-gray-600"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Войти
-                </Link>
-                <Link
-                  href="/register"
-                  className="block py-2 hover:text-gray-600"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Регистрация
-                </Link>
-              </>
+              <Link
+                href="/login"
+                className="block py-2 hover:text-gray-600"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Войти
+              </Link>
             )}
           </div>
         )}

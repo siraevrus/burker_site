@@ -103,7 +103,7 @@ export default function Footer() {
             </h3>
             <p className="text-sm mb-4">
               Подпишитесь на нашу рассылку, чтобы первыми получать новости о
-              скидках, акциях и специальных предложениях BURKERRUSSIA.
+              скидках, акциях и специальных предложениях BURKER WATCHES.
             </p>
             <form className="space-y-2">
               <input
@@ -122,7 +122,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-200 text-center text-sm text-gray-600">
-          <p>© Copyright 2026 BURKERRUSSIA</p>
+          <p>© Copyright 2026 BURKER WATCHES</p>
         </div>
       </div>
     </footer>

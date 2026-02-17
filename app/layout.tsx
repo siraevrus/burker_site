@@ -21,8 +21,8 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "BURKERRUSSIA | Официальный магазин",
-  description: "Элегантные женские часы и украшения от BURKERRUSSIA",
+  title: "BURKER WATCHES | Официальный магазин",
+  description: "Элегантные женские часы и украшения от BURKER WATCHES",
 };
 
 export default function RootLayout({

@@ -4,7 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function RegisterForm() {
+interface RegisterFormProps {
+  onSwitchToLogin?: () => void;
+}
+
+export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps = {}) {
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
@@ -112,12 +116,18 @@ export default function RegisterForm() {
         {loading ? "Регистрация..." : "Зарегистрироваться"}
       </button>
 
-      <p className="text-sm text-center text-gray-600">
-        Уже есть аккаунт?{" "}
-        <Link href="/login" className="text-black hover:underline">
-          Войти
-        </Link>
-      </p>
+      {onSwitchToLogin && (
+        <p className="text-sm text-center text-gray-600 mt-4">
+          Уже есть аккаунт?{" "}
+          <button
+            type="button"
+            onClick={onSwitchToLogin}
+            className="text-black hover:underline"
+          >
+            Войти
+          </button>
+        </p>
+      )}
     </form>
   );
 }
