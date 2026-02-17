@@ -87,23 +87,47 @@ export async function updateExchangeRates(eurRate: number, rubRate: number): Pro
   cacheTimestamp = Date.now();
 }
 
+// Наценка по категории товара
+const CATEGORY_MARKUP = {
+  watches: 1000, // Часы: +1000 руб
+  jewelry: 500,  // Украшения: +500 руб
+};
+
 /**
  * Конвертировать цену из EUR в RUB по формуле:
- * ((price / EUR) * 1.01) * (RUB + 5)
+ * ((price / EUR) * 1.01) * (RUB + 5) + наценка по категории
  * 
  * @param priceEur - цена товара в EUR
  * @param eurRate - курс EUR к USD
  * @param rubRate - курс RUB к USD
+ * @param collection - коллекция товара (для определения наценки)
  * @returns цена в RUB
  */
-export function convertPrice(priceEur: number, eurRate: number, rubRate: number): number {
+export function convertPrice(
+  priceEur: number, 
+  eurRate: number, 
+  rubRate: number, 
+  collection?: string
+): number {
   // ((price / EUR) * 1.01) * (RUB + 5)
   const priceInUsd = priceEur / eurRate;
   const priceWithMargin = priceInUsd * 1.01; // +1% наценка
   const priceInRub = priceWithMargin * (rubRate + 5); // RUB + 5
   
-  // Округляем до целых рублей
-  return Math.round(priceInRub);
+  // Добавляем наценку по категории
+  let categoryMarkup = 0;
+  if (collection) {
+    if (collection === "Украшения") {
+      categoryMarkup = CATEGORY_MARKUP.jewelry; // +500 руб для украшений
+    } else {
+      categoryMarkup = CATEGORY_MARKUP.watches; // +1000 руб для часов (все остальные коллекции)
+    }
+  }
+  
+  const totalPrice = priceInRub + categoryMarkup;
+  
+  // Округляем вверх до ближайшей сотни (13445 → 13500)
+  return Math.ceil(totalPrice / 100) * 100;
 }
 
 /**

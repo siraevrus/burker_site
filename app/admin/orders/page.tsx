@@ -305,7 +305,7 @@ export default function AdminOrdersPage() {
                             </p>
                           </div>
                           <p className="font-semibold">
-                            €{(item.productPrice * item.quantity).toFixed(2)}
+                            {(item.productPrice * item.quantity).toFixed(0)} ₽
                           </p>
                         </div>
                       </div>
@@ -319,13 +319,13 @@ export default function AdminOrdersPage() {
                         {order.shippingCost === 0 ? (
                           <span className="text-green-600 font-medium">Бесплатно</span>
                         ) : (
-                          <span className="font-medium">€{order.shippingCost.toFixed(2)}</span>
+                          <span className="font-medium">{order.shippingCost.toFixed(0)} ₽</span>
                         )}
                       </span>
                     </div>
                     <div className="flex justify-between text-xl font-bold">
                       <span>Итого:</span>
-                      <span>€{order.totalAmount.toFixed(2)}</span>
+                      <span>{order.totalAmount.toFixed(0)} ₽</span>
                     </div>
                   </div>
                 </div>

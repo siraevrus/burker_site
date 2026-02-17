@@ -171,11 +171,11 @@ export default function AdminPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    €{product.price.toFixed(2)}
+                    {product.price.toFixed(0)} ₽
                   </div>
                   {product.originalPrice > product.price && (
                     <div className="text-xs text-gray-500 line-through">
-                      €{product.originalPrice.toFixed(2)}
+                      {product.originalPrice.toFixed(0)} ₽
                     </div>
                   )}
                 </td>
@@ -286,7 +286,7 @@ function ProductForm({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Оригинальная цена (€)
+              Оригинальная цена (₽)
             </label>
             <input
               type="number"
@@ -311,7 +311,7 @@ function ProductForm({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Цена со скидкой (€)
+              Цена со скидкой (₽)
             </label>
             <input
               type="number"

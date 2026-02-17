@@ -86,7 +86,7 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                     <p className="text-xs text-gray-600">Цвет: {item.selectedColor}</p>
                     <p className="text-xs text-gray-600">Кол-во: {item.quantity}</p>
                     <p className="text-sm font-semibold mt-1">
-                      €{(item.price * item.quantity).toFixed(2)}
+                      {(item.price * item.quantity).toFixed(0)} ₽
                     </p>
                   </div>
                 </div>

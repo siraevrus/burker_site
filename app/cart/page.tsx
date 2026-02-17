@@ -78,10 +78,10 @@ export default function CartPage() {
                     Цвет: {item.selectedColor}
                   </p>
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="text-lg font-bold">€{item.price.toFixed(2)}</span>
+                    <span className="text-lg font-bold">{item.price.toFixed(0)} ₽</span>
                     {item.originalPrice > item.price && (
                       <span className="text-sm text-gray-500 line-through">
-                        €{item.originalPrice.toFixed(2)}
+                        {item.originalPrice.toFixed(0)} ₽
                       </span>
                     )}
                   </div>
@@ -130,7 +130,7 @@ export default function CartPage() {
                 {/* Subtotal */}
                 <div className="text-right">
                   <p className="font-semibold text-lg">
-                    €{(item.price * item.quantity).toFixed(2)}
+                    {(item.price * item.quantity).toFixed(0)} ₽
                   </p>
                 </div>
               </motion.div>
@@ -145,7 +145,7 @@ export default function CartPage() {
             <div className="space-y-2 mb-4">
               <div className="flex justify-between">
                 <span>Товары</span>
-                <span>€{totalPrice.toFixed(2)}</span>
+                <span>{totalPrice.toFixed(0)} ₽</span>
               </div>
               <div className="flex justify-between">
                 <span>Доставка</span>
@@ -153,7 +153,7 @@ export default function CartPage() {
                   {totalPrice >= freeShippingThreshold ? (
                     <span className="text-green-600">Бесплатно</span>
                   ) : (
-                    <span>€5.00</span>
+                    <span>500 ₽</span>
                   )}
                 </span>
               </div>
@@ -162,10 +162,9 @@ export default function CartPage() {
               <div className="flex justify-between text-xl font-bold">
                 <span>Всего</span>
                 <span>
-                  €
                   {(
-                    totalPrice + (totalPrice >= freeShippingThreshold ? 0 : 5)
-                  ).toFixed(2)}
+                    totalPrice + (totalPrice >= freeShippingThreshold ? 0 : 500)
+                  ).toFixed(0)} ₽
                 </span>
               </div>
             </div>

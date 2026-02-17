@@ -124,11 +124,11 @@ export default function ProductCard({ product }: ProductCardProps) {
               color: "rgb(162, 60, 66)",
             }}
           >
-            €{product.price.toFixed(2)}
+            {product.price.toFixed(0)} ₽
           </span>
           {product.originalPrice > product.price && (
             <span className="text-sm text-gray-500 line-through">
-              €{product.originalPrice.toFixed(2)}
+              {product.originalPrice.toFixed(0)} ₽
             </span>
           )}
         </div>

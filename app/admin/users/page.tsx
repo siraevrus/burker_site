@@ -148,7 +148,7 @@ export default function AdminUsersPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
-                    €{getTotalSpent(user.orders).toFixed(2)}
+                    {getTotalSpent(user.orders).toFixed(0)} ₽
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -223,7 +223,7 @@ export default function AdminUsersPage() {
                 <div>
                   <p className="text-sm text-gray-600">Всего потрачено</p>
                   <p className="font-medium text-green-600">
-                    €{getTotalSpent(selectedUser.orders).toFixed(2)}
+                    {getTotalSpent(selectedUser.orders).toFixed(0)} ₽
                   </p>
                 </div>
               </div>
@@ -249,7 +249,7 @@ export default function AdminUsersPage() {
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-lg">
-                            €{order.totalAmount.toFixed(2)}
+                            {order.totalAmount.toFixed(0)} ₽
                           </p>
                           <span
                             className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${

@@ -437,7 +437,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
         <div className="space-y-2 mb-4">
           <div className="flex justify-between">
             <span>Товары</span>
-            <span>€{totalPrice.toFixed(2)}</span>
+            <span>{totalPrice.toFixed(0)} ₽</span>
           </div>
           <div className="flex justify-between">
             <span>Доставка</span>
@@ -445,13 +445,13 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
               {shippingCost === 0 ? (
                 <span className="text-green-600">Бесплатно</span>
               ) : (
-                <span>€{shippingCost.toFixed(2)}</span>
+                <span>{shippingCost.toFixed(0)} ₽</span>
               )}
             </span>
           </div>
           <div className="flex justify-between text-xl font-bold border-t border-gray-200 pt-2">
             <span>Всего</span>
-            <span>€{finalTotal.toFixed(2)}</span>
+            <span>{finalTotal.toFixed(0)} ₽</span>
           </div>
         </div>
 

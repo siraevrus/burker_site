@@ -43,8 +43,8 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
-# Создаем директорию для базы данных
-RUN mkdir -p /app/prisma && chown -R nextjs:nodejs /app/prisma
+# Создаем директории для базы данных и кэша
+RUN mkdir -p /app/prisma /app/.next/cache && chown -R nextjs:nodejs /app/prisma /app/.next/cache
 
 USER nextjs
 

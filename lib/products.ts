@@ -34,9 +34,11 @@ function mapProductFromDbRaw(dbProduct: any): Product {
 function mapProductFromDbWithRates(dbProduct: any, rates: ExchangeRates): Product {
   const product = mapProductFromDbRaw(dbProduct);
   
-  // Конвертируем цены из EUR в RUB
-  product.price = convertPrice(product.price, rates.eurRate, rates.rubRate);
-  product.originalPrice = convertPrice(product.originalPrice, rates.eurRate, rates.rubRate);
+  // Конвертируем цены из EUR в RUB с учётом наценки по категории
+  // Часы (все коллекции кроме "Украшения"): +1000 руб
+  // Украшения: +500 руб
+  product.price = convertPrice(product.price, rates.eurRate, rates.rubRate, product.collection);
+  product.originalPrice = convertPrice(product.originalPrice, rates.eurRate, rates.rubRate, product.collection);
   
   return product;
 }
