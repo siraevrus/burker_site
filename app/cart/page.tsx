@@ -61,7 +61,10 @@ export default function CartPage() {
                 className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row gap-4"
               >
                 {/* Product Image */}
-                <div className="w-full sm:w-24 h-24 bg-gray-200 rounded-md flex-shrink-0 relative overflow-hidden">
+                <Link 
+                  href={`/product/${item.bodyId || item.id}`}
+                  className="w-full sm:w-24 h-24 bg-gray-200 rounded-md flex-shrink-0 relative overflow-hidden hover:opacity-90 transition-opacity cursor-pointer"
+                >
                   <Image
                     src={item.images && item.images.length > 0 ? item.images[0] : "/Isabell_gold_burgundy_1.webp"}
                     alt={item.name}
@@ -69,11 +72,16 @@ export default function CartPage() {
                     className="object-cover"
                     sizes="96px"
                   />
-                </div>
+                </Link>
 
                 {/* Product Info */}
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-2">{item.name}</h3>
+                  <Link 
+                    href={`/product/${item.bodyId || item.id}`}
+                    className="font-semibold text-lg mb-2 hover:text-gray-600 transition-colors block"
+                  >
+                    {item.name}
+                  </Link>
                   <p className="text-sm text-gray-600 mb-2">
                     Цвет: {item.selectedColor}
                   </p>
