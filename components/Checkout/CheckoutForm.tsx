@@ -1,10 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { CheckoutFormData } from "@/lib/types";
 import Link from "next/link";
+
+interface CdekPoint {
+  code: string;
+  uuid: string | null;
+  type: string;
+  address: string;
+  address_full: string;
+  city: string;
+  work_time: string;
+  latitude: number | null;
+  longitude: number | null;
+  phones: string[];
+}
 
 interface CheckoutFormProps {
   user?: {
@@ -42,6 +55,39 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pvzList, setPvzList] = useState<CdekPoint[]>([]);
+  const [pvzLoading, setPvzLoading] = useState(false);
+  const [pvzError, setPvzError] = useState("");
+  const [cityForPvz, setCityForPvz] = useState("");
+
+  const loadDeliveryPoints = useCallback(async () => {
+    const q = cityForPvz.trim() ? `?city=${encodeURIComponent(cityForPvz.trim())}` : "";
+    setPvzError("");
+    setPvzLoading(true);
+    try {
+      const res = await fetch(`/api/cdek/deliverypoints${q}`);
+      const data = await res.json();
+      if (!res.ok) {
+        setPvzList([]);
+        setPvzError(typeof data.error === "string" ? data.error : "Не удалось загрузить список ПВЗ");
+        return;
+      }
+      setPvzList(Array.isArray(data) ? data : []);
+    } catch {
+      setPvzList([]);
+      setPvzError("Ошибка сети. Попробуйте позже.");
+    } finally {
+      setPvzLoading(false);
+    }
+  }, [cityForPvz]);
+
+  const selectPvz = (point: CdekPoint) => {
+    setFormData((prev) => ({
+      ...prev,
+      cdekAddress: point.address_full || point.address,
+      cdekPointCode: point.code,
+    }));
+  };
 
   const totalPrice = getTotalPrice();
   const freeShippingThreshold = 39;
@@ -222,65 +268,72 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
         </div>
 
         <div className="md:col-span-2">
-          <label htmlFor="cdekAddress" className="block text-sm font-medium mb-2">
-            Адрес доставки ПВЗ СДЕК *
+          <label className="block text-sm font-medium mb-2">
+            Пункт выдачи СДЭК (ПВЗ) *
           </label>
-          <input
-            id="cdekAddress"
-            type="text"
-            value={formData.cdekAddress}
-            onChange={(e) => setFormData({ ...formData, cdekAddress: e.target.value })}
-            className="w-full border border-gray-300 rounded-md px-3 py-2"
-            required
-            placeholder="Выберите адрес ПВЗ СДЕК"
-          />
-          <a
-            href="https://www.cdek.ru/ru/offices/map/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-blue-600 hover:text-blue-800 mt-1 inline-block"
-          >
-            📌 Выбрать адрес ПВЗ СДЕК на карте
-          </a>
-        </div>
-
-        <div>
-          <label htmlFor="city" className="block text-sm font-medium mb-2">
-            Город
-          </label>
-          <input
-            id="city"
-            type="text"
-            value={formData.city}
-            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-            className="w-full border border-gray-300 rounded-md px-3 py-2"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="postalCode" className="block text-sm font-medium mb-2">
-            Почтовый индекс
-          </label>
-          <input
-            id="postalCode"
-            type="text"
-            value={formData.postalCode}
-            onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-            className="w-full border border-gray-300 rounded-md px-3 py-2"
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <label htmlFor="country" className="block text-sm font-medium mb-2">
-            Страна
-          </label>
-          <input
-            id="country"
-            type="text"
-            value={formData.country}
-            onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-            className="w-full border border-gray-300 rounded-md px-3 py-2"
-          />
+          {formData.cdekAddress ? (
+            <div className="border border-gray-200 rounded-md px-3 py-2.5 bg-gray-50">
+              <p className="text-sm text-gray-800">
+                <strong>{formData.cdekAddress}</strong>
+                {formData.cdekPointCode && (
+                  <span className="text-gray-500 font-normal ml-1">(код {formData.cdekPointCode})</span>
+                )}
+              </p>
+              <button
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, cdekAddress: "", cdekPointCode: undefined }))}
+                className="text-sm text-blue-600 hover:text-blue-800 mt-1"
+              >
+                Изменить пункт
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={cityForPvz}
+                  onChange={(e) => setCityForPvz(e.target.value)}
+                  placeholder="Введите город для поиска ПВЗ"
+                  className="flex-1 border border-gray-300 rounded-md px-3 py-2"
+                />
+                <button
+                  type="button"
+                  onClick={loadDeliveryPoints}
+                  disabled={pvzLoading}
+                  className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:opacity-50 whitespace-nowrap"
+                >
+                  {pvzLoading ? "Загрузка…" : "Найти ПВЗ"}
+                </button>
+              </div>
+              {pvzError && (
+                <p className="text-sm text-red-600 mb-2">{pvzError}</p>
+              )}
+              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-md divide-y divide-gray-100">
+                {pvzList.length === 0 && !pvzLoading && (
+                  <p className="px-3 py-4 text-sm text-gray-500 text-center">
+                    Введите город и нажмите «Найти ПВЗ» или оставьте пустым для полного списка
+                  </p>
+                )}
+                {pvzList.map((point) => (
+                  <button
+                    key={point.code}
+                    type="button"
+                    onClick={() => selectPvz(point)}
+                    className="w-full text-left px-3 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="font-medium">{point.address_full || point.address}</span>
+                    {point.work_time && (
+                      <span className="block text-gray-500 text-xs mt-0.5">{point.work_time}</span>
+                    )}
+                    <span className="text-xs text-gray-400">
+                      {point.type === "POSTAMAT" ? "Постамат" : "ПВЗ"} · {point.code}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         <div className="md:col-span-2">

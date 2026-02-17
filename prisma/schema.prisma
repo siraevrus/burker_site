@@ -99,6 +99,7 @@ model Order {
   phone           String
   address         String      // адрес доставки
   cdekAddress     String      // Адрес ПВЗ СДЕК (обязательное поле)
+  cdekPointCode   String?     // Код ПВЗ СДЭК (для накладной)
   city            String?
   postalCode      String?
   country         String?     @default("Россия")

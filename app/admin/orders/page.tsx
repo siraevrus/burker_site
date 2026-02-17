@@ -19,6 +19,7 @@ interface Order {
   phone: string;
   address: string;
   cdekAddress?: string | null;
+  cdekPointCode?: string | null;
   city: string | null;
   status: string;
   totalAmount: number;
@@ -259,7 +260,12 @@ export default function AdminOrdersPage() {
                     </div>
                     <div className="md:col-span-2">
                       <p className="text-sm text-gray-600 mb-1">Адрес ПВЗ СДЕК</p>
-                      <p className="font-medium">{order.cdekAddress}</p>
+                      <p className="font-medium">
+                        {order.cdekAddress}
+                        {order.cdekPointCode && (
+                          <span className="text-gray-500 font-normal ml-1">(код {order.cdekPointCode})</span>
+                        )}
+                      </p>
                     </div>
                     <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
                       <h4 className="text-sm font-semibold text-gray-700 mb-3">Данные для таможенного оформления</h4>

@@ -13,6 +13,7 @@ function mapOrderFromDb(dbOrder: any): Order {
     phone: dbOrder.phone,
     address: dbOrder.address,
     cdekAddress: dbOrder.cdekAddress || "",
+    cdekPointCode: dbOrder.cdekPointCode || undefined,
     city: dbOrder.city || undefined,
     postalCode: dbOrder.postalCode || undefined,
     country: dbOrder.country || undefined,
@@ -87,6 +88,7 @@ export async function createOrder(orderData: {
   phone: string;
   address: string;
   cdekAddress: string;
+  cdekPointCode?: string;
   city?: string;
   postalCode?: string;
   country?: string;
@@ -114,6 +116,7 @@ export async function createOrder(orderData: {
     phone: orderData.phone,
     address: orderData.address,
     cdekAddress: orderData.cdekAddress,
+    cdekPointCode: orderData.cdekPointCode || null,
     city: orderData.city || null,
     postalCode: orderData.postalCode || null,
     country: orderData.country || "Россия",

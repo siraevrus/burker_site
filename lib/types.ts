@@ -79,6 +79,7 @@ export interface Order {
   phone: string;
   address: string;
   cdekAddress: string; // Адрес ПВЗ СДЕК
+  cdekPointCode?: string; // Код ПВЗ СДЭК
   city?: string;
   postalCode?: string;
   country?: string;
@@ -113,6 +114,7 @@ export interface CheckoutFormData {
   phone: string;
   address: string;
   cdekAddress: string; // Адрес ПВЗ СДЕК
+  cdekPointCode?: string; // Код ПВЗ СДЭК
   city?: string;
   postalCode?: string;
   country?: string;
