@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
+import CookieBanner from "@/components/CookieBanner/CookieBanner";
 
 export default function ConditionalLayout({
   children,
@@ -21,6 +22,7 @@ export default function ConditionalLayout({
       <Header />
       <main className="min-h-screen">{children}</main>
       <Footer />
+      <CookieBanner />
     </>
   );
 }
