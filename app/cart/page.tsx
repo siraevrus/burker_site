@@ -1,15 +1,27 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+
+const CUSTOMS_HINT =
+  "По таможенным правилам доставка одного типа товара не более 3 вещей в один заказ";
 
 export default function CartPage() {
   const cart = useStore((state) => state.cart);
   const removeFromCart = useStore((state) => state.removeFromCart);
   const updateQuantity = useStore((state) => state.updateQuantity);
   const getTotalPrice = useStore((state) => state.getTotalPrice);
+  const getTotalQuantityByProductId = useStore((state) => state.getTotalQuantityByProductId);
+  const [customsHintProductId, setCustomsHintProductId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!customsHintProductId) return;
+    const t = setTimeout(() => setCustomsHintProductId(null), 4000);
+    return () => clearTimeout(t);
+  }, [customsHintProductId]);
 
   const totalPrice = getTotalPrice();
   const freeShippingThreshold = 39;
@@ -75,28 +87,43 @@ export default function CartPage() {
                   </div>
 
                   {/* Quantity Controls */}
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center border border-gray-300 rounded-md">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center border border-gray-300 rounded-md">
+                        <button
+                          onClick={() =>
+                            updateQuantity(item.id, item.quantity - 1, item.selectedColor)
+                          }
+                          className="px-3 py-1 hover:bg-gray-100"
+                        >
+                          -
+                        </button>
+                        <span className="px-4 py-1">{item.quantity}</span>
+                        <button
+                          onClick={() => {
+                            if (getTotalQuantityByProductId(item.id) >= 3) {
+                              setCustomsHintProductId(item.id);
+                              return;
+                            }
+                            updateQuantity(item.id, item.quantity + 1, item.selectedColor);
+                          }}
+                          className="px-3 py-1 hover:bg-gray-100"
+                        >
+                          +
+                        </button>
+                      </div>
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="px-3 py-1 hover:bg-gray-100"
+                        onClick={() => removeFromCart(item.id, item.selectedColor)}
+                        className="text-red-600 hover:text-red-800 text-sm"
                       >
-                        -
-                      </button>
-                      <span className="px-4 py-1">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="px-3 py-1 hover:bg-gray-100"
-                      >
-                        +
+                        Удалить
                       </button>
                     </div>
-                    <button
-                      onClick={() => removeFromCart(item.id)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Удалить
-                    </button>
+                    {customsHintProductId === item.id && (
+                      <p className="text-amber-700 text-sm bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+                        {CUSTOMS_HINT}
+                      </p>
+                    )}
                   </div>
                 </div>
 

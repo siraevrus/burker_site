@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "@/components/ProductCard/ProductCard";
+
+const CUSTOMS_HINT =
+  "По таможенным правилам доставка одного типа товара не более 3 вещей в один заказ";
 
 interface ProductPageClientProps {
   product: Product;
@@ -31,6 +34,14 @@ export default function ProductPageClient({
   });
 
   const addToCart = useStore((state) => state.addToCart);
+  const getTotalQuantityByProductId = useStore((state) => state.getTotalQuantityByProductId);
+  const [customsHintProductId, setCustomsHintProductId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!customsHintProductId) return;
+    const t = setTimeout(() => setCustomsHintProductId(null), 4000);
+    return () => clearTimeout(t);
+  }, [customsHintProductId]);
 
   // Используем реальные изображения из product.images
   const getProductImages = () => {
@@ -66,6 +77,10 @@ export default function ProductPageClient({
     .slice(0, 4);
 
   const handleAddToCart = () => {
+    if (getTotalQuantityByProductId(product.id) >= 3) {
+      setCustomsHintProductId(product.id);
+      return;
+    }
     addToCart({
       ...product,
       quantity: 1,
@@ -280,12 +295,19 @@ export default function ProductPageClient({
           )}
 
           {/* Кнопка добавления в корзину */}
-          <button
-            onClick={handleAddToCart}
-            className="w-full bg-black text-white py-4 rounded-md hover:bg-gray-800 transition-colors font-semibold mb-6"
-          >
-            ДОБАВИТЬ В КОРЗИНУ
-          </button>
+          <div className="mb-6">
+            <button
+              onClick={handleAddToCart}
+              className="w-full bg-black text-white py-4 rounded-md hover:bg-gray-800 transition-colors font-semibold"
+            >
+              ДОБАВИТЬ В КОРЗИНУ
+            </button>
+            {customsHintProductId === product.id && (
+              <p className="text-amber-700 text-sm bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mt-2">
+                {CUSTOMS_HINT}
+              </p>
+            )}
+          </div>
 
           {/* Информация о возврате и гарантии */}
           <div className="space-y-3 mb-6 text-sm">
@@ -354,31 +376,42 @@ export default function ProductPageClient({
                         )}
                       </div>
                     </div>
-                    <button
-                      onClick={() =>
-                        addToCart({
-                          ...related,
-                          quantity: 1,
-                          selectedColor: related.colors[0] || "золото",
-                        })
-                      }
-                      className="p-2 hover:bg-gray-100 rounded-md transition-colors"
-                      aria-label="Добавить в корзину"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    <div className="flex flex-col">
+                      <button
+                        onClick={() => {
+                          if (getTotalQuantityByProductId(related.id) >= 3) {
+                            setCustomsHintProductId(related.id);
+                            return;
+                          }
+                          addToCart({
+                            ...related,
+                            quantity: 1,
+                            selectedColor: related.colors[0] || "золото",
+                          });
+                        }}
+                        className="p-2 hover:bg-gray-100 rounded-md transition-colors"
+                        aria-label="Добавить в корзину"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                        />
-                      </svg>
-                    </button>
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                          />
+                        </svg>
+                      </button>
+                      {customsHintProductId === related.id && (
+                        <p className="text-amber-700 text-xs bg-amber-50 border border-amber-200 rounded px-2 py-1 mt-1 max-w-[200px]">
+                          {CUSTOMS_HINT}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

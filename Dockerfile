@@ -20,6 +20,8 @@ COPY . .
 
 # Генерируем Prisma Client и собираем приложение
 ENV NEXT_TELEMETRY_DISABLED 1
+# DATABASE_URL нужен для prisma db push во время сборки
+ENV DATABASE_URL="file:./prisma/dev.db"
 RUN npx prisma generate
 RUN npm run build
 

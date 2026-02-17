@@ -14,6 +14,7 @@ services:
       - MAILOPOST_FROM_EMAIL=noreply@burker-watches.ru
       - MAILOPOST_FROM_NAME=Burker Watches
       - ADMIN_EMAIL=info@kondratov.online
+      - CRON_SECRET=${CRON_SECRET:-your-secret-key-here}
     volumes:
       # Монтируем базу данных и загруженные файлы
       - ./prisma/dev.db:/app/prisma/dev.db
@@ -25,3 +26,22 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # Cron-сервис для обновления курсов валют каждые 4 часа
+  cron:
+    image: curlimages/curl:latest
+    environment:
+      - CRON_SECRET=${CRON_SECRET:-your-secret-key-here}
+    command: >
+      sh -c 'echo "Starting exchange rate updater...";
+      while true; do
+        echo "[$(date)] Updating exchange rates...";
+        curl -s -H "X-Cron-Secret: $${CRON_SECRET}" http://app:3000/api/cron/update-rates;
+        echo "";
+        echo "[$(date)] Sleeping for 4 hours...";
+        sleep 14400;
+      done'
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped

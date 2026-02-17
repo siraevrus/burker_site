@@ -135,3 +135,10 @@ model OrderItem {
   
   order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
+
+model ExchangeRate {
+  id        String   @id @default("current")
+  eurRate   Float    // Курс EUR к USD
+  rubRate   Float    // Курс RUB к USD
+  updatedAt DateTime @updatedAt
+}
