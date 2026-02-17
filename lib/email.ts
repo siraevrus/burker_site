@@ -1,27 +1,7 @@
-import nodemailer from "nodemailer";
+import { sendEmailViaMailopost } from "./mailopost";
 
-// Конфигурация SMTP из переменных окружения
-const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || "587");
-const SMTP_USER = process.env.SMTP_USER || "";
-const SMTP_PASS = process.env.SMTP_PASS || "";
-const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER;
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || SMTP_USER;
-
-/**
- * Создание транспорта для отправки email
- */
-function createTransporter() {
-  return nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_PORT === 465,
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-  });
-}
+// Конфигурация из переменных окружения
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.MAILOPOST_FROM_EMAIL || "";
 
 /**
  * Отправка кода верификации на email
@@ -31,61 +11,36 @@ export async function sendVerificationCode(
   email: string,
   code: string
 ): Promise<boolean> {
-  // Универсальный код для разработки (если SMTP не настроен)
-  const isDevelopment = !SMTP_USER || !SMTP_PASS || process.env.NODE_ENV === "development";
-  
-  if (isDevelopment) {
-    // Выводим код в консоль для удобства разработки
-    console.log("\n" + "=".repeat(60));
-    console.log("📧 КОД ВЕРИФИКАЦИИ EMAIL");
-    console.log("=".repeat(60));
-    console.log(`Email: ${email}`);
-    console.log(`Код: ${code}`);
-    console.log("=".repeat(60) + "\n");
-    
-    // Также можно использовать фиксированный код для тестирования
-    // Раскомментируйте следующую строку для использования фиксированного кода "123456"
-    // console.log("Используйте фиксированный код: 123456");
-    
-    return true;
-  }
+  // Выводим код в консоль для удобства разработки
+  console.log("\n" + "=".repeat(60));
+  console.log("📧 КОД ВЕРИФИКАЦИИ EMAIL");
+  console.log("=".repeat(60));
+  console.log(`Email: ${email}`);
+  console.log(`Код: ${code}`);
+  console.log("=".repeat(60) + "\n");
 
-  try {
-    const transporter = createTransporter();
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">Подтверждение email адреса</h2>
+      <p>Здравствуйте!</p>
+      <p>Для подтверждения вашего email адреса используйте следующий код:</p>
+      <div style="background-color: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0;">
+        <h1 style="color: #A13D42; font-size: 32px; letter-spacing: 5px; margin: 0;">${code}</h1>
+      </div>
+      <p>Код действителен в течение 15 минут.</p>
+      <p>Если вы не регистрировались на нашем сайте, просто проигнорируйте это письмо.</p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      <p style="color: #999; font-size: 12px;">BurkerRussia - Официальный магазин</p>
+    </div>
+  `;
 
-    const mailOptions = {
-      from: `"BurkerRussia" <${SMTP_FROM}>`,
-      to: email,
-      subject: "Код подтверждения email",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Подтверждение email адреса</h2>
-          <p>Здравствуйте!</p>
-          <p>Для подтверждения вашего email адреса используйте следующий код:</p>
-          <div style="background-color: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0;">
-            <h1 style="color: #A13D42; font-size: 32px; letter-spacing: 5px; margin: 0;">${code}</h1>
-          </div>
-          <p>Код действителен в течение 15 минут.</p>
-          <p>Если вы не регистрировались на нашем сайте, просто проигнорируйте это письмо.</p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="color: #999; font-size: 12px;">BurkerRussia - Официальный магазин</p>
-        </div>
-      `,
-    };
+  const result = await sendEmailViaMailopost(
+    email,
+    "Код подтверждения email",
+    html
+  );
 
-    await transporter.sendMail(mailOptions);
-    return true;
-  } catch (error) {
-    console.error("Error sending verification email:", error);
-    // В режиме разработки все равно возвращаем true и выводим код в консоль
-    console.log("\n" + "=".repeat(60));
-    console.log("📧 КОД ВЕРИФИКАЦИИ EMAIL (fallback)");
-    console.log("=".repeat(60));
-    console.log(`Email: ${email}`);
-    console.log(`Код: ${code}`);
-    console.log("=".repeat(60) + "\n");
-    return true;
-  }
+  return result.success;
 }
 
 /**
@@ -100,87 +55,66 @@ export async function sendOrderConfirmation(
     items: Array<{ name: string; quantity: number; price: number }>;
   }
 ): Promise<boolean> {
-  const isDevelopment = !SMTP_USER || !SMTP_PASS || process.env.NODE_ENV === "development";
-  
-  if (isDevelopment) {
-    console.log("\n" + "=".repeat(60));
-    console.log("📦 ПОДТВЕРЖДЕНИЕ ЗАКАЗА");
-    console.log("=".repeat(60));
-    console.log(`Заказ #${orderId}`);
-    console.log(`Email: ${email}`);
-    console.log(`Имя: ${orderData.firstName}`);
-    console.log(`Сумма: €${orderData.totalAmount.toFixed(2)}`);
-    console.log(`Товаров: ${orderData.items.length}`);
-    console.log("=".repeat(60) + "\n");
-    return true;
-  }
+  console.log("\n" + "=".repeat(60));
+  console.log("📦 ПОДТВЕРЖДЕНИЕ ЗАКАЗА");
+  console.log("=".repeat(60));
+  console.log(`Заказ #${orderId}`);
+  console.log(`Email: ${email}`);
+  console.log(`Имя: ${orderData.firstName}`);
+  console.log(`Сумма: €${orderData.totalAmount.toFixed(2)}`);
+  console.log(`Товаров: ${orderData.items.length}`);
+  console.log("=".repeat(60) + "\n");
 
-  try {
-    const transporter = createTransporter();
+  const itemsList = orderData.items
+    .map(
+      (item) =>
+        `<tr>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">€${item.price.toFixed(2)}</td>
+        </tr>`
+    )
+    .join("");
 
-    const itemsList = orderData.items
-      .map(
-        (item) =>
-          `<tr>
-            <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">€${item.price.toFixed(2)}</td>
-          </tr>`
-      )
-      .join("");
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">Спасибо за ваш заказ!</h2>
+      <p>Здравствуйте, ${orderData.firstName}!</p>
+      <p>Ваш заказ <strong>#${orderId}</strong> успешно принят и находится в обработке.</p>
+      
+      <h3 style="color: #333; margin-top: 30px;">Детали заказа:</h3>
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <thead>
+          <tr style="background-color: #f5f5f5;">
+            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Товар</th>
+            <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd;">Количество</th>
+            <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Цена</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsList}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold;">Итого:</td>
+            <td style="padding: 10px; text-align: right; font-weight: bold;">€${orderData.totalAmount.toFixed(2)}</td>
+          </tr>
+        </tfoot>
+      </table>
+      
+      <p>Мы свяжемся с вами в ближайшее время для подтверждения заказа.</p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      <p style="color: #999; font-size: 12px;">BurkerRussia - Официальный магазин</p>
+    </div>
+  `;
 
-    const mailOptions = {
-      from: `"BurkerRussia" <${SMTP_FROM}>`,
-      to: email,
-      subject: `Заказ #${orderId} принят`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Спасибо за ваш заказ!</h2>
-          <p>Здравствуйте, ${orderData.firstName}!</p>
-          <p>Ваш заказ <strong>#${orderId}</strong> успешно принят и находится в обработке.</p>
-          
-          <h3 style="color: #333; margin-top: 30px;">Детали заказа:</h3>
-          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-            <thead>
-              <tr style="background-color: #f5f5f5;">
-                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Товар</th>
-                <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd;">Количество</th>
-                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Цена</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsList}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold;">Итого:</td>
-                <td style="padding: 10px; text-align: right; font-weight: bold;">€${orderData.totalAmount.toFixed(2)}</td>
-              </tr>
-            </tfoot>
-          </table>
-          
-          <p>Мы свяжемся с вами в ближайшее время для подтверждения заказа.</p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="color: #999; font-size: 12px;">BurkerRussia - Официальный магазин</p>
-        </div>
-      `,
-    };
+  const result = await sendEmailViaMailopost(
+    email,
+    `Заказ #${orderId} принят`,
+    html
+  );
 
-    await transporter.sendMail(mailOptions);
-    return true;
-  } catch (error) {
-    console.error("Error sending order confirmation email:", error);
-    // В режиме разработки все равно выводим информацию
-    console.log("\n" + "=".repeat(60));
-    console.log("📦 ПОДТВЕРЖДЕНИЕ ЗАКАЗА (fallback)");
-    console.log("=".repeat(60));
-    console.log(`Заказ #${orderId}`);
-    console.log(`Email: ${email}`);
-    console.log(`Имя: ${orderData.firstName}`);
-    console.log(`Сумма: €${orderData.totalAmount.toFixed(2)}`);
-    console.log("=".repeat(60) + "\n");
-    return true;
-  }
+  return result.success;
 }
 
 /**
@@ -197,59 +131,43 @@ export async function sendAdminOrderNotification(
     itemsCount: number;
   }
 ): Promise<boolean> {
-  const isDevelopment = !SMTP_USER || !SMTP_PASS || process.env.NODE_ENV === "development";
-  
-  if (isDevelopment) {
-    console.log("\n" + "=".repeat(60));
-    console.log("🔔 УВЕДОМЛЕНИЕ АДМИНУ О НОВОМ ЗАКАЗЕ");
-    console.log("=".repeat(60));
-    console.log(`Заказ #${orderId}`);
-    console.log(`Email: ${orderData.email}`);
-    console.log(`Имя: ${orderData.firstName}`);
-    console.log(`Телефон: ${orderData.phone}`);
-    console.log(`Адрес: ${orderData.address}`);
-    console.log(`Товаров: ${orderData.itemsCount}`);
-    console.log(`Сумма: €${orderData.totalAmount.toFixed(2)}`);
-    console.log("=".repeat(60) + "\n");
+  console.log("\n" + "=".repeat(60));
+  console.log("🔔 УВЕДОМЛЕНИЕ АДМИНУ О НОВОМ ЗАКАЗЕ");
+  console.log("=".repeat(60));
+  console.log(`Заказ #${orderId}`);
+  console.log(`Email: ${orderData.email}`);
+  console.log(`Имя: ${orderData.firstName}`);
+  console.log(`Телефон: ${orderData.phone}`);
+  console.log(`Адрес: ${orderData.address}`);
+  console.log(`Товаров: ${orderData.itemsCount}`);
+  console.log(`Сумма: €${orderData.totalAmount.toFixed(2)}`);
+  console.log("=".repeat(60) + "\n");
+
+  if (!ADMIN_EMAIL) {
+    console.warn("ADMIN_EMAIL не настроен, уведомление админу не отправлено");
     return true;
   }
 
-  try {
-    const transporter = createTransporter();
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">Новый заказ #${orderId}</h2>
+      <p><strong>Email:</strong> ${orderData.email}</p>
+      <p><strong>Имя:</strong> ${orderData.firstName}</p>
+      <p><strong>Телефон:</strong> ${orderData.phone}</p>
+      <p><strong>Адрес:</strong> ${orderData.address}</p>
+      <p><strong>Количество товаров:</strong> ${orderData.itemsCount}</p>
+      <p><strong>Сумма заказа:</strong> €${orderData.totalAmount.toFixed(2)}</p>
+      <p><a href="${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/admin/orders/${orderId}" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #A13D42; color: white; text-decoration: none; border-radius: 5px;">Просмотреть заказ</a></p>
+    </div>
+  `;
 
-    const mailOptions = {
-      from: `"BurkerRussia" <${SMTP_FROM}>`,
-      to: ADMIN_EMAIL,
-      subject: `Новый заказ #${orderId}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Новый заказ #${orderId}</h2>
-          <p><strong>Email:</strong> ${orderData.email}</p>
-          <p><strong>Имя:</strong> ${orderData.firstName}</p>
-          <p><strong>Телефон:</strong> ${orderData.phone}</p>
-          <p><strong>Адрес:</strong> ${orderData.address}</p>
-          <p><strong>Количество товаров:</strong> ${orderData.itemsCount}</p>
-          <p><strong>Сумма заказа:</strong> €${orderData.totalAmount.toFixed(2)}</p>
-          <p><a href="${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/admin/orders/${orderId}" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #A13D42; color: white; text-decoration: none; border-radius: 5px;">Просмотреть заказ</a></p>
-        </div>
-      `,
-    };
+  const result = await sendEmailViaMailopost(
+    ADMIN_EMAIL,
+    `Новый заказ #${orderId}`,
+    html
+  );
 
-    await transporter.sendMail(mailOptions);
-    return true;
-  } catch (error) {
-    console.error("Error sending admin notification:", error);
-    // В режиме разработки все равно выводим информацию
-    console.log("\n" + "=".repeat(60));
-    console.log("🔔 УВЕДОМЛЕНИЕ АДМИНУ О НОВОМ ЗАКАЗЕ (fallback)");
-    console.log("=".repeat(60));
-    console.log(`Заказ #${orderId}`);
-    console.log(`Email: ${orderData.email}`);
-    console.log(`Имя: ${orderData.firstName}`);
-    console.log(`Сумма: €${orderData.totalAmount.toFixed(2)}`);
-    console.log("=".repeat(60) + "\n");
-    return true;
-  }
+  return result.success;
 }
 
 /**
@@ -260,53 +178,33 @@ export async function sendPasswordResetCode(
   email: string,
   code: string
 ): Promise<boolean> {
-  // Универсальный код для разработки
-  const isDevelopment = !SMTP_USER || !SMTP_PASS || process.env.NODE_ENV === "development";
-  
-  if (isDevelopment) {
-    console.log("\n" + "=".repeat(60));
-    console.log("🔐 КОД ВОССТАНОВЛЕНИЯ ПАРОЛЯ");
-    console.log("=".repeat(60));
-    console.log(`Email: ${email}`);
-    console.log(`Код: ${code}`);
-    console.log("=".repeat(60) + "\n");
-    return true;
-  }
+  console.log("\n" + "=".repeat(60));
+  console.log("🔐 КОД ВОССТАНОВЛЕНИЯ ПАРОЛЯ");
+  console.log("=".repeat(60));
+  console.log(`Email: ${email}`);
+  console.log(`Код: ${code}`);
+  console.log("=".repeat(60) + "\n");
 
-  try {
-    const transporter = createTransporter();
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">Восстановление пароля</h2>
+      <p>Здравствуйте!</p>
+      <p>Для восстановления пароля используйте следующий код:</p>
+      <div style="background-color: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0;">
+        <h1 style="color: #A13D42; font-size: 32px; letter-spacing: 5px; margin: 0;">${code}</h1>
+      </div>
+      <p>Код действителен в течение 15 минут.</p>
+      <p>Если вы не запрашивали восстановление пароля, просто проигнорируйте это письмо.</p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      <p style="color: #999; font-size: 12px;">BurkerRussia - Официальный магазин</p>
+    </div>
+  `;
 
-    const mailOptions = {
-      from: `"BurkerRussia" <${SMTP_FROM}>`,
-      to: email,
-      subject: "Восстановление пароля",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Восстановление пароля</h2>
-          <p>Здравствуйте!</p>
-          <p>Для восстановления пароля используйте следующий код:</p>
-          <div style="background-color: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0;">
-            <h1 style="color: #A13D42; font-size: 32px; letter-spacing: 5px; margin: 0;">${code}</h1>
-          </div>
-          <p>Код действителен в течение 15 минут.</p>
-          <p>Если вы не запрашивали восстановление пароля, просто проигнорируйте это письмо.</p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="color: #999; font-size: 12px;">BurkerRussia - Официальный магазин</p>
-        </div>
-      `,
-    };
+  const result = await sendEmailViaMailopost(
+    email,
+    "Восстановление пароля",
+    html
+  );
 
-    await transporter.sendMail(mailOptions);
-    return true;
-  } catch (error) {
-    console.error("Error sending password reset email:", error);
-    // В режиме разработки все равно выводим код
-    console.log("\n" + "=".repeat(60));
-    console.log("🔐 КОД ВОССТАНОВЛЕНИЯ ПАРОЛЯ (fallback)");
-    console.log("=".repeat(60));
-    console.log(`Email: ${email}`);
-    console.log(`Код: ${code}`);
-    console.log("=".repeat(60) + "\n");
-    return true;
-  }
+  return result.success;
 }
