@@ -132,12 +132,6 @@ function OrderConfirmationContent() {
             <div className="border-t border-gray-200 pt-2 mt-2">
               <p className="text-sm font-semibold text-gray-700 mb-2">Данные для таможенного оформления:</p>
             </div>
-            {order.gender && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">Пол:</span>
-                <span className="font-medium">{order.gender}</span>
-              </div>
-            )}
             <div className="flex justify-between">
               <span className="text-gray-600">ИНН:</span>
               <span className="font-medium">{order.inn}</span>

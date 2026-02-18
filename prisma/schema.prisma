@@ -109,7 +109,6 @@ model Order {
   comment         String?     // комментарий к заказу
   
   // Данные для таможенного оформления
-  gender          String?     // Пол (М/Ж)
   inn             String      // ИНН (обязательное поле)
   passportSeries  String     // Серия паспорта (обязательное поле)
   passportNumber  String     // Номер паспорта (обязательное поле)

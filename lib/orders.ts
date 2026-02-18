@@ -45,7 +45,6 @@ function mapOrderFromDb(dbOrder: any): Order {
     postalCode: dbOrder.postalCode || undefined,
     country: dbOrder.country || undefined,
     comment: dbOrder.comment || undefined,
-    gender: dbOrder.gender || undefined,
     inn: dbOrder.inn || "",
     passportSeries: dbOrder.passportSeries || "",
     passportNumber: dbOrder.passportNumber || "",
@@ -121,7 +120,6 @@ export async function createOrder(orderData: {
   postalCode?: string;
   country?: string;
   comment?: string;
-  gender?: string;
   inn: string;
   passportSeries: string;
   passportNumber: string;
@@ -153,7 +151,6 @@ export async function createOrder(orderData: {
     postalCode: orderData.postalCode || null,
     country: orderData.country || "Россия",
     comment: orderData.comment || null,
-    gender: orderData.gender || null,
     inn: orderData.inn,
     passportSeries: orderData.passportSeries,
     passportNumber: orderData.passportNumber,

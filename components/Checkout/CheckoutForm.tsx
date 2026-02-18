@@ -79,7 +79,6 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
     city: "",
     postalCode: "",
     country: "Россия",
-    gender: "",
     inn: "",
     passportSeries: "",
     passportNumber: "",
@@ -410,22 +409,6 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
           <h3 className="text-lg font-semibold mb-4">Данные для таможенного оформления</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="gender" className="block text-sm font-medium mb-2">
-                Пол
-              </label>
-              <select
-                id="gender"
-                value={formData.gender || ""}
-                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              >
-                <option value="">Выберите пол</option>
-                <option value="М">Мужской</option>
-                <option value="Ж">Женский</option>
-              </select>
-            </div>
-
             <div>
               <label htmlFor="inn" className="block text-sm font-medium mb-2">
                 ИНН *

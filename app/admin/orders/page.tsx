@@ -28,7 +28,6 @@ interface Order {
   shippingCost: number;
   createdAt: Date;
   items: OrderItem[];
-  gender?: string | null;
   inn?: string | null;
   passportSeries?: string | null;
   passportNumber?: string | null;
@@ -317,12 +316,6 @@ function AdminOrdersPageContent() {
                     <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
                       <h4 className="text-sm font-semibold text-gray-700 mb-3">Данные для таможенного оформления</h4>
                     </div>
-                    {order.gender && (
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Пол</p>
-                        <p className="font-medium">{order.gender}</p>
-                      </div>
-                    )}
                     <div>
                       <p className="text-sm text-gray-600 mb-1">ИНН</p>
                       <p className="font-medium">{order.inn || "—"}</p>

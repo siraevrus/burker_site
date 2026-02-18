@@ -87,7 +87,6 @@ export interface Order {
   country?: string;
   comment?: string;
   // Данные для таможенного оформления
-  gender?: string; // Пол (М/Ж)
   inn: string; // ИНН
   passportSeries: string; // Серия паспорта
   passportNumber: string; // Номер паспорта
@@ -124,7 +123,6 @@ export interface CheckoutFormData {
   country?: string;
   comment?: string;
   // Данные для таможенного оформления
-  gender?: string; // Пол (М/Ж)
   inn: string; // ИНН
   passportSeries: string; // Серия паспорта
   passportNumber: string; // Номер паспорта
