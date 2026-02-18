@@ -11,7 +11,7 @@ export async function getPromoBanners(): Promise<PromoBanner[]> {
   return dbBanners.map((banner) => ({
     id: banner.id,
     image: banner.image,
-    productLink: banner.productLink,
+    productLink: banner.productLink ?? undefined,
     title: banner.title || undefined,
     subtitle: banner.subtitle || undefined,
   }));
