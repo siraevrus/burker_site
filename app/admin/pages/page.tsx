@@ -237,10 +237,10 @@ function PageForm({
           .replace(/(^-|-$)/g, "");
       }
     }
-    // Убеждаемся, что пустая строка category преобразуется в undefined
+    // Убеждаемся, что category корректно обработан
     const pageToSave = {
       ...formData,
-      category: formData.category && formData.category !== "" ? formData.category : undefined,
+      category: formData.category || undefined,
     };
     onSave(pageToSave);
   };
@@ -297,7 +297,7 @@ function PageForm({
             onChange={(e) =>
               setFormData({
                 ...formData,
-                category: e.target.value as "customer-service" | "policies" | undefined,
+                category: e.target.value === "" ? undefined : (e.target.value as "customer-service" | "policies"),
               })
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
