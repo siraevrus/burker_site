@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
       city,
       postalCode,
       country: country || "Россия",
-      comment: null,
+      comment: undefined,
       inn,
       passportSeries,
       passportNumber,
