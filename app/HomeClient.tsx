@@ -25,17 +25,20 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <h2 className="text-xl mb-8 text-center uppercase">Бестселлеры</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {bestsellers.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1, duration: 0.3 }}
-              >
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
+          <div className="overflow-x-auto pb-4 scrollbar-hide">
+            <div className="flex gap-6">
+              {bestsellers.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1, duration: 0.3 }}
+                  className="flex-shrink-0 w-72"
+                >
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

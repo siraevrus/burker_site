@@ -21,8 +21,8 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "BURKER WATCHES | Официальный магазин",
-  description: "Элегантные женские часы и украшения от BURKER WATCHES",
+  title: "MiraShop | Burker | Официальный магазин",
+  description: "Элегантные женские часы и украшения от MiraShop | Burker",
 };
 
 export default function RootLayout({

@@ -8,6 +8,7 @@ import Image from "next/image";
 export default function AdminPage() {
   const [productList, setProductList] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -116,6 +117,61 @@ export default function AdminPage() {
     }
   };
 
+  const handleSelectAll = () => {
+    if (selectedProducts.size === productList.length && productList.length > 0) {
+      setSelectedProducts(new Set());
+    } else {
+      setSelectedProducts(new Set(productList.map((p) => p.id)));
+    }
+  };
+
+  const handleSelectProduct = (productId: string) => {
+    const newSelected = new Set(selectedProducts);
+    if (newSelected.has(productId)) {
+      newSelected.delete(productId);
+    } else {
+      newSelected.add(productId);
+    }
+    setSelectedProducts(newSelected);
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedProducts.size === 0) {
+      alert("Выберите товары для удаления");
+      return;
+    }
+
+    const count = selectedProducts.size;
+    if (!confirm(`Вы уверены, что хотите удалить ${count} товар(ов)?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admin/products", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ids: Array.from(selectedProducts) }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setProductList(
+          productList.filter((p) => !selectedProducts.has(p.id))
+        );
+        setSelectedProducts(new Set());
+        alert(`Успешно удалено товаров: ${result.deletedCount}`);
+      } else {
+        const error = await response.json();
+        alert(`Ошибка при удалении товаров: ${error.error || "Неизвестная ошибка"}`);
+      }
+    } catch (error) {
+      console.error("Error deleting products:", error);
+      alert("Ошибка при удалении товаров");
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
@@ -143,9 +199,31 @@ export default function AdminPage() {
         <div className="text-center py-8">Загрузка товаров...</div>
       ) : (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          {selectedProducts.size > 0 && (
+            <div className="px-6 py-4 bg-blue-50 border-b border-blue-200 flex items-center justify-between">
+              <span className="text-sm font-medium text-blue-900">
+                Выбрано товаров: {selectedProducts.size}
+              </span>
+              <button
+                onClick={handleDeleteSelected}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                Удалить выбранные ({selectedProducts.size})
+              </button>
+            </div>
+          )}
           <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                <input
+                  type="checkbox"
+                  checked={selectedProducts.size === productList.length && productList.length > 0}
+                  onChange={handleSelectAll}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  title="Выделить все"
+                />
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Изображение
               </th>
@@ -178,6 +256,14 @@ export default function AdminPage() {
           <tbody className="bg-white divide-y divide-gray-200">
             {productList.map((product) => (
               <tr key={product.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={selectedProducts.has(product.id)}
+                    onChange={() => handleSelectProduct(product.id)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="w-16 h-16 relative bg-gray-100 rounded-md overflow-hidden">
                     <Image

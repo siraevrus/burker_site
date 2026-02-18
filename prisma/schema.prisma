@@ -38,7 +38,7 @@ model Product {
 model PromoBanner {
   id          String   @id @default(cuid())
   image       String
-  productLink String
+  productLink String?
   title       String?
   subtitle    String?
   order       Int      @default(0)

@@ -116,7 +116,7 @@ export default function Header() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="text-2xl font-bold">
-            Burker Watches
+            MiraShop | Burker
           </Link>
 
           {/* Desktop Navigation */}

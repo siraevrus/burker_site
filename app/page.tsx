@@ -4,7 +4,7 @@ import HomeClient from "./HomeClient";
 export default async function Home() {
   const [allProducts, bestsellers] = await Promise.all([
     getAllProducts(),
-    getBestsellers(8),
+    getBestsellers(20),
   ]);
 
   return <HomeClient products={allProducts} bestsellers={bestsellers} />;

@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "Политика конфиденциальности | Burker Watches",
-  description: "Политика конфиденциальности Burker Watches",
+  title: "Политика конфиденциальности | MiraShop | Burker",
+  description: "Политика конфиденциальности MiraShop | Burker",
 };
 
 export default function PrivacyPage() {
@@ -12,7 +12,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-2xl font-semibold mb-4">1. Общие положения</h2>
           <p className="text-gray-700">
-            Настоящая Политика конфиденциальности определяет порядок обработки и защиты персональных данных пользователей интернет-магазина Burker Watches (далее — «Сайт»).
+            Настоящая Политика конфиденциальности определяет порядок обработки и защиты персональных данных пользователей интернет-магазина MiraShop | Burker (далее — «Сайт»).
           </p>
           <p className="text-gray-700">
             Использование Сайта означает безоговорочное согласие пользователя с настоящей Политикой и указанными в ней условиями обработки его персональной информации.

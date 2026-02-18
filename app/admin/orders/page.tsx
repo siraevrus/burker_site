@@ -12,6 +12,7 @@ interface OrderItem {
 
 interface Order {
   id: string;
+  orderNumber?: string;
   email: string;
   firstName: string;
   lastName: string | null;

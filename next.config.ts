@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     // Исключаем Prisma и связанные модули из клиентского бандла
     if (!isServer) {
       config.resolve.fallback = {
@@ -33,6 +33,14 @@ const nextConfig: NextConfig = {
         "@prisma/client": "commonjs @prisma/client",
         "prisma": "commonjs prisma",
       });
+    }
+
+    // Настройки для hot reload в Docker
+    if (dev) {
+      config.watchOptions = {
+        poll: 1000, // Проверять изменения каждую секунду
+        aggregateTimeout: 300, // Задержка перед пересборкой
+      };
     }
     
     return config;

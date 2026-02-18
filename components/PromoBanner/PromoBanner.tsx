@@ -85,7 +85,46 @@ export default function PromoBannerGallery() {
           transition={{ duration: 0.5 }}
           className="relative w-full h-full"
         >
-          <Link href={currentBanner.productLink || "#"}>
+          {currentBanner.productLink ? (
+            <Link href={currentBanner.productLink}>
+              <div className="relative w-full h-full bg-gradient-to-r from-pink-100 to-red-100 flex items-center justify-center">
+                {currentBanner.image.startsWith("data:image") ? (
+                  <img
+                    src={currentBanner.image}
+                    alt={currentBanner.title || "Promo banner"}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : currentBanner.image.startsWith('/promo/') ? (
+                  // Для локальных файлов используем обычный img, чтобы избежать проблем с оптимизацией
+                  <img
+                    src={currentBanner.image}
+                    alt={currentBanner.title || "Promo banner"}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <Image
+                    src={currentBanner.image}
+                    alt={currentBanner.title || "Promo banner"}
+                    fill
+                    className="object-cover"
+                    priority={currentIndex === 0}
+                  />
+                )}
+                {(currentBanner.title || currentBanner.subtitle) && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-black bg-opacity-20">
+                    {currentBanner.title && (
+                      <h1 className="text-5xl md:text-6xl font-bold mb-4 text-white">
+                        {currentBanner.title}
+                      </h1>
+                    )}
+                    {currentBanner.subtitle && (
+                      <p className="text-xl text-white">{currentBanner.subtitle}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </Link>
+          ) : (
             <div className="relative w-full h-full bg-gradient-to-r from-pink-100 to-red-100 flex items-center justify-center">
               {currentBanner.image.startsWith("data:image") ? (
                 <img
@@ -122,7 +161,7 @@ export default function PromoBannerGallery() {
                 </div>
               )}
             </div>
-          </Link>
+          )}
         </motion.div>
       </AnimatePresence>
 

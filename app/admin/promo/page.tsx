@@ -167,7 +167,7 @@ export default function AdminPromoPage() {
                     <p className="text-sm text-gray-600 mb-2">{banner.subtitle}</p>
                   )}
                   <p className="text-sm text-gray-500">
-                    Ссылка: {banner.productLink}
+                    Ссылка: {banner.productLink || "—"}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">
@@ -382,17 +382,16 @@ function BannerForm({
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Ссылка на товар/страницу
+            Ссылка на товар/страницу (опционально)
           </label>
           <input
             type="text"
-            value={formData.productLink}
+            value={formData.productLink || ""}
             onChange={(e) =>
               setFormData({ ...formData, productLink: e.target.value })
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
             placeholder="/sale или /product/id"
-            required
           />
         </div>
         <div className="flex gap-4 pt-4">

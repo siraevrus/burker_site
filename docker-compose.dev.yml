@@ -9,10 +9,12 @@ services:
       - NODE_ENV=development
       - DATABASE_URL=file:./prisma/dev.db
       - PORT=3000
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
       - MAILOPOST_API_URL=https://api.mailopost.ru/v1
       - MAILOPOST_API_TOKEN=0e214eeceb83783a7ed4dc025a0175b1
       - MAILOPOST_FROM_EMAIL=noreply@burker-watches.ru
-      - MAILOPOST_FROM_NAME=Burker Watches
+      - MAILOPOST_FROM_NAME=MiraShop | Burker
       - ADMIN_EMAIL=info@kondratov.online
     working_dir: /app
     volumes:

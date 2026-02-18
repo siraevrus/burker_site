@@ -16,6 +16,7 @@ interface User {
   };
   orders: Array<{
     id: string;
+    orderNumber?: string;
     totalAmount: number;
     status: string;
     createdAt: Date;

@@ -11,7 +11,7 @@
 MAILOPOST_API_URL=https://api.mailopost.ru/v1
 MAILOPOST_API_TOKEN=your_api_token_here
 MAILOPOST_FROM_EMAIL=noreply@burker-watches.ru
-MAILOPOST_FROM_NAME=Burker Watches
+MAILOPOST_FROM_NAME=MiraShop | Burker
 
 # Admin email for order notifications
 ADMIN_EMAIL=info@kondratov.online
@@ -21,7 +21,7 @@ ADMIN_EMAIL=info@kondratov.online
 
 - **API Token**: `0e214eeceb83783a7ed4dc025a0175b1`
 - **From Email**: `noreply@burker-watches.ru`
-- **From Name**: `Burker Watches`
+- **From Name**: `MiraShop | Burker`
 - **Admin Email**: `info@kondratov.online`
 
 ## Типы отправляемых писем

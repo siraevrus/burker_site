@@ -45,7 +45,7 @@ export type Color = "золото" | "серебро" | "розовое золо
 export interface PromoBanner {
   id: string;
   image: string;
-  productLink: string;
+  productLink?: string;
   title?: string;
   subtitle?: string;
 }
