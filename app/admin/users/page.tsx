@@ -27,14 +27,29 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState("");
 
   useEffect(() => {
-    loadUsers();
-  }, []);
+    setLoading(true);
+    const timeoutId = setTimeout(() => {
+      loadUsers();
+    }, searchQuery ? 300 : 0); // Debounce для поиска
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, orderStatusFilter]);
 
   const loadUsers = async () => {
     try {
-      const response = await fetch("/api/admin/users");
+      const params = new URLSearchParams();
+      if (searchQuery) {
+        params.append("search", searchQuery);
+      }
+      if (orderStatusFilter) {
+        params.append("orderStatus", orderStatusFilter);
+      }
+      
+      const response = await fetch(`/api/admin/users?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users || []);
@@ -80,6 +95,41 @@ export default function AdminUsersPage() {
         <h1 className="text-3xl font-bold">Пользователи</h1>
         <div className="text-sm text-gray-600">
           Всего: {users.length}
+        </div>
+      </div>
+
+      {/* Поиск и фильтры */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Поиск (имя, фамилия, отчество, телефон, email)
+            </label>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Введите имя, фамилию, отчество, телефон или email..."
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Фильтр по статусу заказа
+            </label>
+            <select
+              value={orderStatusFilter}
+              onChange={(e) => setOrderStatusFilter(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
+            >
+              <option value="">Все статусы</option>
+              <option value="pending">В обработке</option>
+              <option value="confirmed">Подтвержден</option>
+              <option value="shipped">Отправлен</option>
+              <option value="delivered">Доставлен</option>
+              <option value="cancelled">Отменен</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -235,9 +285,10 @@ export default function AdminUsersPage() {
               ) : (
                 <div className="space-y-3">
                   {selectedUser.orders.map((order) => (
-                    <div
+                    <Link
                       key={order.id}
-                      className="border border-gray-200 rounded-lg p-4"
+                      href={`/admin/orders?orderId=${order.id}`}
+                      className="block border border-gray-200 rounded-lg p-4 hover:bg-gray-50 hover:border-gray-300 transition-colors cursor-pointer"
                     >
                       <div className="flex justify-between items-start">
                         <div>
@@ -261,7 +312,7 @@ export default function AdminUsersPage() {
                           </span>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}

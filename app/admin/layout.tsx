@@ -87,6 +87,16 @@ export default function AdminLayout({
                   Промоблок
                 </a>
                 <a
+                  href="/admin/promo-codes"
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    pathname === "/admin/promo-codes"
+                      ? "bg-gray-600 text-white"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Промокоды
+                </a>
+                <a
                   href="/admin/top-banner"
                   className={`px-4 py-2 rounded-md transition-colors ${
                     pathname === "/admin/top-banner"
@@ -125,6 +135,16 @@ export default function AdminLayout({
                   }`}
                 >
                   Пользователи
+                </a>
+                <a
+                  href="/admin/subscribers"
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    pathname === "/admin/subscribers"
+                      ? "bg-gray-600 text-white"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Подписчики
                 </a>
               </div>
             </div>

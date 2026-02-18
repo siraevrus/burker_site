@@ -64,14 +64,14 @@ export default function CartPage() {
                 {/* Product Image */}
                 <Link 
                   href={`/product/${item.bodyId || item.id}`}
-                  className="w-24 h-24 sm:w-24 sm:h-24 bg-gray-200 rounded-md flex-shrink-0 relative overflow-hidden hover:opacity-90 transition-opacity cursor-pointer"
+                  className="w-[150px] h-[150px] bg-gray-200 rounded-md flex-shrink-0 relative overflow-hidden hover:opacity-90 transition-opacity cursor-pointer"
                 >
                   <Image
                     src={item.images && item.images.length > 0 ? item.images[0] : "/Isabell_gold_burgundy_1.webp"}
                     alt={item.name}
                     fill
                     className="object-cover"
-                    sizes="96px"
+                    sizes="150px"
                   />
                 </Link>
 
@@ -139,7 +139,7 @@ export default function CartPage() {
                 {/* Subtotal */}
                 <div className="text-right">
                   <p className="font-semibold text-lg">
-                    {(item.price * item.quantity).toFixed(0)} ₽
+                    Итого: {(item.price * item.quantity).toFixed(0)} ₽
                   </p>
                 </div>
               </motion.div>
@@ -157,7 +157,7 @@ export default function CartPage() {
                 <span>{totalPrice.toFixed(0)} ₽</span>
               </div>
               <div className="flex justify-between">
-                <span>Доставка</span>
+                <span>Доставка до РФ</span>
                 <span>
                   {totalWeight.toFixed(1)} кг / {shippingCost.toFixed(0)} ₽
                 </span>
@@ -178,6 +178,27 @@ export default function CartPage() {
               Оформить заказ
             </Link>
           </div>
+        </div>
+      </div>
+
+      {/* Information Block */}
+      <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div className="max-w-4xl mx-auto space-y-3 text-sm text-gray-700">
+          <p>
+            <strong>Выкуп осуществляется с официального сайта производителя.</strong> Товар поставляется под индивидуальный заказ клиента.
+          </p>
+          <p>
+            В стоимость товара включена комиссия агента за услугу выкупа.
+          </p>
+          <p>
+            Доставка до РФ рассчитывается исходя из фактического веса и тарифа перевозчика.
+          </p>
+          <p>
+            Средний срок доставки — около 30 дней с момента выкупа.
+          </p>
+          <p className="pt-2 border-t border-blue-200">
+            <strong>Оплачивая заказ, вы подтверждаете согласие с условиями сервиса.</strong>
+          </p>
         </div>
       </div>
     </div>

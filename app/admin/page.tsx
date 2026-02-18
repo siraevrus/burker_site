@@ -266,12 +266,23 @@ export default function AdminPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="w-16 h-16 relative bg-gray-100 rounded-md overflow-hidden">
-                    <Image
-                      src={product.images && product.images.length > 0 ? product.images[0] : "/Isabell_gold_burgundy_1.webp"}
-                      alt={product.name}
-                      fill
-                      className="object-cover"
-                    />
+                    {product.images && product.images.length > 0 && product.images[0] ? (
+                      <Image
+                        src={product.images[0].startsWith('http') || product.images[0].startsWith('/') 
+                          ? product.images[0] 
+                          : `/${product.images[0]}`}
+                        alt={product.name}
+                        fill
+                        className="object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder.png';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                        Нет фото
+                      </div>
+                    )}
                   </div>
                 </td>
                 <td className="px-6 py-4">

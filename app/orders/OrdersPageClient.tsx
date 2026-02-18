@@ -124,6 +124,28 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
               {/* Раскрывающийся контент */}
               {isExpanded && (
                 <div className="px-6 py-4 border-t border-gray-200">
+                  <h3 className="text-lg font-bold mb-4">Товары</h3>
+                  <div className="space-y-3 mb-6">
+                    {order.items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="border border-gray-200 rounded-lg p-4"
+                      >
+                        <div className="flex justify-between">
+                          <div>
+                            <p className="font-medium">{item.productName}</p>
+                            <p className="text-sm text-gray-600">
+                              Цвет: {item.selectedColor} × {item.quantity}
+                            </p>
+                          </div>
+                          <p className="font-semibold">
+                            {(item.productPrice * item.quantity).toFixed(0)} ₽
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Email</p>
@@ -133,17 +155,73 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                       <p className="text-sm text-gray-600 mb-1">Телефон</p>
                       <p className="font-medium">{order.phone}</p>
                     </div>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Имя</p>
+                      <p className="font-medium">{order.firstName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Фамилия</p>
+                      <p className="font-medium">{order.lastName}</p>
+                    </div>
+                    {order.middleName && (
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Отчество</p>
+                        <p className="font-medium">{order.middleName}</p>
+                      </div>
+                    )}
                     <div className="md:col-span-2">
-                      <p className="text-sm text-gray-600 mb-1">Адрес доставки</p>
+                      <p className="text-sm text-gray-600 mb-1">Пункт выдачи СДЭК (ПВЗ)</p>
                       <p className="font-medium">
-                        {order.address}
-                        {order.city && `, ${order.city}`}
-                        {order.postalCode && `, ${order.postalCode}`}
+                        {order.cdekAddress}
+                        {order.cdekPointCode && ` (код ${order.cdekPointCode})`}
                       </p>
                     </div>
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-gray-600 mb-1">Адрес ПВЗ СДЕК</p>
-                      <p className="font-medium">{order.cdekAddress}</p>
+                    {order.address && (
+                      <div className="md:col-span-2">
+                        <p className="text-sm text-gray-600 mb-1">Адрес доставки</p>
+                        <p className="font-medium">
+                          {order.address}
+                          {order.city && `, ${order.city}`}
+                          {order.postalCode && `, ${order.postalCode}`}
+                        </p>
+                      </div>
+                    )}
+                    <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Данные для таможенного оформления</h4>
+                    </div>
+                    {order.gender && (
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Пол</p>
+                        <p className="font-medium">{order.gender}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">ИНН</p>
+                      <p className="font-medium">{order.inn}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Серия паспорта</p>
+                      <p className="font-medium">{order.passportSeries}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Номер паспорта</p>
+                      <p className="font-medium">{order.passportNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Дата выдачи паспорта</p>
+                      <p className="font-medium">
+                        {order.passportIssueDate 
+                          ? new Date(order.passportIssueDate).toLocaleDateString("ru-RU", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            })
+                          : order.passportIssueDate}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Кем выдан паспорт</p>
+                      <p className="font-medium">{order.passportIssuedBy}</p>
                     </div>
                     <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
                       <h4 className="text-sm font-semibold text-gray-700 mb-3">Данные для таможенного оформления</h4>
@@ -166,28 +244,6 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                       <p className="text-sm text-gray-600 mb-1">Кем выдан</p>
                       <p className="font-medium">{order.passportIssuedBy}</p>
                     </div>
-                  </div>
-
-                  <h3 className="text-lg font-bold mb-4">Товары</h3>
-                  <div className="space-y-3 mb-6">
-                    {order.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="border border-gray-200 rounded-lg p-4"
-                      >
-                        <div className="flex justify-between">
-                          <div>
-                            <p className="font-medium">{item.productName}</p>
-                            <p className="text-sm text-gray-600">
-                              Цвет: {item.selectedColor} × {item.quantity}
-                            </p>
-                          </div>
-                          <p className="font-semibold">
-                            {(item.productPrice * item.quantity).toFixed(0)} ₽
-                          </p>
-                        </div>
-                      </div>
-                    ))}
                   </div>
 
                   {order.comment && (

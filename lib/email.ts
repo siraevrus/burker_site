@@ -61,7 +61,7 @@ export async function sendOrderConfirmation(
   console.log(`Заказ #${orderNumber}`);
   console.log(`Email: ${email}`);
   console.log(`Имя: ${orderData.firstName}`);
-  console.log(`Сумма: €${orderData.totalAmount.toFixed(2)}`);
+  console.log(`Сумма: ${orderData.totalAmount.toFixed(0)} ₽`);
   console.log(`Товаров: ${orderData.items.length}`);
   console.log("=".repeat(60) + "\n");
 
@@ -71,7 +71,7 @@ export async function sendOrderConfirmation(
         `<tr>
           <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">€${item.price.toFixed(2)}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toFixed(0)} ₽</td>
         </tr>`
     )
     .join("");
@@ -97,7 +97,7 @@ export async function sendOrderConfirmation(
         <tfoot>
           <tr>
             <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold;">Итого:</td>
-            <td style="padding: 10px; text-align: right; font-weight: bold;">€${orderData.totalAmount.toFixed(2)}</td>
+            <td style="padding: 10px; text-align: right; font-weight: bold;">${orderData.totalAmount.toFixed(0)} ₽</td>
           </tr>
         </tfoot>
       </table>
@@ -141,7 +141,7 @@ export async function sendAdminOrderNotification(
   console.log(`Телефон: ${orderData.phone}`);
   console.log(`Адрес: ${orderData.address}`);
   console.log(`Товаров: ${orderData.itemsCount}`);
-  console.log(`Сумма: €${orderData.totalAmount.toFixed(2)}`);
+  console.log(`Сумма: ${orderData.totalAmount.toFixed(0)} ₽`);
   console.log("=".repeat(60) + "\n");
 
   if (!ADMIN_EMAIL) {
@@ -157,7 +157,7 @@ export async function sendAdminOrderNotification(
       <p><strong>Телефон:</strong> ${orderData.phone}</p>
       <p><strong>Адрес:</strong> ${orderData.address}</p>
       <p><strong>Количество товаров:</strong> ${orderData.itemsCount}</p>
-      <p><strong>Сумма заказа:</strong> €${orderData.totalAmount.toFixed(2)}</p>
+      <p><strong>Сумма заказа:</strong> ${orderData.totalAmount.toFixed(0)} ₽</p>
       <p><a href="${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/admin/orders/${orderId}" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #A13D42; color: white; text-decoration: none; border-radius: 5px;">Просмотреть заказ #${orderNumber}</a></p>
     </div>
   `;

@@ -1,32 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-
-interface Page {
-  id: string;
-  title: string;
-  slug: string;
-  content: string;
-  published: boolean;
-}
+import { Page } from "@/lib/types";
 
 export default function AdminPages() {
-  const [pages, setPages] = useState<Page[]>([
-    {
-      id: "1",
-      title: "О нас",
-      slug: "about",
-      content: "<p>Информация о компании...</p>",
-      published: true,
-    },
-  ]);
+  const [pages, setPages] = useState<Page[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingPage, setEditingPage] = useState<Page | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
 
-  const handleDelete = (id: string) => {
+  useEffect(() => {
+    loadPages();
+  }, []);
+
+  const loadPages = async () => {
+    try {
+      const response = await fetch("/api/pages");
+      if (response.ok) {
+        const data = await response.json();
+        setPages(data.pages || []);
+      }
+    } catch (error) {
+      console.error("Error loading pages:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
     if (confirm("Вы уверены, что хотите удалить эту страницу?")) {
-      setPages(pages.filter((p) => p.id !== id));
+      try {
+        const response = await fetch(`/api/pages?id=${id}`, {
+          method: "DELETE",
+        });
+        if (response.ok) {
+          await loadPages();
+        } else {
+          alert("Ошибка при удалении страницы");
+        }
+      } catch (error) {
+        console.error("Error deleting page:", error);
+        alert("Ошибка при удалении страницы");
+      }
     }
   };
 
@@ -40,19 +56,39 @@ export default function AdminPages() {
     setIsAddingNew(true);
   };
 
-  const handleSave = (page: Page) => {
-    if (isAddingNew) {
-      setPages([...pages, page]);
-      setIsAddingNew(false);
-    } else {
-      setPages(pages.map((p) => (p.id === page.id ? page : p)));
-      setEditingPage(null);
+  const handleSave = async (page: Page) => {
+    try {
+      const method = isAddingNew ? "POST" : "PUT";
+      const response = await fetch("/api/pages", {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(page),
+      });
+
+      if (response.ok) {
+        await loadPages();
+        setEditingPage(null);
+        setIsAddingNew(false);
+      } else {
+        const error = await response.json();
+        alert(`Ошибка при сохранении страницы: ${error.error || "Неизвестная ошибка"}`);
+      }
+    } catch (error) {
+      console.error("Error saving page:", error);
+      alert("Ошибка при сохранении страницы");
     }
   };
 
   const handleCancel = () => {
     setEditingPage(null);
     setIsAddingNew(false);
+  };
+
+  const getCategoryLabel = (category?: string) => {
+    if (!category) return "—";
+    return category === "customer-service" ? "Обслуживание клиентов" : "Политики";
   };
 
   return (
@@ -78,72 +114,89 @@ export default function AdminPages() {
       )}
 
       {/* Список страниц */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Название
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                URL
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Статус
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Действия
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {pages.map((page) => (
-              <tr key={page.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900">
-                    {page.title}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-500">/{page.slug}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-2 py-1 text-xs rounded-full ${
-                      page.published
-                        ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {page.published ? "Опубликовано" : "Черновик"}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <Link
-                    href={`/${page.slug}`}
-                    target="_blank"
-                    className="text-blue-600 hover:text-blue-900 mr-4"
-                  >
-                    Просмотр
-                  </Link>
-                  <button
-                    onClick={() => handleEdit(page)}
-                    className="text-blue-600 hover:text-blue-900 mr-4"
-                  >
-                    Редактировать
-                  </button>
-                  <button
-                    onClick={() => handleDelete(page.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Удалить
-                  </button>
-                </td>
+      {isLoading ? (
+        <div className="text-center py-8">Загрузка страниц...</div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Название
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  URL
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Категория
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Статус
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Действия
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {pages.map((page) => (
+                <tr key={page.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-medium text-gray-900">
+                      {page.title}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-500">/{page.slug}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-500">
+                      {getCategoryLabel(page.category)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        page.published
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {page.published ? "Опубликовано" : "Черновик"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <Link
+                      href={`/${page.slug}`}
+                      target="_blank"
+                      className="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      Просмотр
+                    </Link>
+                    <button
+                      onClick={() => handleEdit(page)}
+                      className="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      Редактировать
+                    </button>
+                    <button
+                      onClick={() => handleDelete(page.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Удалить
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {pages.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              Нет добавленных страниц
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -166,7 +219,10 @@ function PageForm({
       title: "",
       slug: "",
       content: "",
+      category: undefined,
       published: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }
   );
 
@@ -174,12 +230,19 @@ function PageForm({
     e.preventDefault();
     if (isNew) {
       formData.id = Date.now().toString();
-      formData.slug = formData.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
+      if (!formData.slug) {
+        formData.slug = formData.title
+          .toLowerCase()
+          .replace(/[^a-z0-9а-яё]+/g, "-")
+          .replace(/(^-|-$)/g, "");
+      }
     }
-    onSave(formData);
+    // Убеждаемся, что пустая строка category преобразуется в undefined
+    const pageToSave = {
+      ...formData,
+      category: formData.category && formData.category !== "" ? formData.category : undefined,
+    };
+    onSave(pageToSave);
   };
 
   return (
@@ -224,6 +287,28 @@ function PageForm({
               Страница будет доступна по адресу /{formData.slug}
             </p>
           </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Категория
+          </label>
+          <select
+            value={formData.category || ""}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                category: e.target.value as "customer-service" | "policies" | undefined,
+              })
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          >
+            <option value="">— Не выбрано —</option>
+            <option value="customer-service">Обслуживание клиентов</option>
+            <option value="policies">Политики</option>
+          </select>
+          <p className="text-xs text-gray-500 mt-1">
+            Выберите категорию для отображения страницы в соответствующем разделе футера
+          </p>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">

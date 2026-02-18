@@ -20,12 +20,15 @@ export async function POST(request: NextRequest) {
       city,
       postalCode,
       country,
-      comment,
+      gender,
       inn,
       passportSeries,
       passportNumber,
       passportIssueDate,
       passportIssuedBy,
+      requiresConfirmation,
+      promoCode,
+      promoDiscount,
       items,
     } = body;
 
@@ -36,7 +39,6 @@ export async function POST(request: NextRequest) {
       !lastName ||
       !middleName ||
       !phone ||
-      !address ||
       !cdekAddress ||
       !inn ||
       !passportSeries ||
@@ -82,7 +84,8 @@ export async function POST(request: NextRequest) {
     }));
     
     const { totalCost: shippingCost } = calculateShipping(cartItems);
-    const totalAmount = itemsTotal + shippingCost;
+    const discountAmount = promoDiscount ? parseFloat(promoDiscount.toString()) : 0;
+    const totalAmount = Math.max(0, itemsTotal + shippingCost - discountAmount);
 
     // Создание заказа
     const order = await createOrder({
@@ -92,18 +95,22 @@ export async function POST(request: NextRequest) {
       lastName,
       middleName,
       phone,
-      address,
+      address: address || undefined,
       cdekAddress,
       cdekPointCode,
       city,
       postalCode,
       country: country || "Россия",
-      comment,
+      comment: null,
+      gender: gender || null,
       inn,
       passportSeries,
       passportNumber,
       passportIssueDate,
       passportIssuedBy,
+      requiresConfirmation: requiresConfirmation || false,
+      promoCode: promoCode || null,
+      promoDiscount: discountAmount,
       items: items.map((item: any) => ({
         productId: item.productId,
         productName: item.productName,
@@ -132,7 +139,7 @@ export async function POST(request: NextRequest) {
         email: order.email,
         firstName: order.firstName,
         phone: order.phone,
-        address: order.address,
+        address: order.address || order.cdekAddress,
         totalAmount: order.totalAmount,
         itemsCount: order.items.length,
       });

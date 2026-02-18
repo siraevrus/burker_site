@@ -68,7 +68,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
 
       <div>
         <label htmlFor="email" className="block text-sm font-medium mb-2">
-          Email
+          Электронная почта
         </label>
         <input
           id="email"

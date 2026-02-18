@@ -51,6 +51,7 @@ model Page {
   title     String
   slug      String   @unique
   content   String
+  category  String?  // "customer-service" или "policies"
   published Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -99,7 +100,7 @@ model Order {
   lastName        String      // обязательное поле
   middleName      String      // Отчество (обязательное поле)
   phone           String
-  address         String      // адрес доставки
+  address         String?     // адрес доставки (опционально)
   cdekAddress     String      // Адрес ПВЗ СДЕК (обязательное поле)
   cdekPointCode   String?     // Код ПВЗ СДЭК (для накладной)
   city            String?
@@ -108,11 +109,15 @@ model Order {
   comment         String?     // комментарий к заказу
   
   // Данные для таможенного оформления
+  gender          String?     // Пол (М/Ж)
   inn             String      // ИНН (обязательное поле)
   passportSeries  String     // Серия паспорта (обязательное поле)
   passportNumber  String     // Номер паспорта (обязательное поле)
   passportIssueDate String   // Дата выдачи паспорта (обязательное поле)
   passportIssuedBy String    // Кем выдан паспорт (обязательное поле)
+  requiresConfirmation Boolean @default(false) // Требуется ли связаться для подтверждения заказа
+  promoCode        String?   // Промокод, примененный к заказу
+  promoDiscount    Float?    @default(0) // Сумма скидки по промокоду
   
   status          String      @default("pending") // pending, confirmed, shipped, delivered, cancelled
   totalAmount     Float
@@ -142,5 +147,23 @@ model ExchangeRate {
   id        String   @id @default("current")
   eurRate   Float    // Курс EUR к USD
   rubRate   Float    // Курс RUB к USD
+  updatedAt DateTime @updatedAt
+}
+
+model PromoCode {
+  id          String   @id @default(cuid())
+  code        String   @unique // Уникальный код промокода
+  discount    Float    // Сумма скидки в рублях
+  validFrom   DateTime // Дата начала действия
+  validUntil  DateTime // Дата окончания действия
+  isActive    Boolean  @default(true) // Активен ли промокод
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique // Email подписчика
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

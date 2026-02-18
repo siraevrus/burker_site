@@ -11,6 +11,14 @@ function OrderConfirmationContent() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const statusLabels: Record<string, string> = {
+    pending: "В обработке",
+    confirmed: "Подтвержден",
+    shipped: "Отправлен",
+    delivered: "Доставлен",
+    cancelled: "Отменен",
+  };
+
   useEffect(() => {
     if (orderId) {
       fetch(`/api/orders/${orderId}`)
@@ -92,48 +100,75 @@ function OrderConfirmationContent() {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Имя:</span>
-              <span className="font-medium">
-                {order.firstName} {order.middleName || ""} {order.lastName || ""}
-              </span>
+              <span className="font-medium">{order.firstName}</span>
             </div>
-            {order.phone && (
+            <div className="flex justify-between">
+              <span className="text-gray-600">Фамилия:</span>
+              <span className="font-medium">{order.lastName}</span>
+            </div>
+            {order.middleName && (
               <div className="flex justify-between">
-                <span className="text-gray-600">Телефон:</span>
-                <span className="font-medium">{order.phone}</span>
+                <span className="text-gray-600">Отчество:</span>
+                <span className="font-medium">{order.middleName}</span>
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-gray-600">Адрес:</span>
-              <span className="font-medium text-right">{order.address}</span>
+              <span className="text-gray-600">Телефон:</span>
+              <span className="font-medium">{order.phone}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Адрес ПВЗ СДЕК:</span>
-              <span className="font-medium text-right">{order.cdekAddress}</span>
+              <span className="text-gray-600">Пункт выдачи СДЭК (ПВЗ):</span>
+              <span className="font-medium text-right">
+                {order.cdekAddress}
+                {order.cdekPointCode && ` (код ${order.cdekPointCode})`}
+              </span>
             </div>
+            {order.address && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Адрес доставки:</span>
+                <span className="font-medium text-right">{order.address}</span>
+              </div>
+            )}
             <div className="border-t border-gray-200 pt-2 mt-2">
               <p className="text-sm font-semibold text-gray-700 mb-2">Данные для таможенного оформления:</p>
             </div>
+            {order.gender && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Пол:</span>
+                <span className="font-medium">{order.gender}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-gray-600">ИНН:</span>
               <span className="font-medium">{order.inn}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Паспорт:</span>
+              <span className="text-gray-600">Серия паспорта:</span>
+              <span className="font-medium">{order.passportSeries}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Номер паспорта:</span>
+              <span className="font-medium">{order.passportNumber}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Дата выдачи паспорта:</span>
               <span className="font-medium">
-                {order.passportSeries} {order.passportNumber}
+                {order.passportIssueDate 
+                  ? new Date(order.passportIssueDate).toLocaleDateString("ru-RU", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })
+                  : order.passportIssueDate}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Дата выдачи:</span>
-              <span className="font-medium">{order.passportIssueDate}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Кем выдан:</span>
+              <span className="text-gray-600">Кем выдан паспорт:</span>
               <span className="font-medium text-right">{order.passportIssuedBy}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Статус:</span>
-              <span className="font-medium capitalize">{order.status}</span>
+              <span className="font-medium">{statusLabels[order.status] || order.status}</span>
             </div>
           </div>
         </div>

@@ -16,7 +16,30 @@ export default function EmailVerificationForm() {
   const [resending, setResending] = useState(false);
 
   const handleCodeChange = (index: number, value: string) => {
-    if (value.length > 1) return;
+    // Если вставлено несколько символов (из буфера обмена)
+    if (value.length > 1) {
+      // Извлекаем только цифры
+      const digits = value.replace(/\D/g, "").slice(0, 6);
+      const newCode = [...code];
+      
+      // Заполняем поля начиная с текущего индекса
+      for (let i = 0; i < digits.length && (index + i) < 6; i++) {
+        newCode[index + i] = digits[i];
+      }
+      
+      setCode(newCode);
+      
+      // Фокус на следующее пустое поле или последнее заполненное
+      const nextEmptyIndex = newCode.findIndex((digit, idx) => idx > index && digit === "");
+      const focusIndex = nextEmptyIndex !== -1 ? nextEmptyIndex : Math.min(index + digits.length, 5);
+      setTimeout(() => {
+        const nextInput = document.getElementById(`code-${focusIndex}`);
+        nextInput?.focus();
+      }, 0);
+      return;
+    }
+
+    // Обычная обработка одного символа
     if (!/^\d*$/.test(value)) return;
 
     const newCode = [...code];
@@ -28,6 +51,32 @@ export default function EmailVerificationForm() {
     if (value && index < 5) {
       const nextInput = document.getElementById(`code-${index + 1}`);
       nextInput?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent, index: number) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData("text");
+    
+    if (pastedText) {
+      // Извлекаем только цифры
+      const digits = pastedText.replace(/\D/g, "").slice(0, 6);
+      const newCode = [...code];
+      
+      // Заполняем поля начиная с текущего индекса
+      for (let i = 0; i < digits.length && (index + i) < 6; i++) {
+        newCode[index + i] = digits[i];
+      }
+      
+      setCode(newCode);
+      
+      // Фокус на следующее пустое поле или последнее заполненное
+      const nextEmptyIndex = newCode.findIndex((digit, idx) => idx > index && digit === "");
+      const focusIndex = nextEmptyIndex !== -1 ? nextEmptyIndex : Math.min(index + digits.length, 5);
+      setTimeout(() => {
+        const nextInput = document.getElementById(`code-${focusIndex}`);
+        nextInput?.focus();
+      }, 0);
     }
   };
 
@@ -149,6 +198,7 @@ export default function EmailVerificationForm() {
             value={digit}
             onChange={(e) => handleCodeChange(index, e.target.value)}
             onKeyDown={(e) => handleKeyDown(index, e)}
+            onPaste={(e) => handlePaste(e, index)}
             className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-md focus:border-black focus:outline-none"
           />
         ))}

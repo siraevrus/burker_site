@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
 interface OrderItem {
   id: string;
@@ -27,11 +28,13 @@ interface Order {
   shippingCost: number;
   createdAt: Date;
   items: OrderItem[];
+  gender?: string | null;
   inn?: string | null;
   passportSeries?: string | null;
   passportNumber?: string | null;
   passportIssueDate?: string | null;
   passportIssuedBy?: string | null;
+  requiresConfirmation?: boolean;
   user: {
     id: string;
     email: string;
@@ -40,7 +43,8 @@ interface Order {
   } | null;
 }
 
-export default function AdminOrdersPage() {
+function AdminOrdersPageContent() {
+  const searchParams = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
@@ -55,6 +59,25 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     loadOrders();
   }, [statusFilter, pagination.page]);
+
+  // Автоматически раскрываем заказ, если передан orderId в URL
+  useEffect(() => {
+    const orderId = searchParams.get("orderId");
+    if (orderId && orders.length > 0) {
+      // Проверяем, есть ли заказ с таким ID в текущем списке
+      const orderExists = orders.some((order) => order.id === orderId);
+      if (orderExists) {
+        setExpandedOrders(new Set([orderId]));
+        // Прокручиваем к заказу
+        setTimeout(() => {
+          const element = document.getElementById(`order-${orderId}`);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }, 100);
+      }
+    }
+  }, [searchParams, orders]);
 
   const loadOrders = async () => {
     try {
@@ -160,6 +183,7 @@ export default function AdminOrdersPage() {
           const isExpanded = expandedOrders.has(order.id);
           return (
             <div
+              id={`order-${order.id}`}
               key={order.id}
               className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
             >
@@ -187,6 +211,11 @@ export default function AdminOrdersPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
+                    {order.requiresConfirmation && (
+                      <div className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
+                        Позвонить
+                      </div>
+                    )}
                     <span className="text-sm text-gray-600">Статус</span>
                     <select
                       value={order.status}
@@ -236,9 +265,15 @@ export default function AdminOrdersPage() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Имя</p>
-                      <p className="font-medium">
-                        {order.firstName} {order.middleName || ""} {order.lastName || ""}
-                      </p>
+                      <p className="font-medium">{order.firstName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Фамилия</p>
+                      <p className="font-medium">{order.lastName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Отчество</p>
+                      <p className="font-medium">{order.middleName || "—"}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Телефон</p>
@@ -253,41 +288,68 @@ export default function AdminOrdersPage() {
                       </p>
                     </div>
                     <div className="md:col-span-2">
-                      <p className="text-sm text-gray-600 mb-1">Адрес доставки</p>
+                      <p className="text-sm text-gray-600 mb-1">Пункт выдачи СДЭК (ПВЗ)</p>
                       <p className="font-medium">
-                        {order.address}
-                        {order.city && `, ${order.city}`}
-                      </p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-gray-600 mb-1">Адрес ПВЗ СДЕК</p>
-                      <p className="font-medium">
-                        {order.cdekAddress}
+                        {order.cdekAddress || "—"}
                         {order.cdekPointCode && (
                           <span className="text-gray-500 font-normal ml-1">(код {order.cdekPointCode})</span>
                         )}
                       </p>
                     </div>
+                    {order.address && (
+                      <div className="md:col-span-2">
+                        <p className="text-sm text-gray-600 mb-1">Адрес доставки</p>
+                        <p className="font-medium">
+                          {order.address}
+                          {order.city && `, ${order.city}`}
+                        </p>
+                      </div>
+                    )}
+                    {order.requiresConfirmation && (
+                      <div className="md:col-span-2">
+                        <div className="bg-orange-50 border border-orange-200 rounded-md p-3 mb-4">
+                          <p className="text-sm font-medium text-orange-800">
+                            ⚠️ Клиент просит связаться для подтверждения заказа
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
                       <h4 className="text-sm font-semibold text-gray-700 mb-3">Данные для таможенного оформления</h4>
                     </div>
+                    {order.gender && (
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Пол</p>
+                        <p className="font-medium">{order.gender}</p>
+                      </div>
+                    )}
                     <div>
                       <p className="text-sm text-gray-600 mb-1">ИНН</p>
-                      <p className="font-medium">{order.inn}</p>
+                      <p className="font-medium">{order.inn || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Серия и номер паспорта</p>
-                      <p className="font-medium">
-                        {order.passportSeries} {order.passportNumber}
-                      </p>
+                      <p className="text-sm text-gray-600 mb-1">Серия паспорта</p>
+                      <p className="font-medium">{order.passportSeries || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Номер паспорта</p>
+                      <p className="font-medium">{order.passportNumber || "—"}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Дата выдачи паспорта</p>
-                      <p className="font-medium">{order.passportIssueDate}</p>
+                      <p className="font-medium">
+                        {order.passportIssueDate 
+                          ? new Date(order.passportIssueDate).toLocaleDateString("ru-RU", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            })
+                          : "—"}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Кем выдан</p>
-                      <p className="font-medium">{order.passportIssuedBy}</p>
+                      <p className="text-sm text-gray-600 mb-1">Кем выдан паспорт</p>
+                      <p className="font-medium">{order.passportIssuedBy || "—"}</p>
                     </div>
                   </div>
 
@@ -364,5 +426,17 @@ export default function AdminOrdersPage() {
       )}
 
     </div>
+  );
+}
+
+export default function AdminOrdersPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-8">Загрузка заказов...</div>
+      </div>
+    }>
+      <AdminOrdersPageContent />
+    </Suspense>
   );
 }

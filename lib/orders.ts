@@ -45,6 +45,7 @@ function mapOrderFromDb(dbOrder: any): Order {
     postalCode: dbOrder.postalCode || undefined,
     country: dbOrder.country || undefined,
     comment: dbOrder.comment || undefined,
+    gender: dbOrder.gender || undefined,
     inn: dbOrder.inn || "",
     passportSeries: dbOrder.passportSeries || "",
     passportNumber: dbOrder.passportNumber || "",
@@ -113,18 +114,22 @@ export async function createOrder(orderData: {
   lastName: string;
   middleName: string;
   phone: string;
-  address: string;
+  address?: string;
   cdekAddress: string;
   cdekPointCode?: string;
   city?: string;
   postalCode?: string;
   country?: string;
   comment?: string;
+  gender?: string;
   inn: string;
   passportSeries: string;
   passportNumber: string;
   passportIssueDate: string;
   passportIssuedBy: string;
+  requiresConfirmation?: boolean;
+  promoCode?: string;
+  promoDiscount?: number;
   items: Array<{
     productId: string;
     productName: string;
@@ -141,18 +146,22 @@ export async function createOrder(orderData: {
     lastName: orderData.lastName,
     middleName: orderData.middleName,
     phone: orderData.phone,
-    address: orderData.address,
+    ...(orderData.address !== undefined && { address: orderData.address || null }),
     cdekAddress: orderData.cdekAddress,
     cdekPointCode: orderData.cdekPointCode || null,
     city: orderData.city || null,
     postalCode: orderData.postalCode || null,
     country: orderData.country || "Россия",
     comment: orderData.comment || null,
+    gender: orderData.gender || null,
     inn: orderData.inn,
     passportSeries: orderData.passportSeries,
     passportNumber: orderData.passportNumber,
     passportIssueDate: orderData.passportIssueDate,
     passportIssuedBy: orderData.passportIssuedBy,
+    requiresConfirmation: orderData.requiresConfirmation || false,
+    promoCode: orderData.promoCode || null,
+    promoDiscount: orderData.promoDiscount || 0,
     status: "pending",
     totalAmount: orderData.totalAmount,
     shippingCost: orderData.shippingCost,

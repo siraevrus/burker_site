@@ -75,7 +75,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps = {}
 
       <div>
         <label htmlFor="email" className="block text-sm font-medium mb-2">
-          Email *
+          Электронная почта *
         </label>
         <input
           id="email"

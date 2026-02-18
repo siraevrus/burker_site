@@ -79,7 +79,7 @@ export interface Order {
   lastName: string;
   middleName: string; // Отчество
   phone: string;
-  address: string;
+  address?: string;
   cdekAddress: string; // Адрес ПВЗ СДЕК
   cdekPointCode?: string; // Код ПВЗ СДЭК
   city?: string;
@@ -87,11 +87,13 @@ export interface Order {
   country?: string;
   comment?: string;
   // Данные для таможенного оформления
+  gender?: string; // Пол (М/Ж)
   inn: string; // ИНН
   passportSeries: string; // Серия паспорта
   passportNumber: string; // Номер паспорта
   passportIssueDate: string; // Дата выдачи паспорта
   passportIssuedBy: string; // Кем выдан паспорт
+  requiresConfirmation?: boolean; // Требуется ли связаться для подтверждения заказа
   status: string;
   totalAmount: number;
   shippingCost: number;
@@ -114,7 +116,7 @@ export interface CheckoutFormData {
   lastName: string;
   middleName: string; // Отчество
   phone: string;
-  address: string;
+  address?: string;
   cdekAddress: string; // Адрес ПВЗ СДЕК
   cdekPointCode?: string; // Код ПВЗ СДЭК
   city?: string;
@@ -122,9 +124,40 @@ export interface CheckoutFormData {
   country?: string;
   comment?: string;
   // Данные для таможенного оформления
+  gender?: string; // Пол (М/Ж)
   inn: string; // ИНН
   passportSeries: string; // Серия паспорта
   passportNumber: string; // Номер паспорта
   passportIssueDate: string; // Дата выдачи паспорта
   passportIssuedBy: string; // Кем выдан паспорт
+  requiresConfirmation?: boolean; // Требуется ли связаться для подтверждения заказа
+}
+
+export interface Page {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  category?: "customer-service" | "policies"; // Категория страницы
+  published: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PromoCode {
+  id: string;
+  code: string;
+  discount: number;
+  validFrom: Date;
+  validUntil: Date;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Subscriber {
+  id: string;
+  email: string;
+  createdAt: Date;
+  updatedAt: Date;
 }

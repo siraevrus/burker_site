@@ -35,23 +35,57 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
   const getTotalPrice = useStore((state) => state.getTotalPrice);
   const clearCart = useStore((state) => state.clearCart);
 
+  const formatPhoneNumber = (value: string): string => {
+    // Удаляем все нецифровые символы
+    const numbers = value.replace(/\D/g, "");
+    
+    // Если номер начинается с 8, заменяем на 7
+    let formatted = numbers.startsWith("8") ? "7" + numbers.slice(1) : numbers;
+    
+    // Если номер не начинается с 7, добавляем 7
+    if (formatted && !formatted.startsWith("7")) {
+      formatted = "7" + formatted;
+    }
+    
+    // Ограничиваем до 11 цифр (7 + 10 цифр)
+    formatted = formatted.slice(0, 11);
+    
+    // Форматируем в +7(999)999-99-99
+    if (formatted.length === 0) {
+      return "";
+    }
+    if (formatted.length <= 1) {
+      return `+${formatted}`;
+    }
+    if (formatted.length <= 4) {
+      return `+${formatted.slice(0, 1)}(${formatted.slice(1)}`;
+    }
+    if (formatted.length <= 7) {
+      return `+${formatted.slice(0, 1)}(${formatted.slice(1, 4)})${formatted.slice(4)}`;
+    }
+    if (formatted.length <= 9) {
+      return `+${formatted.slice(0, 1)}(${formatted.slice(1, 4)})${formatted.slice(4, 7)}-${formatted.slice(7)}`;
+    }
+    return `+${formatted.slice(0, 1)}(${formatted.slice(1, 4)})${formatted.slice(4, 7)}-${formatted.slice(7, 9)}-${formatted.slice(9, 11)}`;
+  };
+
   const [formData, setFormData] = useState<CheckoutFormData>({
     email: user?.email || "",
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     middleName: "",
-    phone: user?.phone || "",
-    address: "",
+    phone: user?.phone ? formatPhoneNumber(user.phone) : "",
     cdekAddress: "",
     city: "",
     postalCode: "",
     country: "Россия",
-    comment: "",
+    gender: "",
     inn: "",
     passportSeries: "",
     passportNumber: "",
     passportIssueDate: "",
     passportIssuedBy: "",
+    requiresConfirmation: false,
   });
 
   const [error, setError] = useState("");
@@ -60,6 +94,10 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
   const [pvzLoading, setPvzLoading] = useState(false);
   const [pvzError, setPvzError] = useState("");
   const [cityForPvz, setCityForPvz] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [promoCodeError, setPromoCodeError] = useState("");
+  const [appliedPromoCode, setAppliedPromoCode] = useState<{ code: string; discount: number } | null>(null);
+  const [checkingPromoCode, setCheckingPromoCode] = useState(false);
 
   const loadDeliveryPoints = useCallback(async () => {
     const q = cityForPvz.trim() ? `?city=${encodeURIComponent(cityForPvz.trim())}` : "";
@@ -90,9 +128,50 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
     }));
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setFormData({ ...formData, phone: formatted });
+  };
+
+  const handleCheckPromoCode = async () => {
+    if (!promoCode.trim()) {
+      setPromoCodeError("Введите промокод");
+      return;
+    }
+
+    setCheckingPromoCode(true);
+    setPromoCodeError("");
+
+    try {
+      const response = await fetch(`/api/promo-codes?code=${encodeURIComponent(promoCode.trim())}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setPromoCodeError(data.error || "Промокод не действителен");
+        setAppliedPromoCode(null);
+        return;
+      }
+
+      if (data.success && data.promoCode) {
+        setAppliedPromoCode({
+          code: data.promoCode.code,
+          discount: data.promoCode.discount,
+        });
+        setPromoCodeError("");
+      }
+    } catch (error) {
+      console.error("Error checking promo code:", error);
+      setPromoCodeError("Ошибка при проверке промокода");
+      setAppliedPromoCode(null);
+    } finally {
+      setCheckingPromoCode(false);
+    }
+  };
+
   const totalPrice = getTotalPrice();
   const { totalWeight, totalCost: shippingCost } = calculateShipping(cart);
-  const finalTotal = totalPrice + shippingCost;
+  const promoDiscount = appliedPromoCode ? appliedPromoCode.discount : 0;
+  const finalTotal = Math.max(0, totalPrice + shippingCost - promoDiscount);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,7 +185,6 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
       !formData.lastName ||
       !formData.middleName ||
       !formData.phone ||
-      !formData.address ||
       !formData.cdekAddress ||
       !formData.inn ||
       !formData.passportSeries ||
@@ -137,6 +215,8 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
         },
         body: JSON.stringify({
           ...formData,
+          promoCode: appliedPromoCode?.code || null,
+          promoDiscount: appliedPromoCode?.discount || 0,
           items: orderItems,
         }),
       });
@@ -206,9 +286,11 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
             id="phone"
             type="tel"
             value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            onChange={handlePhoneChange}
+            placeholder="+7(999)999-99-99"
             className="w-full border border-gray-300 rounded-md px-3 py-2"
             required
+            maxLength={17} // +7(999)999-99-99 = 17 символов
           />
         </div>
 
@@ -249,20 +331,6 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
             type="text"
             value={formData.middleName}
             onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
-            className="w-full border border-gray-300 rounded-md px-3 py-2"
-            required
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <label htmlFor="address" className="block text-sm font-medium mb-2">
-            Адрес доставки *
-          </label>
-          <input
-            id="address"
-            type="text"
-            value={formData.address}
-            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
             className="w-full border border-gray-300 rounded-md px-3 py-2"
             required
           />
@@ -337,27 +405,30 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
           )}
         </div>
 
-        <div className="md:col-span-2">
-          <label htmlFor="comment" className="block text-sm font-medium mb-2">
-            Комментарий к заказу
-          </label>
-          <textarea
-            id="comment"
-            value={formData.comment}
-            onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
-            rows={3}
-            className="w-full border border-gray-300 rounded-md px-3 py-2"
-          />
-        </div>
-
         {/* Данные для таможенного оформления */}
         <div className="md:col-span-2 border-t border-gray-300 pt-4 mt-4">
           <h3 className="text-lg font-semibold mb-4">Данные для таможенного оформления</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
+              <label htmlFor="gender" className="block text-sm font-medium mb-2">
+                Пол
+              </label>
+              <select
+                id="gender"
+                value={formData.gender || ""}
+                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option value="">Выберите пол</option>
+                <option value="М">Мужской</option>
+                <option value="Ж">Женский</option>
+              </select>
+            </div>
+
+            <div>
               <label htmlFor="inn" className="block text-sm font-medium mb-2">
-                📌 ИНН (для таможенного оформления) *
+                ИНН *
               </label>
               <input
                 id="inn"
@@ -372,7 +443,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
 
             <div>
               <label htmlFor="passportSeries" className="block text-sm font-medium mb-2">
-                📌 Серия паспорта (для таможенного оформления) *
+                Серия паспорта *
               </label>
               <input
                 id="passportSeries"
@@ -388,7 +459,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
 
             <div>
               <label htmlFor="passportNumber" className="block text-sm font-medium mb-2">
-                📌 Номер паспорта (для таможенного оформления) *
+                Номер паспорта *
               </label>
               <input
                 id="passportNumber"
@@ -404,7 +475,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
 
             <div>
               <label htmlFor="passportIssueDate" className="block text-sm font-medium mb-2">
-                📌 Дата выдачи паспорта *
+                Дата выдачи паспорта *
               </label>
               <input
                 id="passportIssueDate"
@@ -418,7 +489,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
 
             <div className="md:col-span-2">
               <label htmlFor="passportIssuedBy" className="block text-sm font-medium mb-2">
-                📌 Кем выдан паспорт *
+                Кем выдан паспорт *
               </label>
               <input
                 id="passportIssuedBy"
@@ -446,10 +517,65 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
               {totalWeight.toFixed(1)} кг / {shippingCost.toFixed(0)} ₽
             </span>
           </div>
+          {appliedPromoCode && (
+            <div className="flex justify-between text-green-600">
+              <span>Скидка по промокоду</span>
+              <span>-{promoDiscount.toFixed(0)} ₽</span>
+            </div>
+          )}
           <div className="flex justify-between text-xl font-bold border-t border-gray-200 pt-2">
             <span>Всего</span>
             <span>{finalTotal.toFixed(0)} ₽</span>
           </div>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">
+            Промокод
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={promoCode}
+              onChange={(e) => {
+                setPromoCode(e.target.value.toUpperCase());
+                setPromoCodeError("");
+                setAppliedPromoCode(null);
+              }}
+              placeholder="Введите промокод"
+              className="flex-1 border border-gray-300 rounded-md px-3 py-2"
+            />
+            <button
+              type="button"
+              onClick={handleCheckPromoCode}
+              disabled={checkingPromoCode || !promoCode.trim()}
+              className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              {checkingPromoCode ? "Проверка..." : "Применить"}
+            </button>
+          </div>
+          {promoCodeError && (
+            <p className="text-sm text-red-600 mt-1">{promoCodeError}</p>
+          )}
+          {appliedPromoCode && (
+            <p className="text-sm text-green-600 mt-1">
+              Промокод "{appliedPromoCode.code}" применен. Скидка: {appliedPromoCode.discount.toFixed(0)} ₽
+            </p>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.requiresConfirmation}
+              onChange={(e) => setFormData({ ...formData, requiresConfirmation: e.target.checked })}
+              className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black"
+            />
+            <span className="text-sm text-gray-700">
+              Связаться со мной для подтверждения заказа
+            </span>
+          </label>
         </div>
 
         <button
