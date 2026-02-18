@@ -309,7 +309,7 @@ sudo apt install nginx
 
 ### Конфигурация
 
-Создайте файл `/etc/nginx/sites-available/burker-watches`:
+Создайте файл `/etc/nginx/sites-available/burker-watches.ru`:
 
 ```nginx
 server {
@@ -320,7 +320,7 @@ server {
     # return 301 https://$server_name$request_uri;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3010;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -333,7 +333,7 @@ server {
 
     # Кеширование статических файлов
     location /_next/static {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3010;
         proxy_cache_valid 200 60m;
         add_header Cache-Control "public, immutable";
     }
@@ -345,7 +345,7 @@ server {
 
 ### Активация
 ```bash
-sudo ln -s /etc/nginx/sites-available/burker-watches /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/burker-watches.ru /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -402,7 +402,7 @@ bash check-env.sh
 
 3. Проверьте порт:
 ```bash
-sudo netstat -tlnp | grep :3000
+sudo netstat -tlnp | grep :3010
 ```
 
 ### Проблема: Ошибка сборки
