@@ -17,6 +17,7 @@ function mapProductFromDbRaw(dbProduct: any): Product {
     colors: JSON.parse(dbProduct.colors || "[]"),
     images: JSON.parse(dbProduct.images || "[]"),
     inStock: dbProduct.inStock,
+    soldOut: dbProduct.soldOut || false,
     disabled: dbProduct.disabled || false,
     variant: dbProduct.variant || undefined,
     rating: dbProduct.rating || undefined,

@@ -63,6 +63,7 @@ export async function importProducts(jsonData: any[]): Promise<ImportResult> {
           colors: productData.colors,
           images: productData.images,
           inStock: productData.inStock,
+          soldOut: productData.soldOut,
           variant: productData.variant,
           description: productData.description,
           specifications: productData.specifications,
@@ -95,6 +96,7 @@ export async function importProducts(jsonData: any[]): Promise<ImportResult> {
           colors: productData.colors,
           images: productData.images,
           inStock: productData.inStock,
+          soldOut: productData.soldOut,
           disabled: false, // По умолчанию новые товары активны
           variant: productData.variant,
           description: productData.description,

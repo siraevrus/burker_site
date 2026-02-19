@@ -15,6 +15,7 @@ export interface ProductData {
   colors: string; // JSON string
   images: string; // JSON string
   inStock: boolean;
+  soldOut: boolean; // Sold_out: 0 = распродан (false), 1 = в наличии (true)
   variant: string | null;
   description: string | null;
   specifications: string | null; // JSON string
@@ -176,6 +177,10 @@ export function transformJsonProduct(jsonProduct: any): ProductData {
     Array.isArray(jsonProduct.colors) &&
     jsonProduct.colors.some((color: any) => color?.available === true);
 
+  // Sold_out: 0 = распродан (soldOut = true), 1 = в наличии (soldOut = false)
+  // Если поле отсутствует, считаем товар в наличии (soldOut = false)
+  const soldOut = jsonProduct.Sold_out === 0 || jsonProduct.Sold_out === false;
+
   // Описание
   const description = jsonProduct.description?.trim() || null;
 
@@ -200,6 +205,7 @@ export function transformJsonProduct(jsonProduct: any): ProductData {
     colors,
     images,
     inStock,
+    soldOut,
     variant,
     description,
     specifications,

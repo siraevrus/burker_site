@@ -77,6 +77,9 @@ export default function ProductPageClient({
     .slice(0, 4);
 
   const handleAddToCart = () => {
+    if (product.soldOut) {
+      return; // Товар распродан, не добавляем в корзину
+    }
     const category = getCustomsCategory(product);
     if (getTotalQuantityByCategory(category) >= 3) {
       setCustomsHintProductId(product.id);
@@ -297,16 +300,27 @@ export default function ProductPageClient({
 
           {/* Кнопка добавления в корзину */}
           <div className="mb-6">
-            <button
-              onClick={handleAddToCart}
-              className="w-full bg-black text-white py-4 rounded-md hover:bg-gray-800 transition-colors font-semibold"
-            >
-              ДОБАВИТЬ В КОРЗИНУ
-            </button>
-            {customsHintProductId === product.id && (
-              <p className="text-amber-700 text-sm bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mt-2">
-                {CUSTOMS_HINT}
-              </p>
+            {product.soldOut ? (
+              <button
+                disabled
+                className="w-full bg-gray-400 text-white py-4 rounded-md cursor-not-allowed opacity-60 font-semibold"
+              >
+                Товар распродан
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={handleAddToCart}
+                  className="w-full bg-black text-white py-4 rounded-md hover:bg-gray-800 transition-colors font-semibold"
+                >
+                  ДОБАВИТЬ В КОРЗИНУ
+                </button>
+                {customsHintProductId === product.id && (
+                  <p className="text-amber-700 text-sm bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mt-2">
+                    {CUSTOMS_HINT}
+                  </p>
+                )}
+              </>
             )}
           </div>
 

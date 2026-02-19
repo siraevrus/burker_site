@@ -55,6 +55,9 @@ export const useStore = create<Store>()(
       .reduce((sum, item) => sum + item.quantity, 0);
   },
   addToCart: (item) => {
+    if (item.soldOut) {
+      return; // Товар распродан, не добавляем в корзину
+    }
     const category = getCustomsCategory(item);
     const currentCategoryTotal = get().getTotalQuantityByCategory(category);
     const canAdd = Math.min(item.quantity, MAX_QUANTITY_PER_CATEGORY - currentCategoryTotal);

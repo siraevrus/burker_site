@@ -24,6 +24,7 @@ model Product {
   colors          String   // JSON array as string: ["золото", "серебро"]
   images          String   // JSON array as string: ["/image1.jpg", "/image2.jpg"]
   inStock         Boolean  @default(true)
+  soldOut         Boolean  @default(false) // Товар распродан (Sold_out: 0 = распродан, 1 = в наличии)
   disabled        Boolean  @default(false) // Отключенный товар не отображается на сайте
   variant         String?
   rating          Float?
