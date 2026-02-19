@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Product } from "@/lib/types";
-import { useStore } from "@/lib/store";
+import { useStore, getCustomsCategory } from "@/lib/store";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
@@ -16,7 +16,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const addToCart = useStore((state) => state.addToCart);
-  const getTotalQuantityByProductId = useStore((state) => state.getTotalQuantityByProductId);
+  const getTotalQuantityByCategory = useStore((state) => state.getTotalQuantityByCategory);
   const [showCustomsHint, setShowCustomsHint] = useState(false);
 
   useEffect(() => {
@@ -26,7 +26,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   }, [showCustomsHint]);
 
   const handleAddToCart = () => {
-    if (getTotalQuantityByProductId(product.id) >= 3) {
+    const category = getCustomsCategory(product);
+    if (getTotalQuantityByCategory(category) >= 3) {
       setShowCustomsHint(true);
       return;
     }

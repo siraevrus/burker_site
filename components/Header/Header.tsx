@@ -90,6 +90,8 @@ export default function Header() {
     "Ruby",
   ];
 
+  const hasSaleProducts = products.some((p) => p.discount > 0);
+
   return (
     <header
       className={`sticky top-0 z-50 shadow-sm transition-all duration-300 ${
@@ -121,9 +123,11 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/sale" className="hover:text-gray-600">
-              SALE
-            </Link>
+            {hasSaleProducts && (
+              <Link href="/sale" className="hover:text-gray-600">
+                SALE
+              </Link>
+            )}
             <div
               className="relative"
               onMouseEnter={() => setIsWatchesOpen(true)}
@@ -143,7 +147,7 @@ export default function Header() {
                     <div className="container mx-auto">
                       <div className="grid grid-cols-[250px_1fr] gap-8">
                       {/* Левое меню - подменю */}
-                      <div>
+                      <div className="text-xl">
                         <Link
                           href="/collections/watches"
                           className="block py-2 hover:text-gray-600 transition-colors font-semibold"
@@ -242,7 +246,7 @@ export default function Header() {
                     <div className="container mx-auto">
                       <div className="grid grid-cols-[250px_1fr] gap-8">
                       {/* Левое меню - подменю */}
-                      <div>
+                      <div className="text-xl">
                         <Link
                           href="/collections/jewelry"
                           className="block py-2 hover:text-gray-600 transition-colors font-semibold"
@@ -439,13 +443,15 @@ export default function Header() {
         {/* Mobile menu */}
         {isMenuOpen && (
           <div className="md:hidden mt-4 pb-4">
-            <Link
-              href="/sale"
-              className="block py-2 hover:text-gray-600"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              SALE
-            </Link>
+            {hasSaleProducts && (
+              <Link
+                href="/sale"
+                className="block py-2 hover:text-gray-600"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                SALE
+              </Link>
+            )}
             <div className="py-2">
               <button
                 className="w-full text-left"

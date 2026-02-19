@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useStore } from "@/lib/store";
+import { useStore, getCustomsCategory } from "@/lib/store";
 import { calculateShipping } from "@/lib/shipping";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -15,14 +15,14 @@ export default function CartPage() {
   const removeFromCart = useStore((state) => state.removeFromCart);
   const updateQuantity = useStore((state) => state.updateQuantity);
   const getTotalPrice = useStore((state) => state.getTotalPrice);
-  const getTotalQuantityByProductId = useStore((state) => state.getTotalQuantityByProductId);
-  const [customsHintProductId, setCustomsHintProductId] = useState<string | null>(null);
+  const getTotalQuantityByCategory = useStore((state) => state.getTotalQuantityByCategory);
+  const [customsHintKey, setCustomsHintKey] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!customsHintProductId) return;
-    const t = setTimeout(() => setCustomsHintProductId(null), 4000);
+    if (!customsHintKey) return;
+    const t = setTimeout(() => setCustomsHintKey(null), 4000);
     return () => clearTimeout(t);
-  }, [customsHintProductId]);
+  }, [customsHintKey]);
 
   const totalPrice = getTotalPrice();
   const { totalWeight, totalCost: shippingCost } = calculateShipping(cart);
@@ -110,8 +110,9 @@ export default function CartPage() {
                         <span className="px-4 py-1">{item.quantity}</span>
                         <button
                           onClick={() => {
-                            if (getTotalQuantityByProductId(item.id) >= 3) {
-                              setCustomsHintProductId(item.id);
+                            const category = getCustomsCategory(item);
+                            if (getTotalQuantityByCategory(category) >= 3) {
+                              setCustomsHintKey(`${item.id}-${item.selectedColor}`);
                               return;
                             }
                             updateQuantity(item.id, item.quantity + 1, item.selectedColor);
@@ -128,7 +129,7 @@ export default function CartPage() {
                         Удалить
                       </button>
                     </div>
-                    {customsHintProductId === item.id && (
+                    {customsHintKey === `${item.id}-${item.selectedColor}` && (
                       <p className="text-amber-700 text-sm bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
                         {CUSTOMS_HINT}
                       </p>

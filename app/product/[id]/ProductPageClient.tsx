@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/lib/types";
-import { useStore } from "@/lib/store";
+import { useStore, getCustomsCategory } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "@/components/ProductCard/ProductCard";
 
@@ -34,7 +34,7 @@ export default function ProductPageClient({
   });
 
   const addToCart = useStore((state) => state.addToCart);
-  const getTotalQuantityByProductId = useStore((state) => state.getTotalQuantityByProductId);
+  const getTotalQuantityByCategory = useStore((state) => state.getTotalQuantityByCategory);
   const [customsHintProductId, setCustomsHintProductId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -77,7 +77,8 @@ export default function ProductPageClient({
     .slice(0, 4);
 
   const handleAddToCart = () => {
-    if (getTotalQuantityByProductId(product.id) >= 3) {
+    const category = getCustomsCategory(product);
+    if (getTotalQuantityByCategory(category) >= 3) {
       setCustomsHintProductId(product.id);
       return;
     }

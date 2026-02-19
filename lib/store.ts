@@ -2,8 +2,16 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { CartItem, Collection, Color, User } from "./types";
 
-/** По таможенным правилам — не более 3 вещей одного типа в один заказ */
-export const MAX_QUANTITY_PER_PRODUCT = 3;
+/** По таможенным правилам — не более 3 вещей одной категории в один заказ (часы, браслеты, ожерелье, серьги, кольца) */
+export const MAX_QUANTITY_PER_CATEGORY = 3;
+
+/** Категория для таможенного лимита: часы — одна категория, украшения — по subcategory */
+export function getCustomsCategory(item: { collection: string; subcategory?: string | null }): string {
+  if (item.collection === "Украшения") {
+    return item.subcategory || "Украшения";
+  }
+  return "watches";
+}
 
 interface Store {
   cart: CartItem[];
@@ -16,6 +24,7 @@ interface Store {
   removeFromCart: (id: string, selectedColor?: string) => void;
   updateQuantity: (id: string, quantity: number, selectedColor?: string) => void;
   getTotalQuantityByProductId: (id: string) => number;
+  getTotalQuantityByCategory: (category: string) => number;
   setCollectionFilter: (collection: Collection) => void;
   setColorFilter: (color: Color) => void;
   getTotalPrice: () => number;
@@ -40,9 +49,15 @@ export const useStore = create<Store>()(
       .filter((item) => item.id === id)
       .reduce((sum, item) => sum + item.quantity, 0);
   },
+  getTotalQuantityByCategory: (category) => {
+    return get().cart
+      .filter((item) => getCustomsCategory(item) === category)
+      .reduce((sum, item) => sum + item.quantity, 0);
+  },
   addToCart: (item) => {
-    const totalForProduct = get().getTotalQuantityByProductId(item.id);
-    const canAdd = Math.min(item.quantity, MAX_QUANTITY_PER_PRODUCT - totalForProduct);
+    const category = getCustomsCategory(item);
+    const currentCategoryTotal = get().getTotalQuantityByCategory(category);
+    const canAdd = Math.min(item.quantity, MAX_QUANTITY_PER_CATEGORY - currentCategoryTotal);
     if (canAdd <= 0) return;
 
     const existingItem = get().cart.find(
@@ -50,7 +65,7 @@ export const useStore = create<Store>()(
     );
 
     if (existingItem) {
-      const newQty = Math.min(existingItem.quantity + canAdd, MAX_QUANTITY_PER_PRODUCT);
+      const newQty = Math.min(existingItem.quantity + canAdd, MAX_QUANTITY_PER_CATEGORY);
       set({
         cart: get().cart.map((cartItem) =>
           cartItem.id === item.id && cartItem.selectedColor === item.selectedColor
@@ -81,15 +96,17 @@ export const useStore = create<Store>()(
         : cart.filter((item) => item.id === id);
 
     if (targetItems.length === 0) return;
-    const currentQty = targetItems[0].quantity;
-    const otherQty = get().getTotalQuantityByProductId(id) - currentQty;
+    const targetItem = targetItems[0];
+    const currentQty = targetItem.quantity;
+    const category = getCustomsCategory(targetItem);
+    const otherCategoryQty = get().getTotalQuantityByCategory(category) - currentQty;
 
     if (quantity <= 0) {
       get().removeFromCart(id, selectedColor);
       return;
     }
 
-    const cappedQty = Math.min(quantity, MAX_QUANTITY_PER_PRODUCT - otherQty);
+    const cappedQty = Math.min(quantity, MAX_QUANTITY_PER_CATEGORY - otherCategoryQty);
     if (cappedQty <= 0) return;
 
     set({

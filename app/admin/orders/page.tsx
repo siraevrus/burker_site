@@ -34,6 +34,8 @@ interface Order {
   passportIssueDate?: string | null;
   passportIssuedBy?: string | null;
   requiresConfirmation?: boolean;
+  promoCode?: string | null;
+  promoDiscount?: number | null;
   user: {
     id: string;
     email: string;
@@ -48,6 +50,8 @@ function AdminOrdersPageContent() {
   const [loading, setLoading] = useState(true);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState(""); // значение в инпуте (для debounce)
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 50,
@@ -56,8 +60,13 @@ function AdminOrdersPageContent() {
   });
 
   useEffect(() => {
+    const t = setTimeout(() => setSearchQuery(searchInput.trim()), 400);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  useEffect(() => {
     loadOrders();
-  }, [statusFilter, pagination.page]);
+  }, [statusFilter, searchQuery, pagination.page]);
 
   // Автоматически раскрываем заказ, если передан orderId в URL
   useEffect(() => {
@@ -80,9 +89,13 @@ function AdminOrdersPageContent() {
 
   const loadOrders = async () => {
     try {
-      const response = await fetch(
-        `/api/admin/orders?status=${statusFilter}&page=${pagination.page}&limit=${pagination.limit}`
-      );
+      const params = new URLSearchParams({
+        status: statusFilter,
+        page: String(pagination.page),
+        limit: String(pagination.limit),
+      });
+      if (searchQuery) params.set("search", searchQuery);
+      const response = await fetch(`/api/admin/orders?${params}`);
       if (response.ok) {
         const data = await response.json();
         setOrders(data.orders || []);
@@ -153,14 +166,24 @@ function AdminOrdersPageContent() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <h1 className="text-3xl font-bold">Заказы</h1>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            type="search"
+            placeholder="ФИО, телефон, номер заказа..."
+            value={searchInput}
+            onChange={(e) => {
+              setSearchInput(e.target.value);
+              setPagination((p) => ({ ...p, page: 1 }));
+            }}
+            className="px-3 py-2 border border-gray-300 rounded-md w-full sm:w-64 text-sm"
+          />
           <select
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
-              setPagination({ ...pagination, page: 1 });
+              setPagination((p) => ({ ...p, page: 1 }));
             }}
             className="px-4 py-2 border border-gray-300 rounded-md"
           >
@@ -379,6 +402,12 @@ function AdminOrdersPageContent() {
                         )}
                       </span>
                     </div>
+                    {order.promoCode && (order.promoDiscount ?? 0) > 0 && (
+                      <div className="flex justify-between mb-2 text-green-600">
+                        <span>Промокод {order.promoCode}:</span>
+                        <span className="font-medium">−{(order.promoDiscount ?? 0).toFixed(0)} ₽</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-xl font-bold">
                       <span>Итого:</span>
                       <span>{order.totalAmount.toFixed(0)} ₽</span>

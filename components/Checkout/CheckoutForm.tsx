@@ -35,6 +35,16 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
   const getTotalPrice = useStore((state) => state.getTotalPrice);
   const clearCart = useStore((state) => state.clearCart);
 
+  /** Только буквы (кириллица, латиница), пробел и дефис — для ФИО и «Кем выдан» */
+  const lettersOnly = (value: string): string =>
+    value.replace(/[^a-zA-Zа-яА-ЯёЁ\s-]/g, "");
+
+  /** Только цифры, опционально ограничение длины */
+  const digitsOnly = (value: string, maxLen?: number): string => {
+    const digits = value.replace(/\D/g, "");
+    return maxLen != null ? digits.slice(0, maxLen) : digits;
+  };
+
   const formatPhoneNumber = (value: string): string => {
     // Удаляем все нецифровые символы
     const numbers = value.replace(/\D/g, "");
@@ -167,6 +177,12 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
     }
   };
 
+  const handleCancelPromoCode = () => {
+    setAppliedPromoCode(null);
+    setPromoCode("");
+    setPromoCodeError("");
+  };
+
   const totalPrice = getTotalPrice();
   const { totalWeight, totalCost: shippingCost } = calculateShipping(cart);
   const promoDiscount = appliedPromoCode ? appliedPromoCode.discount : 0;
@@ -192,6 +208,13 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
       !formData.passportIssuedBy
     ) {
       setError("Заполните все обязательные поля");
+      setLoading(false);
+      return;
+    }
+
+    // ИНН — ровно 12 цифр
+    if (!/^\d{12}$/.test(formData.inn)) {
+      setError("ИНН должен содержать ровно 12 цифр");
       setLoading(false);
       return;
     }
@@ -301,7 +324,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
             id="firstName"
             type="text"
             value={formData.firstName}
-            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, firstName: lettersOnly(e.target.value) })}
             className="w-full border border-gray-300 rounded-md px-3 py-2"
             required
           />
@@ -315,7 +338,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
             id="lastName"
             type="text"
             value={formData.lastName}
-            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, lastName: lettersOnly(e.target.value) })}
             className="w-full border border-gray-300 rounded-md px-3 py-2"
             required
           />
@@ -329,7 +352,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
             id="middleName"
             type="text"
             value={formData.middleName}
-            onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, middleName: lettersOnly(e.target.value) })}
             className="w-full border border-gray-300 rounded-md px-3 py-2"
             required
           />
@@ -416,11 +439,14 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
               <input
                 id="inn"
                 type="text"
+                inputMode="numeric"
+                autoComplete="off"
                 value={formData.inn}
-                onChange={(e) => setFormData({ ...formData, inn: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, inn: digitsOnly(e.target.value, 12) })}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
                 required
-                placeholder="Введите ИНН"
+                placeholder="12 цифр"
+                maxLength={12}
               />
             </div>
 
@@ -431,11 +457,13 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
               <input
                 id="passportSeries"
                 type="text"
+                inputMode="numeric"
+                autoComplete="off"
                 value={formData.passportSeries}
-                onChange={(e) => setFormData({ ...formData, passportSeries: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, passportSeries: digitsOnly(e.target.value, 4) })}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
                 required
-                placeholder="Серия паспорта"
+                placeholder="4 цифры"
                 maxLength={4}
               />
             </div>
@@ -447,11 +475,13 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
               <input
                 id="passportNumber"
                 type="text"
+                inputMode="numeric"
+                autoComplete="off"
                 value={formData.passportNumber}
-                onChange={(e) => setFormData({ ...formData, passportNumber: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, passportNumber: digitsOnly(e.target.value, 6) })}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
                 required
-                placeholder="Номер паспорта"
+                placeholder="6 цифр"
                 maxLength={6}
               />
             </div>
@@ -478,10 +508,10 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
                 id="passportIssuedBy"
                 type="text"
                 value={formData.passportIssuedBy}
-                onChange={(e) => setFormData({ ...formData, passportIssuedBy: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, passportIssuedBy: lettersOnly(e.target.value) })}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
                 required
-                placeholder="Например: УФМС России по г. Москве"
+                placeholder="Только буквы, например: УФМС России по г Москве"
               />
             </div>
           </div>
@@ -521,21 +551,33 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
               type="text"
               value={promoCode}
               onChange={(e) => {
-                setPromoCode(e.target.value.toUpperCase());
-                setPromoCodeError("");
-                setAppliedPromoCode(null);
+                if (!appliedPromoCode) {
+                  setPromoCode(e.target.value.toUpperCase());
+                  setPromoCodeError("");
+                }
               }}
-              placeholder="Введите промокод"
-              className="flex-1 border border-gray-300 rounded-md px-3 py-2"
+              placeholder={appliedPromoCode ? appliedPromoCode.code : "Введите промокод"}
+              className="flex-1 border border-gray-300 rounded-md px-3 py-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              disabled={!!appliedPromoCode}
             />
-            <button
-              type="button"
-              onClick={handleCheckPromoCode}
-              disabled={checkingPromoCode || !promoCode.trim()}
-              className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-            >
-              {checkingPromoCode ? "Проверка..." : "Применить"}
-            </button>
+            {appliedPromoCode ? (
+              <button
+                type="button"
+                onClick={handleCancelPromoCode}
+                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 whitespace-nowrap"
+              >
+                Отмена
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleCheckPromoCode}
+                disabled={checkingPromoCode || !promoCode.trim()}
+                className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {checkingPromoCode ? "Проверка..." : "Применить"}
+              </button>
+            )}
           </div>
           {promoCodeError && (
             <p className="text-sm text-red-600 mt-1">{promoCodeError}</p>

@@ -99,13 +99,13 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                       sizes="192px"
                     />
                   </div>
-                  <div className="flex-1 min-w-0 flex justify-between items-start">
+                  <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:justify-between sm:items-start">
                     <div className="min-w-0 flex-1">
                       <p className="text-[16.8px] font-medium truncate">{item.name}</p>
                       <p className="text-[14.4px] text-gray-600">Цвет: {item.selectedColor}</p>
                       <p className="text-[14.4px] text-gray-600">Кол-во: {item.quantity}</p>
                     </div>
-                    <p className="text-[16.8px] font-semibold ml-3 flex-shrink-0">
+                    <p className="text-[16.8px] font-semibold mt-1 sm:mt-0 sm:ml-3 flex-shrink-0">
                       {(item.price * item.quantity).toFixed(0)} ₽
                     </p>
                   </div>
