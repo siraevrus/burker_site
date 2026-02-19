@@ -60,13 +60,29 @@ export async function getAllProducts(): Promise<Product[]> {
 
 // Получить все товары для админ-панели (включая отключенные)
 export async function getAllProductsForAdmin(): Promise<Product[]> {
-  const [dbProducts, rates] = await Promise.all([
-    prisma.product.findMany({
+  try {
+    const productsPromise = prisma.product.findMany({
       orderBy: { createdAt: "desc" },
-    }),
-    getExchangeRates(),
-  ]);
-  return dbProducts.map((p) => mapProductFromDbWithRates(p, rates));
+    });
+    
+    const ratesPromise = getExchangeRates();
+    
+    // Таймаут для запроса продуктов - 8 секунд
+    const timeoutPromise = new Promise<Product[]>((_, reject) => 
+      setTimeout(() => reject(new Error("Products fetch timeout")), 8000)
+    );
+    
+    const [dbProducts, rates] = await Promise.race([
+      Promise.all([productsPromise, ratesPromise]),
+      timeoutPromise.then(() => { throw new Error("Timeout"); }),
+    ]) as [any[], any];
+    
+    return dbProducts.map((p) => mapProductFromDbWithRates(p, rates));
+  } catch (error) {
+    console.error("[getAllProductsForAdmin] Error:", error);
+    // Возвращаем пустой массив в случае ошибки
+    return [];
+  }
 }
 
 // Получить товар по ID (bodyId из URL)

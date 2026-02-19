@@ -11,20 +11,49 @@ export default function AdminPage() {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    let cancelled = false;
     const loadProducts = async () => {
       try {
-        const response = await fetch("/api/admin/products");
-        if (response.ok) {
-          const data = await response.json();
-          setProductList(data.products || []);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // Таймаут 10 секунд
+        
+        const response = await fetch("/api/admin/products", {
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!cancelled) {
+          if (response.ok) {
+            const data = await response.json();
+            setProductList(data.products || []);
+          } else {
+            console.error("Error loading products:", response.status, response.statusText);
+            const errorData = await response.json().catch(() => ({}));
+            console.error("Error details:", errorData);
+            // Устанавливаем пустой список, чтобы страница загрузилась
+            setProductList([]);
+          }
         }
-      } catch (error) {
-        console.error("Error loading products:", error);
+      } catch (error: any) {
+        if (!cancelled) {
+          if (error.name === 'AbortError') {
+            console.error("Request timeout");
+          } else {
+            console.error("Error loading products:", error);
+          }
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     };
     loadProducts();
+    
+    return () => {
+      cancelled = true;
+    };
   }, []);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);

@@ -27,9 +27,16 @@ export async function getExchangeRates(): Promise<ExchangeRates> {
   }
 
   try {
-    const rates = await prisma.exchangeRate.findUnique({
+    // Добавляем таймаут для запроса к БД
+    const ratesPromise = prisma.exchangeRate.findUnique({
       where: { id: "current" },
     });
+    
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Timeout")), 3000)
+    );
+    
+    const rates = await Promise.race([ratesPromise, timeoutPromise]) as any;
 
     if (rates) {
       cachedRates = {
@@ -42,6 +49,10 @@ export async function getExchangeRates(): Promise<ExchangeRates> {
     }
   } catch (error) {
     console.error("Error fetching exchange rates:", error);
+    // Используем кэш, если он есть, даже если истек
+    if (cachedRates) {
+      return cachedRates;
+    }
   }
 
   // Возвращаем дефолтные значения

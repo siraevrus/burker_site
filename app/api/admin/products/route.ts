@@ -4,12 +4,14 @@ import { prisma } from "@/lib/db";
 
 export async function GET() {
   try {
+    console.log("[GET /api/admin/products] Starting fetch...");
     const products = await getAllProductsForAdmin();
+    console.log("[GET /api/admin/products] Products fetched:", products.length);
     return NextResponse.json({ products });
   } catch (error: any) {
-    console.error("Error fetching products for admin:", error);
+    console.error("[GET /api/admin/products] Error:", error);
     return NextResponse.json(
-      { error: error.message || "Ошибка при получении товаров" },
+      { error: error.message || "Ошибка при получении товаров", products: [] },
       { status: 500 }
     );
   }

@@ -2,7 +2,18 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Page } from "@/lib/types";
+
+// Динамический импорт TinyMCE (только на клиенте)
+const Editor = dynamic(() => import("@tinymce/tinymce-react").then((mod) => mod.Editor), {
+  ssr: false,
+  loading: () => (
+    <div className="h-96 border border-gray-300 rounded-md flex items-center justify-center bg-white">
+      <div className="text-gray-600">Загрузка редактора...</div>
+    </div>
+  ),
+});
 
 export default function AdminPages() {
   const [pages, setPages] = useState<Page[]>([]);
@@ -246,7 +257,7 @@ function PageForm({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+    <div className="bg-white rounded-lg shadow-sm p-6 mb-8 relative z-10">
       <h2 className="text-2xl font-bold mb-6">
         {isNew ? "Добавить страницу" : "Редактировать страницу"}
       </h2>
@@ -314,16 +325,33 @@ function PageForm({
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Содержимое страницы
           </label>
-          <textarea
-            value={formData.content}
-            onChange={(e) =>
-              setFormData({ ...formData, content: e.target.value })
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            rows={10}
-            required
-            placeholder="Введите HTML или текст содержимого страницы..."
-          />
+          <div className="border border-gray-300 rounded-md relative z-0">
+            <Editor
+              tinymceScriptSrc="/tinymce/tinymce.min.js"
+              value={formData.content}
+              onEditorChange={(content) =>
+                setFormData({ ...formData, content })
+              }
+              init={{
+                license_key: "gpl",
+                height: 500,
+                menubar: true,
+                plugins: [
+                  "advlist", "autolink", "lists", "link", "image", "charmap", "preview",
+                  "anchor", "searchreplace", "visualblocks", "code", "fullscreen",
+                  "insertdatetime", "media", "table", "code", "help", "wordcount"
+                ],
+                toolbar: "undo redo | blocks | " +
+                  "bold italic forecolor | alignleft aligncenter " +
+                  "alignright alignjustify | bullist numlist outdent indent | " +
+                  "removeformat | link image | code | help",
+                content_style: "body { font-family: Arial, sans-serif; font-size: 14px; }",
+                branding: false,
+                promotion: false,
+                resize: true,
+              }}
+            />
+          </div>
         </div>
         <div>
           <label className="flex items-center">

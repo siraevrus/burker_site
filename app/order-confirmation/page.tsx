@@ -219,7 +219,7 @@ function OrderConfirmationContent() {
               </div>
             ))}
           </div>
-          <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="mt-4 pt-4 border-t border-gray-200 bg-white">
             <div className="flex justify-between mb-2">
               <span>Доставка:</span>
               <span>
