@@ -3,28 +3,23 @@ import { Order, OrderItem } from "./types";
 
 /**
  * Генерирует читаемый номер заказа в формате:
- * burker_YYYYMMDDHHmmss_userId_orderId_XXX
+ * BRK_ДДММГГЧЧММ_XXXXX
  * 
- * @param userId - ID пользователя или null для гостевых заказов
- * @param orderId - ID заказа (cuid)
  * @param orderCount - порядковый номер заказа в системе (начиная с 1)
- * @returns номер заказа в формате burker_YYYYMMDDHHmmss_userId_orderId_XXX
+ * @returns номер заказа в формате BRK_ДДММГГЧЧММ_00001
  */
-function generateOrderNumber(userId: string | null | undefined, orderId: string, orderCount: number): string {
+function generateOrderNumber(orderCount: number): string {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = String(now.getFullYear()).slice(-2);
   const hours = String(now.getHours()).padStart(2, "0");
   const minutes = String(now.getMinutes()).padStart(2, "0");
-  const seconds = String(now.getSeconds()).padStart(2, "0");
   
-  const dateTime = `${year}${month}${day}${hours}${minutes}${seconds}`;
-  const userIdPart = userId || "guest";
-  const orderIdPart = orderId.slice(0, 8); // Первые 8 символов cuid
-  const sequentialNumber = String(orderCount).padStart(3, "0"); // 001, 002, 003...
+  const dateTime = `${day}${month}${year}${hours}${minutes}`;
+  const sequentialNumber = String(orderCount).padStart(5, "0");
   
-  return `burker_${dateTime}_${userIdPart}_${orderIdPart}_${sequentialNumber}`;
+  return `BRK_${dateTime}_${sequentialNumber}`;
 }
 
 // Преобразование данных из БД в формат Order
@@ -59,6 +54,7 @@ function mapOrderFromDb(dbOrder: any): Order {
       productId: item.productId,
       productName: item.productName,
       productPrice: item.productPrice,
+      originalPriceEur: item.originalPriceEur ?? undefined,
       selectedColor: item.selectedColor,
       quantity: item.quantity,
     })) || [],
@@ -132,6 +128,7 @@ export async function createOrder(orderData: {
     productId: string;
     productName: string;
     productPrice: number;
+    originalPriceEur?: number | null;
     selectedColor: string;
     quantity: number;
   }>;
@@ -167,6 +164,7 @@ export async function createOrder(orderData: {
         productId: item.productId,
         productName: item.productName,
         productPrice: item.productPrice,
+        originalPriceEur: item.originalPriceEur ?? null,
         selectedColor: item.selectedColor,
         quantity: item.quantity,
       })),
@@ -188,10 +186,9 @@ export async function createOrder(orderData: {
 
   // Получаем общее количество заказов в системе для порядкового номера
   const orderCount = await prisma.order.count();
-  const sequentialNumber = orderCount;
   
-  // Генерируем номер заказа с реальным orderId
-  const orderNumber = generateOrderNumber(order.userId, order.id, sequentialNumber);
+  // Генерируем номер заказа
+  const orderNumber = generateOrderNumber(orderCount);
   
   // Обновляем заказ с номером
   const updatedOrder = await prisma.order.update({

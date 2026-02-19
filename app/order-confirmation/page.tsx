@@ -5,11 +5,17 @@ import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { Order } from "@/lib/types";
 
+interface ExchangeRates {
+  eurRate: number;
+  rubRate: number;
+}
+
 function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("id");
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [rates, setRates] = useState<ExchangeRates | null>(null);
 
   const statusLabels: Record<string, string> = {
     pending: "В обработке",
@@ -21,11 +27,19 @@ function OrderConfirmationContent() {
 
   useEffect(() => {
     if (orderId) {
-      fetch(`/api/orders/${orderId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.order) {
-            setOrder(data.order);
+      Promise.all([
+        fetch(`/api/orders/${orderId}`).then((res) => res.json()),
+        fetch("/api/exchange-rates").then((res) => res.json()),
+      ])
+        .then(([orderData, ratesData]) => {
+          if (orderData.order) {
+            setOrder(orderData.order);
+          }
+          if (ratesData.eurRate && ratesData.rubRate) {
+            setRates({
+              eurRate: ratesData.eurRate,
+              rubRate: ratesData.rubRate,
+            });
           }
           setLoading(false);
         })
@@ -34,6 +48,27 @@ function OrderConfirmationContent() {
       setLoading(false);
     }
   }, [orderId]);
+
+  const calculateCommission = () => {
+    if (!order || !rates) return null;
+    
+    let totalCommission = 0;
+    let hasOriginalPrices = false;
+    
+    for (const item of order.items) {
+      if (item.originalPriceEur) {
+        hasOriginalPrices = true;
+        const originalPriceInUsd = item.originalPriceEur / rates.eurRate;
+        const originalPriceInRub = originalPriceInUsd * rates.rubRate;
+        const commission = (item.productPrice - originalPriceInRub) * item.quantity;
+        totalCommission += commission;
+      }
+    }
+    
+    return hasOriginalPrices ? totalCommission : null;
+  };
+
+  const commission = calculateCommission();
 
   if (loading) {
     return (
@@ -201,6 +236,16 @@ function OrderConfirmationContent() {
             </div>
           </div>
         </div>
+
+        {commission !== null && (
+          <div className="bg-amber-50 rounded-lg shadow-sm border border-amber-200 p-6 mb-6">
+            <h2 className="text-xl font-bold mb-4 text-amber-800">Вознаграждение комиссионера</h2>
+            <div className="flex justify-between text-lg">
+              <span className="text-amber-700">Сумма:</span>
+              <span className="font-bold text-amber-900">{commission.toFixed(0)} ₽</span>
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-4 justify-center">
           <Link

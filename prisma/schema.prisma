@@ -131,15 +131,16 @@ model Order {
 }
 
 model OrderItem {
-  id            String   @id @default(cuid())
-  orderId       String
-  productId     String
-  productName   String   // snapshot на момент заказа
-  productPrice  Float    // snapshot цены
-  selectedColor String
-  quantity      Int
+  id               String   @id @default(cuid())
+  orderId          String
+  productId        String
+  productName      String   // snapshot на момент заказа
+  productPrice     Float    // snapshot цены в RUB
+  originalPriceEur Float?   // оригинальная цена в EUR (для расчета вознаграждения комиссионера)
+  selectedColor    String
+  quantity         Int
   
-  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order            Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 model ExchangeRate {

@@ -62,6 +62,16 @@ export async function POST(request: NextRequest) {
       0
     );
 
+    // Получаем оригинальные цены в EUR из базы данных для расчета вознаграждения комиссионера
+    const productIds = items.map((item: any) => item.productId);
+    const productsFromDb = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, originalPrice: true },
+    });
+    const productPricesEur = new Map(
+      productsFromDb.map((p) => [p.id, p.originalPrice])
+    );
+
     // Расчет стоимости доставки на основе веса и категории товаров
     // Преобразуем items в формат CartItem для функции calculateShipping
     const cartItems = items.map((item: any) => ({
@@ -113,6 +123,7 @@ export async function POST(request: NextRequest) {
         productId: item.productId,
         productName: item.productName,
         productPrice: item.productPrice,
+        originalPriceEur: productPricesEur.get(item.productId) || null,
         selectedColor: item.selectedColor,
         quantity: item.quantity,
       })),

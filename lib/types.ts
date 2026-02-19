@@ -66,6 +66,7 @@ export interface OrderItem {
   productId: string;
   productName: string;
   productPrice: number;
+  originalPriceEur?: number;
   selectedColor: string;
   quantity: number;
 }
