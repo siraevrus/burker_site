@@ -125,7 +125,7 @@ export default function SalePageClient({ saleProducts }: SalePageClientProps) {
           <p className="text-gray-600 text-lg">Товары со скидкой не найдены.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {sortedProducts.map((product, index) => (
             <motion.div
               key={product.id}

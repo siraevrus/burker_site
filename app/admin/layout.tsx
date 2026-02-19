@@ -146,6 +146,16 @@ export default function AdminLayout({
                 >
                   Подписчики
                 </a>
+                <a
+                  href="/admin/feedback"
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    pathname === "/admin/feedback"
+                      ? "bg-gray-600 text-white"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  ФОС
+                </a>
               </div>
             </div>
             <div className="flex items-center gap-4">

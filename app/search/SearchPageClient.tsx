@@ -28,7 +28,7 @@ export default function SearchPageClient({
 
       {query.trim() ? (
         searchResults.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {searchResults.map((product, index) => (
               <motion.div
                 key={product.id}

@@ -24,7 +24,10 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
       {/* Бестселлеры */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-xl mb-8 text-center uppercase">Бестселлеры</h2>
+          <h2 className="text-xl mb-4 text-center uppercase">Бестселлеры</h2>
+          <div className="flex justify-center mb-8">
+            <div style={{ width: 35, height: 3, backgroundColor: "#CAC8C6" }} />
+          </div>
           <div className="overflow-x-auto pb-4 scrollbar-hide">
             <div className="flex gap-6">
               {bestsellers.map((product, index) => (
@@ -33,7 +36,7 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1, duration: 0.3 }}
-                  className="flex-shrink-0 w-72"
+                  className="flex-shrink-0 w-64"
                 >
                   <ProductCard product={product} />
                 </motion.div>
@@ -49,6 +52,9 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
           <h2 className="text-xl mb-4 text-center uppercase">
             ПОЗНАКОМЬТЕСЬ С НАШЕЙ КОЛЛЕКЦИЕЙ ЧАСОВ
           </h2>
+          <div className="flex justify-center mb-8">
+            <div style={{ width: 35, height: 3, backgroundColor: "#CAC8C6" }} />
+          </div>
           {/* Brands list */}
           <div className="flex justify-center gap-4 mb-8 flex-wrap">
             {brands.map((brand) => (
@@ -66,7 +72,7 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
             ))}
           </div>
           {/* Products from active brand */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
             {products
               .filter((p) => p.collection === activeBrand && p.collection !== "Украшения")
               .slice(0, 4)
@@ -88,7 +94,7 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
       <section className="py-16" style={{ backgroundColor: "#FCFAF8" }}>
         <div className="container mx-auto px-4">
           <h2 
-            className="mb-6 text-center"
+            className="mb-4 text-center"
             style={{
               fontFamily: 'Geist, "Geist Fallback", -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
               fontSize: "20px",
@@ -97,6 +103,9 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
               color: "rgb(23, 23, 23)",
             }}
           >УКРАШЕНИЯ</h2>
+          <div className="flex justify-center mb-6">
+            <div style={{ width: 35, height: 3, backgroundColor: "#CAC8C6" }} />
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {products
               .filter((p) => p.collection === "Украшения")

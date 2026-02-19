@@ -78,19 +78,21 @@ export default function Footer() {
           {/* Customer Service */}
           <div>
             <h3 className="font-bold mb-4">Обслуживание клиентов</h3>
-            {customerServicePages.length > 0 ? (
-              <ul className="space-y-2 text-sm">
-                {customerServicePages.map((page) => (
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/contact" className="hover:text-gray-600">
+                  Форма обратной связи
+                </Link>
+              </li>
+              {customerServicePages.length > 0 &&
+                customerServicePages.map((page) => (
                   <li key={page.id}>
                     <Link href={`/${page.slug}`} className="hover:text-gray-600">
                       {page.title}
                     </Link>
                   </li>
                 ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-gray-500">Нет опубликованных страниц</p>
-            )}
+            </ul>
           </div>
 
           {/* Policies */}
@@ -155,7 +157,7 @@ export default function Footer() {
             </h3>
             <p className="text-sm mb-4">
               Подпишитесь на нашу рассылку, чтобы первыми получать новости о
-              скидках, акциях и специальных предложениях MiraShop | Burker.
+              скидках, акциях и специальных предложениях Mira Brands | Burker.
             </p>
             {newsletterSubmitted && (
               <p className="text-green-600 text-xs mb-2">Вы успешно подписались!</p>
@@ -188,7 +190,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-200 text-center text-sm text-gray-600">
-          <p>© 2026 MiraShop | Burker</p>
+          <p>© 2026 Mira Brands | Burker</p>
         </div>
       </div>
     </footer>

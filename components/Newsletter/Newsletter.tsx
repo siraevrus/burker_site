@@ -48,7 +48,7 @@ export default function Newsletter() {
           </h2>
           <p className="text-gray-600 mb-6">
             Подпишитесь на нашу рассылку, чтобы первыми получать новости о
-            скидках, акциях и специальных предложениях MiraShop | Burker.
+            скидках, акциях и специальных предложениях Mira Brands | Burker.
           </p>
           {submitted && (
             <p className="text-green-600 mb-4">Вы успешно подписались на рассылку!</p>

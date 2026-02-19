@@ -43,8 +43,8 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <motion.div
-      className="group relative rounded-lg overflow-hidden transition-all duration-300"
-      whileHover={{ y: -8, scale: 1.02 }}
+      className="group relative rounded-lg overflow-hidden transition-all duration-300 w-[90%] mx-auto"
+      whileHover={{ y: -6, scale: 1.02 }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -106,28 +106,28 @@ export default function ProductCard({ product }: ProductCardProps) {
       </div>
 
       {/* Product Info */}
-      <div className="p-5">
+      <div className="p-4">
         <Link href={`/product/${product.bodyId || product.id}`}>
-          <h3 className="font-semibold text-base mb-3 text-gray-900 line-clamp-2 text-center hover:text-gray-600 transition-colors">
+          <h3 className="font-semibold text-sm mb-2 text-gray-900 line-clamp-2 text-center hover:text-gray-600 transition-colors">
             {product.name}
           </h3>
         </Link>
         
         {/* Price */}
-        <div className="flex items-center justify-center gap-3 mb-4">
+        <div className="flex items-center justify-center gap-2 mb-3">
           <span
             style={{
               fontFamily: '"Open Sans", sans-serif',
-              fontSize: "12.75px",
+              fontSize: "11.5px",
               fontWeight: 600,
-              lineHeight: "20.4px",
+              lineHeight: "18px",
               color: "rgb(162, 60, 66)",
             }}
           >
             {product.price.toFixed(0)} ₽
           </span>
           {product.originalPrice > product.price && (
-            <span className="text-sm text-gray-500 line-through">
+            <span className="text-xs text-gray-500 line-through">
               {product.originalPrice.toFixed(0)} ₽
             </span>
           )}

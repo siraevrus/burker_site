@@ -1,6 +1,6 @@
-# MiraShop | Burker - Интернет-магазин часов и украшений
+# Mira Brands | Burker - Интернет-магазин часов и украшений
 
-Воссоздание фронтенда интернет-магазина MiraShop | Burker на Next.js с React и TypeScript.
+Воссоздание фронтенда интернет-магазина Mira Brands | Burker на Next.js с React и TypeScript.
 
 ## Технологический стек
 

@@ -50,7 +50,7 @@ export default function NotFoundClient({ bestsellers }: NotFoundClientProps) {
         <div className="mb-8">
           <h2 className="text-xl text-center uppercase">Бестселлеры</h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {bestsellers.map((product, index) => (
             <motion.div
               key={product.id}

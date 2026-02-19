@@ -1,4 +1,4 @@
-# Инструкция по сборке и деплою проекта MiraShop | Burker
+# Инструкция по сборке и деплою проекта Mira Brands | Burker
 
 ## Содержание
 1. [Локальная сборка и запуск](#локальная-сборка-и-запуск)
@@ -233,7 +233,7 @@ CRON_SECRET="ваш-секретный-ключ-для-безопасности"
 MAILOPOST_API_URL="https://api.mailopost.ru/v1"
 MAILOPOST_API_TOKEN="ваш_api_token"
 MAILOPOST_FROM_EMAIL="noreply@burker-watches.ru"
-MAILOPOST_FROM_NAME="MiraShop | Burker"
+MAILOPOST_FROM_NAME="Mira Brands | Burker"
 ADMIN_EMAIL="info@kondratov.online"
 ```
 

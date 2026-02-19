@@ -30,7 +30,7 @@ export async function sendVerificationCode(
       <p>Код действителен в течение 15 минут.</p>
       <p>Если вы не регистрировались на нашем сайте, просто проигнорируйте это письмо.</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="color: #999; font-size: 12px;">MiraShop | Burker - Официальный магазин</p>
+          <p style="color: #999; font-size: 12px;">Mira Brands | Burker - Официальный магазин</p>
     </div>
   `;
 
@@ -104,7 +104,7 @@ export async function sendOrderConfirmation(
       
       <p>Мы свяжемся с вами в ближайшее время для подтверждения заказа.</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="color: #999; font-size: 12px;">MiraShop | Burker - Официальный магазин</p>
+          <p style="color: #999; font-size: 12px;">Mira Brands | Burker - Официальный магазин</p>
     </div>
   `;
 
@@ -197,7 +197,7 @@ export async function sendPasswordResetCode(
       <p>Код действителен в течение 15 минут.</p>
       <p>Если вы не запрашивали восстановление пароля, просто проигнорируйте это письмо.</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="color: #999; font-size: 12px;">MiraShop | Burker - Официальный магазин</p>
+          <p style="color: #999; font-size: 12px;">Mira Brands | Burker - Официальный магазин</p>
     </div>
   `;
 

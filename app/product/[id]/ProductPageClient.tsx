@@ -544,7 +544,7 @@ export default function ProductPageClient({
           <h2 className="text-xl mb-8 text-center uppercase">
             Вам также может понравиться
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {recommendedProducts.map((recommendedProduct, index) => (
               <motion.div
                 key={recommendedProduct.id}

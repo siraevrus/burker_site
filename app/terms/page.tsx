@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "Условия и положения | MiraShop | Burker",
-  description: "Условия использования интернет-магазина MiraShop | Burker",
+  title: "Условия и положения | Mira Brands | Burker",
+  description: "Условия использования интернет-магазина Mira Brands | Burker",
 };
 
 export default function TermsPage() {
@@ -12,7 +12,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-2xl font-semibold mb-4">1. Общие положения</h2>
           <p className="text-gray-700">
-            Настоящие Условия и положения (далее — «Условия») регулируют отношения между интернет-магазином MiraShop | Burker (далее — «Магазин») и пользователями Сайта (далее — «Пользователь»).
+            Настоящие Условия и положения (далее — «Условия») регулируют отношения между интернет-магазином Mira Brands | Burker (далее — «Магазин») и пользователями Сайта (далее — «Пользователь»).
           </p>
           <p className="text-gray-700">
             Используя Сайт, Пользователь соглашается с настоящими Условиями в полном объеме.
