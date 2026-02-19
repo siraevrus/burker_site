@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { CartItem, Collection, Color, User } from "./types";
 
 /** По таможенным правилам — не более 3 вещей одного типа в один заказ */
@@ -25,13 +26,15 @@ interface Store {
   logout: () => Promise<void>;
 }
 
-export const useStore = create<Store>((set, get) => ({
-  cart: [],
-  filters: {
-    collection: "all",
-    color: "all",
-  },
-  user: null,
+export const useStore = create<Store>()(
+  persist(
+    (set, get) => ({
+      cart: [],
+      filters: {
+        collection: "all",
+        color: "all",
+      },
+      user: null,
   getTotalQuantityByProductId: (id) => {
     return get().cart
       .filter((item) => item.id === id)
@@ -143,4 +146,10 @@ export const useStore = create<Store>((set, get) => ({
       console.error("Error logging out:", error);
     }
   },
-}));
+    }),
+    {
+      name: "burker-cart-storage",
+      partialize: (state) => ({ cart: state.cart }),
+    }
+  )
+);
