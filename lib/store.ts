@@ -150,6 +150,7 @@ export const useStore = create<Store>()(
     {
       name: "burker-cart-storage",
       partialize: (state) => ({ cart: state.cart }),
+      skipHydration: true,
     }
   )
 );

@@ -118,7 +118,7 @@ export default function EmailVerificationForm() {
 
       // Успешная верификация - загружаем данные пользователя и редирект на главную
       await loadUser();
-      window.location.href = "/";
+      router.push("/");
     } catch (error) {
       console.error("Verification error:", error);
       setError("Ошибка при верификации. Попробуйте позже.");

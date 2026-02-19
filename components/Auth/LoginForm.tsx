@@ -48,9 +48,9 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
         return;
       }
 
-      // Успешный вход - загружаем данные пользователя и обновляем страницу
+      // Успешный вход - загружаем данные пользователя и переходим на главную
       await loadUser();
-      window.location.href = "/";
+      router.push("/");
     } catch (error) {
       console.error("Login error:", error);
       setError("Ошибка при входе. Попробуйте позже.");
