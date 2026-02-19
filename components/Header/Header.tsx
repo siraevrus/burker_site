@@ -185,24 +185,37 @@ export default function Header() {
                         </Link>
                       </div>
 
-                      {/* Правый блок - 4 ссылки на коллекции */}
+                      {/* Правый блок - 4 ссылки на коллекции с первым товаром */}
                       <div className="grid grid-cols-4 gap-3">
-                        {["Diana", "Isabell", "Julia", "Macy"].map((collectionName) => (
-                          <Link
-                            key={collectionName}
-                            href={`/collections/${collectionName.toLowerCase()}`}
-                            className="group"
-                          >
-                            <div className="relative mb-2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{ height: "360px", width: "100%" }}>
-                              <span className="text-2xl font-semibold text-gray-700 group-hover:text-black transition-colors">
-                                {collectionName}
-                              </span>
-                            </div>
-                            <p className="text-xs font-medium group-hover:text-gray-600 transition-colors">
-                              {collectionName.toUpperCase()} &gt;
-                            </p>
-                          </Link>
-                        ))}
+                        {["Diana", "Isabell", "Julia", "Macy"].map((collectionName) => {
+                          const firstProduct = products.find((p) => p.collection === collectionName);
+                          return (
+                            <Link
+                              key={collectionName}
+                              href={`/collections/${collectionName.toLowerCase()}`}
+                              className="group"
+                            >
+                              <div className="relative mb-2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{ height: "360px", width: "100%" }}>
+                                {firstProduct && firstProduct.images?.length > 0 ? (
+                                  <Image
+                                    src={firstProduct.images[0]}
+                                    alt={firstProduct.name}
+                                    fill
+                                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                                    sizes="(max-width: 768px) 100vw, 360px"
+                                  />
+                                ) : (
+                                  <span className="text-2xl font-semibold text-gray-700 group-hover:text-black transition-colors">
+                                    {collectionName}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs font-medium group-hover:text-gray-600 transition-colors">
+                                {collectionName.toUpperCase()}
+                              </p>
+                            </Link>
+                          );
+                        })}
                       </div>
                       </div>
                     </div>
@@ -262,31 +275,44 @@ export default function Header() {
                         </Link>
                       </div>
 
-                      {/* Правый блок - 4 продукта */}
-                      <div className="grid grid-cols-2 gap-3">
-                        {products
-                          .filter((p) => p.collection === "Украшения")
-                          .slice(0, 4)
-                          .map((product) => (
+                      {/* Правый блок - 4 категории с первым товаром */}
+                      <div className="grid grid-cols-4 gap-3">
+                        {[
+                          { slug: "bracelets", label: "Браслеты" },
+                          { slug: "necklaces", label: "Ожерелье" },
+                          { slug: "earrings", label: "Серьги" },
+                          { slug: "rings", label: "Кольца" },
+                        ].map(({ slug, label }) => {
+                          const firstProduct = products.find(
+                            (p) => p.collection === "Украшения" && p.subcategory === label
+                          );
+                          return (
                             <Link
-                              key={product.id}
-                              href={`/product/${product.bodyId || product.id}`}
+                              key={slug}
+                              href={`/collections/${slug}`}
                               className="group"
                             >
-                              <div className="relative mb-2 bg-gray-100 rounded-lg overflow-hidden" style={{ height: "360px", width: "100%" }}>
-                                <Image
-                                  src={product.images && product.images.length > 0 ? product.images[0] : "/Isabell_gold_burgundy_1.webp"}
-                                  alt={product.name}
-                                  fill
-                                  className="object-cover group-hover:scale-110 transition-transform duration-300"
-                                  sizes="(max-width: 768px) 100vw, 360px"
-                                />
+                              <div className="relative mb-2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{ height: "360px", width: "100%" }}>
+                                {firstProduct && firstProduct.images?.length > 0 ? (
+                                  <Image
+                                    src={firstProduct.images[0]}
+                                    alt={firstProduct.name}
+                                    fill
+                                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                                    sizes="(max-width: 768px) 100vw, 360px"
+                                  />
+                                ) : (
+                                  <span className="text-2xl font-semibold text-gray-700 group-hover:text-black transition-colors">
+                                    {label}
+                                  </span>
+                                )}
                               </div>
                               <p className="text-xs font-medium group-hover:text-gray-600 transition-colors">
-                                {product.name.toUpperCase()} &gt;
+                                {label.toUpperCase()}
                               </p>
                             </Link>
-                          ))}
+                          );
+                        })}
                       </div>
                       </div>
                     </div>

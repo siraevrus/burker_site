@@ -23,8 +23,10 @@ export async function POST(request: NextRequest) {
     // Очищаем имя файла от спецсимволов и кириллицы, оставляем только расширение
     const originalName = file.name;
     const extension = originalName.split('.').pop() || 'png';
-    // Убираем все небезопасные символы из имени
-    const sanitizedName = originalName
+    // Убираем расширение из оригинального имени перед санитизацией
+    const nameWithoutExt = originalName.substring(0, originalName.lastIndexOf('.')) || originalName;
+    // Убираем все небезопасные символы из имени (без расширения)
+    const sanitizedName = nameWithoutExt
       .replace(/[^a-zA-Z0-9.-]/g, '_')
       .replace(/_{2,}/g, '_')
       .substring(0, 50); // Ограничиваем длину
