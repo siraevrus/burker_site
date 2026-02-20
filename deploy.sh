@@ -22,6 +22,9 @@ npm install
 echo "🔨 Генерируем Prisma Client..."
 npx prisma generate
 
+echo "🗄️ Применяем изменения схемы БД..."
+npx prisma db push --skip-generate
+
 echo "🏗️ Собираем проект..."
 npm run build
 
@@ -29,7 +32,8 @@ echo "🧹 Удаляем dev-зависимости после сборки..."
 npm prune --production
 
 echo "🔄 Перезапускаем приложение через PM2..."
-pm2 restart burker-watches || pm2 start npm --name "burker-watches" -- start
+# Используем ecosystem.config.js для правильной конфигурации
+pm2 restart ecosystem.config.js || pm2 start ecosystem.config.js
 
 echo "✅ Деплой завершен успешно!"
 echo "📊 Статус приложения:"

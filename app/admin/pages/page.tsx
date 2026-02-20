@@ -328,12 +328,12 @@ function PageForm({
           <div className="border border-gray-300 rounded-md relative z-0">
             <Editor
               tinymceScriptSrc="/tinymce/tinymce.min.js"
+              licenseKey="gpl"
               value={formData.content}
               onEditorChange={(content) =>
                 setFormData({ ...formData, content })
               }
               init={{
-                license_key: "gpl",
                 height: 500,
                 menubar: true,
                 plugins: [
