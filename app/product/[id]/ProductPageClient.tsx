@@ -400,7 +400,11 @@ export default function ProductPageClient({
                     <div className="flex flex-col">
                       <button
                         onClick={() => {
-                          if (getTotalQuantityByProductId(related.id) >= 3) {
+                          if (related.soldOut) {
+                            return; // Товар распродан
+                          }
+                          const category = getCustomsCategory(related);
+                          if (getTotalQuantityByCategory(category) >= 3) {
                             setCustomsHintProductId(related.id);
                             return;
                           }
