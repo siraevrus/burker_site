@@ -15,7 +15,7 @@ export interface ProductData {
   colors: string; // JSON string
   images: string; // JSON string
   inStock: boolean;
-  soldOut: boolean; // Sold_out: 0 = распродан (false), 1 = в наличии (true)
+  soldOut: boolean; // Sold_out: 1 = распродан (soldOut = true), 0 = в наличии (soldOut = false)
   variant: string | null;
   description: string | null;
   specifications: string | null; // JSON string
@@ -177,9 +177,12 @@ export function transformJsonProduct(jsonProduct: any): ProductData {
     Array.isArray(jsonProduct.colors) &&
     jsonProduct.colors.some((color: any) => color?.available === true);
 
-  // Sold_out: 0 = распродан (soldOut = true), 1 = в наличии (soldOut = false)
+  // Sold_out: 1 = распродан (soldOut = true), 0 = в наличии (soldOut = false)
   // Если поле отсутствует, считаем товар в наличии (soldOut = false)
-  const soldOut = jsonProduct.Sold_out === 0 || jsonProduct.Sold_out === false;
+  const soldOut =
+    jsonProduct.Sold_out === 1 ||
+    jsonProduct.Sold_out === true ||
+    jsonProduct.Sold_out === "1";
 
   // Описание
   const description = jsonProduct.description?.trim() || null;

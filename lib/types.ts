@@ -11,7 +11,7 @@ export interface Product {
   colors: string[]; // золото, серебро, розовое золото
   images: string[];
   inStock: boolean;
-  soldOut?: boolean; // Товар распродан (Sold_out: 0 = распродан, 1 = в наличии)
+  soldOut?: boolean; // Товар распродан (Sold_out: 1 = распродан, 0 = в наличии)
   disabled?: boolean; // Отключенный товар не отображается на сайте
   variant?: string; // Petite, обычная
   rating?: number; // рейтинг от 1 до 5
