@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface ImportResult {
@@ -10,6 +10,16 @@ interface ImportResult {
   total: number;
 }
 
+interface ImportHistoryItem {
+  id: string;
+  type: "automatic" | "manual" | "file";
+  added: number;
+  updated: number;
+  errors: number;
+  total: number;
+  createdAt: string;
+}
+
 export default function AdminImportPage() {
   const [file, setFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -17,6 +27,39 @@ export default function AdminImportPage() {
   const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [history, setHistory] = useState<ImportHistoryItem[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+
+  // Загрузка истории импортов
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const response = await fetch("/api/admin/import/history?limit=20");
+        const data = await response.json();
+        if (data.success) {
+          setHistory(data.history);
+        }
+      } catch (err) {
+        console.error("Error loading import history:", err);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+    loadHistory();
+  }, []);
+
+  // Обновление истории после успешного импорта
+  const refreshHistory = async () => {
+    try {
+      const response = await fetch("/api/admin/import/history?limit=20");
+      const data = await response.json();
+      if (data.success) {
+        setHistory(data.history);
+      }
+    } catch (err) {
+      console.error("Error refreshing import history:", err);
+    }
+  };
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -87,6 +130,8 @@ export default function AdminImportPage() {
       }
 
       setResult(data.result);
+      // Обновляем историю после успешного импорта
+      await refreshHistory();
     } catch (err: any) {
       setError(err.message || "Ошибка при импорте товаров");
     } finally {
@@ -112,11 +157,52 @@ export default function AdminImportPage() {
       }
 
       setResult(data.result);
+      // Обновляем историю после успешного импорта
+      await refreshHistory();
     } catch (err: any) {
       setError(err.message || "Ошибка при скачивании и импорте товаров");
     } finally {
       setIsDownloading(false);
     }
+  };
+
+  const getImportTypeLabel = (type: string) => {
+    switch (type) {
+      case "automatic":
+        return "Автоматически";
+      case "manual":
+        return "Вручную";
+      case "file":
+        return "Загрузка файла";
+      default:
+        return type;
+    }
+  };
+
+  const getImportTypeColor = (type: string) => {
+    switch (type) {
+      case "automatic":
+        return "bg-blue-100 text-blue-800";
+      case "manual":
+        return "bg-green-100 text-green-800";
+      case "file":
+        return "bg-purple-100 text-purple-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("ru-RU", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      timeZone: "Europe/Moscow",
+    }).format(date);
   };
 
   const handleDownloadExample = () => {
@@ -371,6 +457,76 @@ export default function AdminImportPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* История импортов */}
+      <div className="bg-white rounded-lg shadow-sm p-6 mt-8">
+        <h2 className="text-2xl font-bold mb-4">История импортов</h2>
+        
+        {isLoadingHistory ? (
+          <div className="text-center py-8 text-gray-500">Загрузка истории...</div>
+        ) : history.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            История импортов пуста
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Дата и время
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Тип
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Всего
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Добавлено
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Обновлено
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ошибок
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {history.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                      {formatDateTime(item.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getImportTypeColor(
+                          item.type
+                        )}`}
+                      >
+                        {getImportTypeLabel(item.type)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                      {item.total}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-green-600 font-medium">
+                      {item.added}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-yellow-600 font-medium">
+                      {item.updated}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-red-600 font-medium">
+                      {item.errors}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

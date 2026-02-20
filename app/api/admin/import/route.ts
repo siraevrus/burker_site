@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { importProducts } from "@/lib/import/import";
+import { saveImportHistory } from "@/lib/import/history";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,6 +23,9 @@ export async function POST(request: NextRequest) {
 
     // Импорт товаров
     const result = await importProducts(body);
+
+    // Сохранение истории импорта (тип "file" - загрузка файла)
+    await saveImportHistory("file", result);
 
     return NextResponse.json({
       success: true,
