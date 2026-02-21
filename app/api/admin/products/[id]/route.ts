@@ -1,6 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
+function serializeSpecifications(value: unknown): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string") return null;
+
+  const text = value.trim();
+  if (!text) return null;
+
+  // Разрешаем прямой JSON-ввод
+  if (text.startsWith("{") && text.endsWith("}")) {
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return JSON.stringify(parsed);
+      }
+    } catch {
+      // Если JSON невалидный — пробуем разобрать как key: value
+    }
+  }
+
+  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const result: Record<string, string> = {};
+
+  for (const line of lines) {
+    const idx = line.indexOf(":");
+    if (idx > 0) {
+      const key = line.slice(0, idx).trim();
+      const val = line.slice(idx + 1).trim();
+      if (key && val) {
+        result[key] = val;
+      }
+    }
+  }
+
+  if (Object.keys(result).length > 0) {
+    return JSON.stringify(result);
+  }
+
+  return JSON.stringify({ raw: text });
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -29,6 +69,11 @@ export async function PUT(
       disabled: Boolean(body.disabled),
       description: body.description || null,
     };
+
+    const serializedSpecifications = serializeSpecifications(body.specifications);
+    if (serializedSpecifications !== undefined) {
+      updateData.specifications = serializedSpecifications;
+    }
 
     // Обновляем изображения если они переданы
     if (body.images) {

@@ -10,6 +10,15 @@ interface AdminProductEditClientProps {
 
 export default function AdminProductEditClient({ product }: AdminProductEditClientProps) {
   const router = useRouter();
+
+  const formatSpecifications = (specs?: Product["specifications"]) => {
+    if (!specs) return "";
+    return Object.entries(specs)
+      .filter(([, value]) => typeof value === "string" && value.trim().length > 0)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join("\n");
+  };
+
   const [formData, setFormData] = useState({
     name: product.name,
     collection: product.collection,
@@ -20,6 +29,7 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
     inStock: product.inStock,
     disabled: product.disabled || false,
     description: product.description || "",
+    specifications: formatSpecifications(product.specifications),
   });
   const [images, setImages] = useState<string[]>(product.images || []);
   const [uploading, setUploading] = useState(false);
@@ -296,6 +306,22 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
                 rows={6}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Технические характеристики
+              </label>
+              <textarea
+                value={formData.specifications}
+                onChange={(e) => setFormData({ ...formData, specifications: e.target.value })}
+                rows={8}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 font-mono text-sm"
+                placeholder={"dimensions: 32mm\nmaterial: Stainless steel\nwaterResistant: 3 ATM\nwarranty: 1 year"}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Формат: одна характеристика на строку, например <code>ключ: значение</code>.
+              </p>
             </div>
             
             <div className="bg-gray-50 rounded-md p-4 text-sm">
