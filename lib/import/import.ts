@@ -71,12 +71,17 @@ export async function importProducts(jsonData: any[]): Promise<ImportResult> {
           // Сохраняем текущее значение disabled из базы данных
           disabled: existingProduct.disabled ?? false,
         };
-        
-        // Добавляем bodyId только если он не null
-        if (productData.bodyId !== null) {
-          updateData.bodyId = productData.bodyId;
+
+        // bodyId: ставим только если не занят другим товаром (уникальное поле)
+        if (productData.bodyId !== null && productData.bodyId.trim() !== "") {
+          const existingByBodyId = await prisma.product.findUnique({
+            where: { bodyId: productData.bodyId },
+          });
+          if (!existingByBodyId || existingByBodyId.id === productData.id) {
+            updateData.bodyId = productData.bodyId;
+          }
         }
-        
+
         await prisma.product.update({
           where: { id: productData.id },
           data: updateData,
@@ -104,12 +109,17 @@ export async function importProducts(jsonData: any[]): Promise<ImportResult> {
           createdAt: productData.createdAt,
           updatedAt: productData.updatedAt,
         };
-        
-        // Добавляем bodyId только если он не null
-        if (productData.bodyId !== null) {
-          createData.bodyId = productData.bodyId;
+
+        // bodyId: ставим только если ещё не занят (уникальное поле), иначе оставляем null
+        if (productData.bodyId !== null && productData.bodyId.trim() !== "") {
+          const existingByBodyId = await prisma.product.findUnique({
+            where: { bodyId: productData.bodyId },
+          });
+          if (!existingByBodyId) {
+            createData.bodyId = productData.bodyId;
+          }
         }
-        
+
         await prisma.product.create({
           data: createData,
         });
