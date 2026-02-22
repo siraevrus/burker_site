@@ -109,7 +109,7 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
             <div className="space-y-3 mb-4">
               {cart.map((item) => (
                 <div key={`${item.id}-${item.selectedColor}`} className="flex gap-3">
-                  <div className="w-48 h-48 sm:w-32 sm:h-32 bg-gray-200 rounded-md flex-shrink-0 relative overflow-hidden">
+                  <div className="w-48 h-48 sm:w-32 sm:h-32 bg-white border border-[#e5e6eb] rounded-md flex-shrink-0 relative overflow-hidden">
                     <Image
                       src={item.images && item.images.length > 0 ? item.images[0] : "/Isabell_gold_burgundy_1.webp"}
                       alt={item.name}
