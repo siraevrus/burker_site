@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
+import { generateProductSlug } from "@/lib/products";
 
 const BASE_URL =
   process.env.SITE_URL ||
@@ -49,11 +50,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const products = await prisma.product.findMany({
     where: { disabled: { not: true } },
-    select: { bodyId: true, id: true, updatedAt: true },
+    select: { name: true, updatedAt: true },
   });
 
   const productRoutes: MetadataRoute.Sitemap = products.map((p) => ({
-    url: `${BASE_URL}/product/${p.bodyId || p.id}`,
+    url: `${BASE_URL}/product/${generateProductSlug(p.name)}`,
     lastModified: p.updatedAt,
     changeFrequency: "weekly" as const,
     priority: 0.7,

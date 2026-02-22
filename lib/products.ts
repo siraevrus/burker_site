@@ -2,6 +2,13 @@ import { prisma } from "./db";
 import { Product } from "./types";
 import { getExchangeRates, convertPrice, ExchangeRates } from "./exchange-rates";
 
+export function generateProductSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+}
+
 // Преобразование данных из БД в формат Product (без конвертации)
 function mapProductFromDbRaw(dbProduct: any): Product {
   return {
@@ -86,20 +93,24 @@ export async function getAllProductsForAdmin(): Promise<Product[]> {
   }
 }
 
-// Получить товар по ID (bodyId из URL)
-export async function getProductById(id: string): Promise<Product | null> {
-  // Сначала пытаемся найти по bodyId, если не найдено - по внутреннему id
-  const [dbProduct, rates] = await Promise.all([
-    prisma.product.findFirst({
+// Получить товар по slug (из названия) или по id
+export async function getProductById(slug: string): Promise<Product | null> {
+  const [dbProducts, rates] = await Promise.all([
+    prisma.product.findMany({
       where: {
-        OR: [
-          { bodyId: id },
-          { id: id },
-        ],
+        disabled: { not: true },
       },
     }),
     getExchangeRates(),
   ]);
+  
+  const normalizedSlug = slug.toLowerCase();
+  
+  const dbProduct = dbProducts.find((p) => {
+    const productSlug = generateProductSlug(p.name);
+    return productSlug === normalizedSlug || p.id === slug;
+  });
+  
   return dbProduct ? mapProductFromDbWithRates(dbProduct, rates) : null;
 }
 

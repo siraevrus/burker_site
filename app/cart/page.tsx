@@ -6,6 +6,7 @@ import { calculateShipping } from "@/lib/shipping";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import { generateProductSlug } from "@/lib/products";
 
 const CUSTOMS_HINT =
   "По таможенным правилам доставка одного типа товара не более 3 вещей в один заказ";
@@ -63,7 +64,7 @@ export default function CartPage() {
               >
                 {/* Product Image */}
                 <Link 
-                  href={`/product/${item.bodyId || item.id}`}
+                  href={`/product/${generateProductSlug(item.name)}`}
                   className="w-[150px] h-[150px] bg-white border border-[#e5e6eb] rounded-md flex-shrink-0 relative overflow-hidden hover:opacity-90 transition-opacity cursor-pointer"
                 >
                   <Image
@@ -78,7 +79,7 @@ export default function CartPage() {
                 {/* Product Info */}
                 <div className="flex-1">
                   <Link 
-                    href={`/product/${item.bodyId || item.id}`}
+                    href={`/product/${generateProductSlug(item.name)}`}
                     className="font-semibold text-lg mb-2 hover:text-gray-600 transition-colors block"
                   >
                     {item.name}

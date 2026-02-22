@@ -7,6 +7,7 @@ import { Product } from "@/lib/types";
 import { useStore, getCustomsCategory } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "@/components/ProductCard/ProductCard";
+import { generateProductSlug } from "@/lib/products";
 
 const CUSTOMS_HINT =
   "По таможенным правилам доставка одного типа товара не более 3 вещей в один заказ";
@@ -270,7 +271,7 @@ export default function ProductPageClient({
               </h3>
               <div className="flex gap-2 flex-wrap">
                 <Link
-                  href={`/product/${product.bodyId || product.id}`}
+                  href={`/product/${generateProductSlug(product.name)}`}
                   className="relative w-16 h-16 rounded-full border-2 border-black overflow-hidden"
                 >
                   <Image
@@ -283,7 +284,7 @@ export default function ProductPageClient({
                 {colorVariants.map((variant) => (
                   <Link
                     key={variant.id}
-                    href={`/product/${variant.bodyId || variant.id}`}
+                    href={`/product/${generateProductSlug(variant.name)}`}
                     className="relative w-16 h-16 rounded-full border-2 border-gray-300 overflow-hidden hover:border-black transition-colors"
                   >
                     <Image
