@@ -7,7 +7,7 @@ import { Product } from "@/lib/types";
 import { useStore, getCustomsCategory } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "@/components/ProductCard/ProductCard";
-import { generateProductSlug } from "@/lib/products";
+import { generateProductSlug } from "@/lib/utils";
 
 const CUSTOMS_HINT =
   "По таможенным правилам доставка одного типа товара не более 3 вещей в один заказ";

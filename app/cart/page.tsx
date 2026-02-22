@@ -6,7 +6,7 @@ import { calculateShipping } from "@/lib/shipping";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { generateProductSlug } from "@/lib/products";
+import { generateProductSlug } from "@/lib/utils";
 
 const CUSTOMS_HINT =
   "По таможенным правилам доставка одного типа товара не более 3 вещей в один заказ";

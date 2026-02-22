@@ -1,13 +1,9 @@
 import { prisma } from "./db";
 import { Product } from "./types";
 import { getExchangeRates, convertPrice, ExchangeRates } from "./exchange-rates";
+import { generateProductSlug } from "./utils";
 
-export function generateProductSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "");
-}
+export { generateProductSlug };
 
 // Преобразование данных из БД в формат Product (без конвертации)
 function mapProductFromDbRaw(dbProduct: any): Product {
