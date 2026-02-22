@@ -150,7 +150,7 @@ export default function CartPage() {
 
         {/* Order Summary */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg p-6 sticky top-24">
+          <div className="bg-white rounded-lg p-6 sticky top-24 border border-[#e5e6ea]">
             <h2 className="text-xl font-bold mb-4">Итого</h2>
             <div className="space-y-2 mb-4">
               <div className="flex justify-between">

@@ -104,7 +104,7 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
 
         {/* Итоги заказа */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-24">
+          <div className="bg-white rounded-lg p-6 sticky top-24 border border-[#e5e6ea]">
             <h2 className="text-xl font-bold mb-4">Ваш заказ</h2>
             <div className="space-y-3 mb-4">
               {cart.map((item) => (
