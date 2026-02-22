@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useStore } from "@/lib/store";
 import Link from "next/link";
 import Image from "next/image";
 import CheckoutForm from "@/components/Checkout/CheckoutForm";
+import OrderSummaryBlock from "@/components/Checkout/OrderSummaryBlock";
 
 interface CheckoutPageClientProps {
   user?: {
@@ -16,6 +18,22 @@ interface CheckoutPageClientProps {
 
 export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
   const cart = useStore((state) => state.cart);
+  const [formData, setFormData] = useState<{
+    totalPrice: number;
+    totalWeight: number;
+    shippingCost: number;
+    promoCode: string;
+    promoCodeError: string;
+    appliedPromoCode: { code: string; discount: number } | null;
+    checkingPromoCode: boolean;
+    requiresConfirmation: boolean;
+    loading: boolean;
+    onSubmit: () => void;
+    setPromoCode: (value: string) => void;
+    onCheckPromoCode: () => void;
+    onCancelPromoCode: () => void;
+    setRequiresConfirmation: (value: boolean) => void;
+  } | null>(null);
 
   if (cart.length === 0) {
     return (
@@ -78,14 +96,15 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                 firstName: user.firstName ?? undefined,
                 lastName: user.lastName ?? undefined,
                 phone: user.phone ?? undefined,
-              } : undefined} 
+              } : undefined}
+              onFormDataChange={setFormData}
             />
           </div>
         </div>
 
         {/* Итоги заказа */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg p-6 sticky top-24">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-24">
             <h2 className="text-xl font-bold mb-4">Ваш заказ</h2>
             <div className="space-y-3 mb-4">
               {cart.map((item) => (
@@ -112,6 +131,24 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                 </div>
               ))}
             </div>
+            {formData && (
+              <OrderSummaryBlock
+                totalPrice={formData.totalPrice}
+                totalWeight={formData.totalWeight}
+                shippingCost={formData.shippingCost}
+                promoCode={formData.promoCode}
+                setPromoCode={formData.setPromoCode}
+                promoCodeError={formData.promoCodeError}
+                appliedPromoCode={formData.appliedPromoCode}
+                checkingPromoCode={formData.checkingPromoCode}
+                onCheckPromoCode={formData.onCheckPromoCode}
+                onCancelPromoCode={formData.onCancelPromoCode}
+                requiresConfirmation={formData.requiresConfirmation}
+                setRequiresConfirmation={formData.setRequiresConfirmation}
+                loading={formData.loading}
+                onSubmit={formData.onSubmit}
+              />
+            )}
           </div>
         </div>
       </div>
