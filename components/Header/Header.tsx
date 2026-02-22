@@ -151,6 +151,7 @@ export default function Header() {
                         <Link
                           href="/collections/watches"
                           className="block py-2 hover:text-gray-600 transition-colors font-semibold"
+                          onClick={() => setIsWatchesOpen(false)}
                         >
                           Все часы
                         </Link>
@@ -159,6 +160,7 @@ export default function Header() {
                             key={collection}
                             href={`/collections/${collection.toLowerCase()}`}
                             className="block py-2 hover:text-gray-600 transition-colors"
+                            onClick={() => setIsWatchesOpen(false)}
                           >
                             {collection}
                           </Link>
@@ -166,24 +168,28 @@ export default function Header() {
                         <Link
                           href="/collections/olivia-petite"
                           className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
+                          onClick={() => setIsWatchesOpen(false)}
                         >
                           Olivia Petite
                         </Link>
                         <Link
                           href="/collections/macy-petite"
                           className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
+                          onClick={() => setIsWatchesOpen(false)}
                         >
                           Macy Petite
                         </Link>
                         <Link
                           href="/collections/isabell-petite"
                           className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
+                          onClick={() => setIsWatchesOpen(false)}
                         >
                           Isabell Petite
                         </Link>
                         <Link
                           href="/collections/ruby-petite"
                           className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
+                          onClick={() => setIsWatchesOpen(false)}
                         >
                           Ruby Petite
                         </Link>
@@ -198,6 +204,7 @@ export default function Header() {
                               key={collectionName}
                               href={`/collections/${collectionName.toLowerCase()}`}
                               className="group"
+                              onClick={() => setIsWatchesOpen(false)}
                             >
                               <div className="relative mb-2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{ height: "360px", width: "100%" }}>
                                 {firstProduct && firstProduct.images?.length > 0 ? (
@@ -250,30 +257,35 @@ export default function Header() {
                         <Link
                           href="/collections/jewelry"
                           className="block py-2 hover:text-gray-600 transition-colors font-semibold"
+                          onClick={() => setIsJewelryOpen(false)}
                         >
                           Все украшения
                         </Link>
                         <Link
                           href="/collections/bracelets"
                           className="block py-2 hover:text-gray-600 transition-colors"
+                          onClick={() => setIsJewelryOpen(false)}
                         >
                           Браслеты
                         </Link>
                         <Link
                           href="/collections/necklaces"
                           className="block py-2 hover:text-gray-600 transition-colors"
+                          onClick={() => setIsJewelryOpen(false)}
                         >
                           Ожерелье
                         </Link>
                         <Link
                           href="/collections/earrings"
                           className="block py-2 hover:text-gray-600 transition-colors"
+                          onClick={() => setIsJewelryOpen(false)}
                         >
                           Серьги
                         </Link>
                         <Link
                           href="/collections/rings"
                           className="block py-2 hover:text-gray-600 transition-colors"
+                          onClick={() => setIsJewelryOpen(false)}
                         >
                           Кольца
                         </Link>
@@ -295,6 +307,7 @@ export default function Header() {
                               key={slug}
                               href={`/collections/${slug}`}
                               className="group"
+                              onClick={() => setIsJewelryOpen(false)}
                             >
                               <div className="relative mb-2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{ height: "360px", width: "100%" }}>
                                 {firstProduct && firstProduct.images?.length > 0 ? (
