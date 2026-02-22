@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "CHOKIDAR_USEPOLLING=1 next dev --webpack",
     "build": "prisma generate && prisma db push --skip-generate && next build --webpack",
     "start": "next start",
     "lint": "eslint",

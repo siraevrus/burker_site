@@ -35,7 +35,8 @@ const nextConfig: NextConfig = {
       });
     }
 
-    // Настройки для hot reload в Docker
+    // Настройки для hot reload: polling нужен в Docker и на синк-папках (Yandex.Disk, Dropbox и т.д.),
+    // где нативные file watch события могут не срабатывать
     if (dev) {
       config.watchOptions = {
         poll: 1000, // Проверять изменения каждую секунду
