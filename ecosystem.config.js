@@ -3,7 +3,7 @@ module.exports = {
     {
       name: "burker-watches",
       script: "/root/.nvm/versions/node/v24.13.1/bin/node",
-      args: "/var/www/burker-watches.ru/node_modules/.bin/next start",
+      args: ".next/standalone/server.js",
       cwd: "/var/www/burker-watches.ru",
       env: {
         NODE_ENV: "production",
@@ -16,6 +16,8 @@ module.exports = {
       merge_logs: true,
       autorestart: true,
       max_memory_restart: "1G",
+      instances: 1,
+      exec_mode: "fork",
     },
   ],
 };
