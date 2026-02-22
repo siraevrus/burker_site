@@ -98,6 +98,9 @@ export interface Order {
   status: string;
   totalAmount: number;
   shippingCost: number;
+  purchaseProofImage?: string; // URL изображения подтверждения выкупа
+  sellerTrackNumber?: string; // Трек-номер продавца
+  russiaTrackNumber?: string; // Трек-номер для РФ
   items: OrderItem[];
   createdAt: Date;
   updatedAt: Date;

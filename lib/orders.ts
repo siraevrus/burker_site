@@ -48,6 +48,9 @@ function mapOrderFromDb(dbOrder: any): Order {
     status: dbOrder.status,
     totalAmount: dbOrder.totalAmount,
     shippingCost: dbOrder.shippingCost,
+    purchaseProofImage: dbOrder.purchaseProofImage || undefined,
+    sellerTrackNumber: dbOrder.sellerTrackNumber || undefined,
+    russiaTrackNumber: dbOrder.russiaTrackNumber || undefined,
     items: dbOrder.items?.map((item: any) => ({
       id: item.id,
       orderId: item.orderId,
@@ -156,7 +159,7 @@ export async function createOrder(orderData: {
     requiresConfirmation: orderData.requiresConfirmation || false,
     promoCode: orderData.promoCode || null,
     promoDiscount: orderData.promoDiscount || 0,
-    status: "pending",
+    status: "accepted",
     totalAmount: orderData.totalAmount,
     shippingCost: orderData.shippingCost,
     items: {

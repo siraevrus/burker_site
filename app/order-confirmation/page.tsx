@@ -18,11 +18,11 @@ function OrderConfirmationContent() {
   const [rates, setRates] = useState<ExchangeRates | null>(null);
 
   const statusLabels: Record<string, string> = {
-    pending: "В обработке",
-    confirmed: "Подтвержден",
-    shipped: "Отправлен",
+    accepted: "Заказ принят",
+    purchased: "Выкуплен",
+    in_transit_de: "В пути на склад",
+    in_transit_ru: "В пути в РФ",
     delivered: "Доставлен",
-    cancelled: "Отменен",
   };
 
   useEffect(() => {

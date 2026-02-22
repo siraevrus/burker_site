@@ -119,9 +119,14 @@ model Order {
   promoCode        String?   // Промокод, примененный к заказу
   promoDiscount    Float?    @default(0) // Сумма скидки по промокоду
   
-  status          String      @default("pending") // pending, confirmed, shipped, delivered, cancelled
+  status          String      @default("accepted") // accepted, purchased, in_transit_de, in_transit_ru, delivered
   totalAmount     Float
   shippingCost    Float       @default(5.0)
+  
+  // Данные для отслеживания статусов
+  purchaseProofImage String?   // URL изображения подтверждения выкупа (для статуса purchased)
+  sellerTrackNumber  String?   // Трек-номер продавца (для статуса in_transit_de)
+  russiaTrackNumber  String?   // Трек-номер для РФ (для статуса in_transit_ru)
   
   items           OrderItem[]
   

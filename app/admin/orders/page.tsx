@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 
 interface OrderItem {
@@ -36,12 +36,23 @@ interface Order {
   requiresConfirmation?: boolean;
   promoCode?: string | null;
   promoDiscount?: number | null;
+  purchaseProofImage?: string | null;
+  sellerTrackNumber?: string | null;
+  russiaTrackNumber?: string | null;
   user: {
     id: string;
     email: string;
     firstName: string | null;
     lastName: string | null;
   } | null;
+}
+
+interface StatusChangeModal {
+  isOpen: boolean;
+  orderId: string;
+  orderNumber: string;
+  newStatus: string;
+  type: "image" | "track_de" | "track_ru" | null;
 }
 
 function AdminOrdersPageContent() {
@@ -51,13 +62,42 @@ function AdminOrdersPageContent() {
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchInput, setSearchInput] = useState(""); // значение в инпуте (для debounce)
+  const [searchInput, setSearchInput] = useState("");
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 50,
     total: 0,
     totalPages: 0,
   });
+
+  const [modal, setModal] = useState<StatusChangeModal>({
+    isOpen: false,
+    orderId: "",
+    orderNumber: "",
+    newStatus: "",
+    type: null,
+  });
+  const [modalLoading, setModalLoading] = useState(false);
+  const [trackInput, setTrackInput] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const statusLabels: Record<string, string> = {
+    accepted: "Заказ принят",
+    purchased: "Выкуплен",
+    in_transit_de: "В пути на склад",
+    in_transit_ru: "В пути в РФ",
+    delivered: "Доставлен",
+  };
+
+  const statusColors: Record<string, string> = {
+    accepted: "bg-yellow-100 text-yellow-800",
+    purchased: "bg-blue-100 text-blue-800",
+    in_transit_de: "bg-purple-100 text-purple-800",
+    in_transit_ru: "bg-indigo-100 text-indigo-800",
+    delivered: "bg-green-100 text-green-800",
+  };
 
   useEffect(() => {
     const t = setTimeout(() => setSearchQuery(searchInput.trim()), 400);
@@ -68,15 +108,12 @@ function AdminOrdersPageContent() {
     loadOrders();
   }, [statusFilter, searchQuery, pagination.page]);
 
-  // Автоматически раскрываем заказ, если передан orderId в URL
   useEffect(() => {
     const orderId = searchParams.get("orderId");
     if (orderId && orders.length > 0) {
-      // Проверяем, есть ли заказ с таким ID в текущем списке
       const orderExists = orders.some((order) => order.id === orderId);
       if (orderExists) {
         setExpandedOrders(new Set([orderId]));
-        // Прокручиваем к заказу
         setTimeout(() => {
           const element = document.getElementById(`order-${orderId}`);
           if (element) {
@@ -108,14 +145,52 @@ function AdminOrdersPageContent() {
     }
   };
 
-  const handleStatusChange = async (orderId: string, newStatus: string) => {
+  const handleStatusSelectChange = (order: Order, newStatus: string) => {
+    if (newStatus === "purchased") {
+      setModal({
+        isOpen: true,
+        orderId: order.id,
+        orderNumber: order.orderNumber || order.id.slice(0, 8),
+        newStatus,
+        type: "image",
+      });
+    } else if (newStatus === "in_transit_de") {
+      setModal({
+        isOpen: true,
+        orderId: order.id,
+        orderNumber: order.orderNumber || order.id.slice(0, 8),
+        newStatus,
+        type: "track_de",
+      });
+    } else if (newStatus === "in_transit_ru") {
+      setModal({
+        isOpen: true,
+        orderId: order.id,
+        orderNumber: order.orderNumber || order.id.slice(0, 8),
+        newStatus,
+        type: "track_ru",
+      });
+    } else {
+      updateOrderStatus(order.id, newStatus, {});
+    }
+  };
+
+  const updateOrderStatus = async (
+    orderId: string,
+    newStatus: string,
+    additionalData: {
+      purchaseProofImage?: string;
+      sellerTrackNumber?: string;
+      russiaTrackNumber?: string;
+    }
+  ) => {
     try {
       const response = await fetch(`/api/admin/orders/${orderId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: newStatus, ...additionalData }),
       });
 
       if (response.ok) {
@@ -123,27 +198,93 @@ function AdminOrdersPageContent() {
         setOrders(
           orders.map((order) => (order.id === orderId ? data.order : order))
         );
+        return true;
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || "Ошибка при обновлении статуса");
+        return false;
       }
     } catch (error) {
       console.error("Error updating order status:", error);
       alert("Ошибка при обновлении статуса");
+      return false;
     }
   };
 
-  const statusLabels: Record<string, string> = {
-    pending: "В обработке",
-    confirmed: "Подтвержден",
-    shipped: "Отправлен",
-    delivered: "Доставлен",
-    cancelled: "Отменен",
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
   };
 
-  const statusColors: Record<string, string> = {
-    pending: "bg-yellow-100 text-yellow-800",
-    confirmed: "bg-blue-100 text-blue-800",
-    shipped: "bg-purple-100 text-purple-800",
-    delivered: "bg-green-100 text-green-800",
-    cancelled: "bg-red-100 text-red-800",
+  const handleModalSubmit = async () => {
+    if (!modal.orderId) return;
+
+    setModalLoading(true);
+
+    try {
+      if (modal.type === "image" && selectedFile) {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("orderId", modal.orderId);
+
+        const uploadResponse = await fetch("/api/admin/orders/upload-proof", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error("Ошибка загрузки изображения");
+        }
+
+        const uploadData = await uploadResponse.json();
+        const success = await updateOrderStatus(modal.orderId, modal.newStatus, {
+          purchaseProofImage: uploadData.url,
+        });
+
+        if (success) {
+          closeModal();
+        }
+      } else if (modal.type === "track_de" && trackInput.trim()) {
+        const success = await updateOrderStatus(modal.orderId, modal.newStatus, {
+          sellerTrackNumber: trackInput.trim(),
+        });
+        if (success) {
+          closeModal();
+        }
+      } else if (modal.type === "track_ru" && trackInput.trim()) {
+        const success = await updateOrderStatus(modal.orderId, modal.newStatus, {
+          russiaTrackNumber: trackInput.trim(),
+        });
+        if (success) {
+          closeModal();
+        }
+      }
+    } catch (error) {
+      console.error("Error in modal submit:", error);
+      alert("Произошла ошибка");
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const closeModal = () => {
+    setModal({
+      isOpen: false,
+      orderId: "",
+      orderNumber: "",
+      newStatus: "",
+      type: null,
+    });
+    setTrackInput("");
+    setSelectedFile(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
   };
 
   const toggleOrder = (orderId: string) => {
@@ -154,6 +295,13 @@ function AdminOrdersPageContent() {
       newExpanded.add(orderId);
     }
     setExpandedOrders(newExpanded);
+  };
+
+  const isSubmitDisabled = () => {
+    if (modal.type === "image") {
+      return !selectedFile;
+    }
+    return !trackInput.trim();
   };
 
   if (loading) {
@@ -188,11 +336,11 @@ function AdminOrdersPageContent() {
             className="px-4 py-2 border border-gray-300 rounded-md"
           >
             <option value="all">Все статусы</option>
-            <option value="pending">В обработке</option>
-            <option value="confirmed">Подтвержден</option>
-            <option value="shipped">Отправлен</option>
+            <option value="accepted">Заказ принят</option>
+            <option value="purchased">Выкуплен</option>
+            <option value="in_transit_de">В пути на склад</option>
+            <option value="in_transit_ru">В пути в РФ</option>
             <option value="delivered">Доставлен</option>
-            <option value="cancelled">Отменен</option>
           </select>
           <div className="text-sm text-gray-600">
             Всего: {pagination.total}
@@ -209,7 +357,6 @@ function AdminOrdersPageContent() {
               key={order.id}
               className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
             >
-              {/* Шапка заказа */}
               <button
                 onClick={() => toggleOrder(order.id)}
                 className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
@@ -243,18 +390,18 @@ function AdminOrdersPageContent() {
                       value={order.status}
                       onChange={(e) => {
                         e.stopPropagation();
-                        handleStatusChange(order.id, e.target.value);
+                        handleStatusSelectChange(order, e.target.value);
                       }}
                       onClick={(e) => e.stopPropagation()}
                       className={`text-sm font-medium px-3 py-1 rounded-full border-0 ${
-                        statusColors[order.status] || statusColors.pending
+                        statusColors[order.status] || statusColors.accepted
                       }`}
                     >
-                      <option value="pending">В обработке</option>
-                      <option value="confirmed">Подтвержден</option>
-                      <option value="shipped">Отправлен</option>
+                      <option value="accepted">Заказ принят</option>
+                      <option value="purchased">Выкуплен</option>
+                      <option value="in_transit_de">В пути на склад</option>
+                      <option value="in_transit_ru">В пути в РФ</option>
                       <option value="delivered">Доставлен</option>
-                      <option value="cancelled">Отменен</option>
                     </select>
                   </div>
                 </div>
@@ -277,7 +424,6 @@ function AdminOrdersPageContent() {
                 </div>
               </button>
 
-              {/* Раскрывающийся контент */}
               {isExpanded && (
                 <div className="px-6 py-4 border-t border-gray-200">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -331,11 +477,49 @@ function AdminOrdersPageContent() {
                       <div className="md:col-span-2">
                         <div className="bg-orange-50 border border-orange-200 rounded-md p-3 mb-4">
                           <p className="text-sm font-medium text-orange-800">
-                            ⚠️ Клиент просит связаться для подтверждения заказа
+                            Клиент просит связаться для подтверждения заказа
                           </p>
                         </div>
                       </div>
                     )}
+
+                    {(order.purchaseProofImage || order.sellerTrackNumber || order.russiaTrackNumber) && (
+                      <>
+                        <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-3">Данные отслеживания</h4>
+                        </div>
+                        {order.purchaseProofImage && (
+                          <div className="md:col-span-2">
+                            <p className="text-sm text-gray-600 mb-1">Подтверждение выкупа</p>
+                            <a
+                              href={order.purchaseProofImage}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block"
+                            >
+                              <img
+                                src={order.purchaseProofImage}
+                                alt="Подтверждение выкупа"
+                                className="max-w-xs rounded-lg border border-gray-200"
+                              />
+                            </a>
+                          </div>
+                        )}
+                        {order.sellerTrackNumber && (
+                          <div>
+                            <p className="text-sm text-gray-600 mb-1">Трек продавца</p>
+                            <p className="font-medium font-mono">{order.sellerTrackNumber}</p>
+                          </div>
+                        )}
+                        {order.russiaTrackNumber && (
+                          <div>
+                            <p className="text-sm text-gray-600 mb-1">Трек РФ</p>
+                            <p className="font-medium font-mono">{order.russiaTrackNumber}</p>
+                          </div>
+                        )}
+                      </>
+                    )}
+
                     <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
                       <h4 className="text-sm font-semibold text-gray-700 mb-3">Данные для таможенного оформления</h4>
                     </div>
@@ -380,7 +564,7 @@ function AdminOrdersPageContent() {
                           <div>
                             <p className="font-medium">{item.productName}</p>
                             <p className="text-sm text-gray-600">
-                              Цвет: {item.selectedColor} × {item.quantity}
+                              Цвет: {item.selectedColor} x {item.quantity}
                             </p>
                           </div>
                           <p className="font-semibold">
@@ -405,7 +589,7 @@ function AdminOrdersPageContent() {
                     {order.promoCode && (order.promoDiscount ?? 0) > 0 && (
                       <div className="flex justify-between mb-2 text-green-600">
                         <span>Промокод {order.promoCode}:</span>
-                        <span className="font-medium">−{(order.promoDiscount ?? 0).toFixed(0)} ₽</span>
+                        <span className="font-medium">-{(order.promoDiscount ?? 0).toFixed(0)} ₽</span>
                       </div>
                     )}
                     <div className="flex justify-between text-xl font-bold">
@@ -420,7 +604,6 @@ function AdminOrdersPageContent() {
         })}
       </div>
 
-      {/* Пагинация */}
       {pagination.totalPages > 1 && (
         <div className="mt-4 flex justify-center gap-2">
           <button
@@ -447,6 +630,100 @@ function AdminOrdersPageContent() {
         </div>
       )}
 
+      {modal.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-bold mb-4">
+              {modal.type === "image" && "Загрузите подтверждение выкупа"}
+              {modal.type === "track_de" && "Введите трек-номер продавца"}
+              {modal.type === "track_ru" && "Введите трек-номер для РФ"}
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Заказ #{modal.orderNumber}
+            </p>
+
+            {modal.type === "image" && (
+              <div className="space-y-4">
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                >
+                  {previewUrl ? (
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="max-h-48 mx-auto rounded"
+                    />
+                  ) : (
+                    <>
+                      <svg
+                        className="w-12 h-12 mx-auto text-gray-400 mb-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <p className="text-gray-600">Нажмите для загрузки изображения</p>
+                    </>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                {selectedFile && (
+                  <p className="text-sm text-gray-600">
+                    Выбран файл: {selectedFile.name}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {(modal.type === "track_de" || modal.type === "track_ru") && (
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  value={trackInput}
+                  onChange={(e) => setTrackInput(e.target.value)}
+                  placeholder="Введите трек-номер"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
+                />
+                <p className="text-sm text-gray-500">
+                  {modal.type === "track_de"
+                    ? "Трек-номер от продавца для отслеживания доставки на склад в Германии"
+                    : "Трек-номер для отслеживания доставки в Россию"}
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={closeModal}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={modalLoading}
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleModalSubmit}
+                disabled={isSubmitDisabled() || modalLoading}
+                className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {modalLoading ? "Сохранение..." : "Сохранить"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

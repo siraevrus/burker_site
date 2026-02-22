@@ -10,19 +10,19 @@ interface OrdersPageClientProps {
 }
 
 const statusLabels: Record<string, string> = {
-  pending: "В обработке",
-  confirmed: "Подтвержден",
-  shipped: "Отправлен",
+  accepted: "Заказ принят",
+  purchased: "Выкуплен",
+  in_transit_de: "В пути на склад",
+  in_transit_ru: "В пути в РФ",
   delivered: "Доставлен",
-  cancelled: "Отменен",
 };
 
 const statusColors: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800",
-  confirmed: "bg-blue-100 text-blue-800",
-  shipped: "bg-purple-100 text-purple-800",
+  accepted: "bg-yellow-100 text-yellow-800",
+  purchased: "bg-blue-100 text-blue-800",
+  in_transit_de: "bg-purple-100 text-purple-800",
+  in_transit_ru: "bg-indigo-100 text-indigo-800",
   delivered: "bg-green-100 text-green-800",
-  cancelled: "bg-red-100 text-red-800",
 };
 
 export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
@@ -95,7 +95,7 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                     <span className="text-sm text-gray-600">Статус</span>
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                        statusColors[order.status] || statusColors.pending
+                        statusColors[order.status] || statusColors.accepted
                       }`}
                     >
                       {statusLabels[order.status] || order.status}
@@ -186,6 +186,80 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                         </p>
                       </div>
                     )}
+
+                    {(order.purchaseProofImage || order.sellerTrackNumber || order.russiaTrackNumber) && (
+                      <>
+                        <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-3">Информация об отслеживании</h4>
+                        </div>
+                        {order.purchaseProofImage && (
+                          <div className="md:col-span-2">
+                            <p className="text-sm text-gray-600 mb-2">Подтверждение выкупа</p>
+                            <a
+                              href={order.purchaseProofImage}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block"
+                            >
+                              <img
+                                src={order.purchaseProofImage}
+                                alt="Подтверждение выкупа"
+                                className="max-w-xs rounded-lg border border-gray-200 hover:opacity-90 transition-opacity"
+                              />
+                            </a>
+                          </div>
+                        )}
+                        {order.sellerTrackNumber && (
+                          <div>
+                            <p className="text-sm text-gray-600 mb-1">Трек-номер (склад в Германии)</p>
+                            <p className="font-medium font-mono text-purple-700">{order.sellerTrackNumber}</p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <a
+                                href={`https://t.17track.net/en#nums=${order.sellerTrackNumber}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:underline"
+                              >
+                                17track
+                              </a>
+                              <a
+                                href={`https://www.dhl.de/en/privatkunden/pakete-empfangen/verfolgen.html?piececode=${order.sellerTrackNumber}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:underline"
+                              >
+                                DHL
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                        {order.russiaTrackNumber && (
+                          <div>
+                            <p className="text-sm text-gray-600 mb-1">Трек-номер (доставка в РФ)</p>
+                            <p className="font-medium font-mono text-indigo-700">{order.russiaTrackNumber}</p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <a
+                                href={`https://www.cdek.ru/ru/tracking?order_id=${order.russiaTrackNumber}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:underline"
+                              >
+                                СДЭК
+                              </a>
+                              <a
+                                href={`https://t.17track.net/en#nums=${order.russiaTrackNumber}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:underline"
+                              >
+                                17track
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+
                     <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
                       <h4 className="text-sm font-semibold text-gray-700 mb-3">Данные для таможенного оформления</h4>
                     </div>
@@ -215,27 +289,6 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Кем выдан паспорт</p>
-                      <p className="font-medium">{order.passportIssuedBy}</p>
-                    </div>
-                    <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Данные для таможенного оформления</h4>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">ИНН</p>
-                      <p className="font-medium">{order.inn}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Серия и номер паспорта</p>
-                      <p className="font-medium">
-                        {order.passportSeries} {order.passportNumber}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Дата выдачи паспорта</p>
-                      <p className="font-medium">{order.passportIssueDate}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Кем выдан</p>
                       <p className="font-medium">{order.passportIssuedBy}</p>
                     </div>
                   </div>
