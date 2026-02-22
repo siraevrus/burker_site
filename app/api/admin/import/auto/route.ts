@@ -6,32 +6,30 @@ const API_URL = "https://parcing.burker-watches.ru/api_json.php";
 
 /**
  * API endpoint для автоматического импорта товаров с внешнего сервера
- * Может быть вызван вручную или через cron job
+ * Может быть вызван вручную или через cron job.
+ * Vercel при вызове cron передаёт заголовок Authorization: Bearer <CRON_SECRET>.
  */
 export async function GET(request: NextRequest) {
   try {
-    // Проверка секретного ключа (опционально, через query параметр или заголовок)
     const authHeader = request.headers.get("authorization");
     const secretKey = request.nextUrl.searchParams.get("secret");
-    const cronSecret = process.env.CRON_SECRET_KEY;
+    const providedSecret = authHeader?.replace(/^Bearer\s+/i, "") || secretKey || "";
 
-    // Определяем тип импорта
-    // Если установлен CRON_SECRET_KEY и он передан в запросе - это автоматический импорт (cron)
-    // Иначе - ручной импорт через кнопку
+    // Vercel использует переменную CRON_SECRET, внешние cron — можно CRON_SECRET_KEY
+    const vercelCronSecret = process.env.CRON_SECRET;
+    const customCronSecret = process.env.CRON_SECRET_KEY;
+    const expectedCronSecret = vercelCronSecret || customCronSecret;
+
     let importType: "automatic" | "manual" = "manual";
-    
-    if (cronSecret) {
-      const providedSecret = authHeader?.replace("Bearer ", "") || secretKey;
-      if (providedSecret === cronSecret) {
+    if (expectedCronSecret) {
+      if (providedSecret === expectedCronSecret) {
         importType = "automatic";
-      } else if (providedSecret && providedSecret !== cronSecret) {
-        // Если передан неверный секретный ключ - отклоняем запрос
+      } else if (providedSecret) {
         return NextResponse.json(
           { error: "Unauthorized" },
           { status: 401 }
         );
       }
-      // Если секретный ключ не передан вообще - это ручной импорт (importType уже "manual")
     }
 
     // Запрос JSON с внешнего сервера
