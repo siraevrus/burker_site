@@ -225,7 +225,7 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
         promoCodeError,
         appliedPromoCode,
         checkingPromoCode,
-        requiresConfirmation: formData.requiresConfirmation,
+        requiresConfirmation: Boolean(formData.requiresConfirmation),
         loading,
         onSubmit: submitForm,
         setPromoCode,
