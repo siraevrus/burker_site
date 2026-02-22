@@ -17,7 +17,16 @@ echo "🗄️  Генерация Prisma Client..."
 npx prisma generate
 
 echo "🗄️  Инициализация/обновление базы данных..."
-npx prisma db push --skip-generate
+# Проверить размер базы данных
+DB_SIZE=$(stat -f%z prisma/dev.db 2>/dev/null || stat -c%s prisma/dev.db 2>/dev/null || echo "0")
+if [ "$DB_SIZE" = "0" ] || [ ! -f "prisma/dev.db" ]; then
+  echo "   База данных пустая или не существует, создаём заново..."
+  rm -f prisma/dev.db
+  npx prisma db push --accept-data-loss --skip-generate
+else
+  echo "   База данных существует, обновляем схему..."
+  npx prisma db push --skip-generate
+fi
 
 echo "🏗️  Сборка проекта..."
 npm run build
