@@ -70,25 +70,6 @@ function parseDateTime(dateStr: string | null): Date {
 }
 
 /**
- * Маппинг ключей specifications на стандартные поля
- */
-function mapSpecKey(key: string): string {
-  const keyMap: Record<string, string> = {
-    Case: "dimensions",
-    "Case Size": "dimensions",
-    "Case Thickness": "dimensions",
-    "Case Color": "material",
-    Материал: "material",
-    Механизм: "waterResistant",
-    Гарантия: "warranty",
-    "Water Resistant": "waterResistant",
-    Водонепроницаемость: "waterResistant",
-  };
-
-  return keyMap[key] || key.toLowerCase().replace(/\s+/g, "_");
-}
-
-/**
  * Парсинг specifications из строки в объект
  */
 function parseSpecifications(specs: string | null): object | null {
@@ -103,8 +84,7 @@ function parseSpecifications(specs: string | null): object | null {
       const key = line.substring(0, colonIndex).trim();
       const value = line.substring(colonIndex + 1).trim();
       if (key && value) {
-        const mappedKey = mapSpecKey(key);
-        result[mappedKey] = value;
+        result[key] = value;
       }
     }
   }

@@ -502,22 +502,16 @@ export default function ProductPageClient({
               </button>
               {expandedSections.specifications && (
                 <div className="pb-4 text-sm text-gray-600 space-y-2">
-                  <p>
-                    <strong>Размеры:</strong>{" "}
-                    {product.specifications?.dimensions || "29 мм x 10 мм"}
-                  </p>
-                  <p>
-                    <strong>Материал:</strong>{" "}
-                    {product.specifications?.material || "Нержавеющая сталь"}
-                  </p>
-                  <p>
-                    <strong>Водонепроницаемость:</strong>{" "}
-                    {product.specifications?.waterResistant || "30 м"}
-                  </p>
-                  <p>
-                    <strong>Гарантия:</strong>{" "}
-                    {product.specifications?.warranty || "1 год"}
-                  </p>
+                  {product.specifications &&
+                  Object.keys(product.specifications).length > 0 ? (
+                    Object.entries(product.specifications).map(([key, value]) => (
+                      <p key={key}>
+                        <strong>{key}:</strong> {value}
+                      </p>
+                    ))
+                  ) : (
+                    <p>Характеристики отсутствуют</p>
+                  )}
                 </div>
               )}
             </div>

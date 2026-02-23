@@ -17,12 +17,7 @@ export interface Product {
   rating?: number; // рейтинг от 1 до 5
   reviewsCount?: number; // количество отзывов
   description?: string;
-  specifications?: {
-    dimensions?: string;
-    material?: string;
-    waterResistant?: string;
-    warranty?: string;
-  };
+  specifications?: Record<string, string>;
   relatedProducts?: string[]; // ID сопутствующих товаров
 }
 
