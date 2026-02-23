@@ -2,7 +2,9 @@
 
 # Безопасный production-deploy:
 # - без git reset --hard
-# - с prisma migrate deploy (вместо db push)
+# - с авто-режимом Prisma:
+#   * migrate deploy, если миграции есть
+#   * db push, если миграций нет
 # - с проверкой health endpoint
 
 set -Eeuo pipefail
@@ -73,8 +75,24 @@ log_ok "DATABASE_URL=${DATABASE_URL}"
 
 log_info "Prisma generate + migrate deploy..."
 npx prisma generate
-npx prisma migrate deploy
-log_ok "Миграции применены"
+
+# Режим Prisma:
+# 1) Если есть миграции (prisma/migrations/*/migration.sql) -> migrate deploy
+# 2) Если миграций нет -> db push (для проектов без истории миграций)
+# 3) Можно форсировать db push: FORCE_DB_PUSH=1 ./deploy-prod.sh
+if [[ "${FORCE_DB_PUSH:-0}" == "1" ]]; then
+  log_warn "FORCE_DB_PUSH=1 -> принудительно запускаю prisma db push"
+  npx prisma db push --skip-generate
+  log_ok "Схема БД синхронизирована через db push"
+elif ls prisma/migrations/*/migration.sql >/dev/null 2>&1; then
+  log_info "Найдены миграции -> prisma migrate deploy"
+  npx prisma migrate deploy
+  log_ok "Миграции применены"
+else
+  log_warn "Миграции не найдены -> prisma db push --skip-generate"
+  npx prisma db push --skip-generate
+  log_ok "Схема БД синхронизирована через db push"
+fi
 
 log_info "Сборка приложения..."
 npm run build
