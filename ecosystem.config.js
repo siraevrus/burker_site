@@ -10,6 +10,9 @@ module.exports = {
         PORT: 3010,
         PATH: "/root/.nvm/versions/node/v24.13.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
         DATABASE_URL: "file:/var/lib/burker-watches/dev.db",
+          ADMIN_USERNAME: "admin",
+      ADMIN_PASSWORD: "admin123",
+      ADMIN_JWT_SECRET: "h2VCZGvF/Kp7DQNgT7+4Q3xgBfwZ"
       },
       error_file: "/root/.pm2/logs/burker-watches-error.log",
       out_file: "/root/.pm2/logs/burker-watches-out.log",
