@@ -262,25 +262,22 @@ function BannerForm({
 
         const response = await fetch("/api/upload-promo", {
           method: "POST",
+          credentials: "include",
           body: uploadFormData,
         });
 
         if (!response.ok) {
-          throw new Error("Ошибка загрузки файла");
+          const errorData = await response.json().catch(() => ({}));
+          const serverError = typeof errorData?.error === "string" ? errorData.error : "Ошибка загрузки файла";
+          throw new Error(serverError);
         }
 
         const data = await response.json();
         setFormData({ ...formData, image: data.filename });
       } catch (error) {
         console.error("Error uploading file:", error);
-        alert("Ошибка загрузки файла. Попробуйте еще раз.");
-        // Fallback на base64 если загрузка не удалась
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const result = reader.result as string;
-          setFormData({ ...formData, image: result });
-        };
-        reader.readAsDataURL(file);
+        alert(error instanceof Error ? error.message : "Ошибка загрузки файла. Попробуйте еще раз.");
+        setImagePreview("");
       } finally {
         setIsUploading(false);
       }
