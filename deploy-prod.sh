@@ -98,6 +98,38 @@ log_info "Сборка приложения..."
 npm run build
 log_ok "Сборка завершена"
 
+log_info "Подготовка standalone-статики (CSS/JS/public)..."
+if [[ ! -d ".next/standalone" ]]; then
+  log_err "Не найдена директория .next/standalone. Проверьте output: 'standalone' в next.config.ts"
+  exit 1
+fi
+
+mkdir -p .next/standalone/.next
+
+if [[ ! -d ".next/static" ]]; then
+  log_err "Не найдена директория .next/static после build"
+  exit 1
+fi
+rm -rf .next/standalone/.next/static
+cp -r .next/static .next/standalone/.next/static
+
+if [[ -d "public" ]]; then
+  rm -rf .next/standalone/public
+  cp -r public .next/standalone/public
+else
+  log_warn "Папка public не найдена в проекте, пропускаю копирование"
+fi
+
+if [[ ! -d ".next/standalone/.next/static" ]]; then
+  log_err "Копирование static не удалось"
+  exit 1
+fi
+if [[ -d "public" && ! -d ".next/standalone/public" ]]; then
+  log_err "Копирование public не удалось"
+  exit 1
+fi
+log_ok "Standalone-статика подготовлена"
+
 log_info "Перезапуск PM2..."
 if pm2 describe "${APP_NAME}" >/dev/null 2>&1; then
   pm2 restart "${APP_NAME}"
