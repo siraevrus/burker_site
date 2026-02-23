@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { importProducts } from "@/lib/import/import";
 import { saveImportHistory } from "@/lib/import/history";
 import { logError, logEvent } from "@/lib/ops-log";
+import { requireAdmin } from "@/lib/admin-api";
 
 const API_URL = "https://parcing.burker-watches.ru/api_json.php";
 
@@ -13,6 +14,8 @@ const API_URL = "https://parcing.burker-watches.ru/api_json.php";
 export async function GET(request: NextRequest) {
   try {
     const requestId = crypto.randomUUID();
+    const adminUnauthorized = await requireAdmin(request);
+    const isAdminAuthorized = adminUnauthorized === null;
     const authHeader = request.headers.get("authorization");
     const secretKey = request.nextUrl.searchParams.get("secret");
     const providedSecret = authHeader?.replace(/^Bearer\s+/i, "") || secretKey || "";
@@ -22,16 +25,20 @@ export async function GET(request: NextRequest) {
     const customCronSecret = process.env.CRON_SECRET_KEY;
     const expectedCronSecret = vercelCronSecret || customCronSecret;
 
-    let importType: "automatic" | "manual" = "manual";
-    if (expectedCronSecret) {
-      if (providedSecret !== expectedCronSecret) {
-        return NextResponse.json(
-          { error: "Unauthorized" },
-          { status: 401 }
-        );
-      }
-      importType = "automatic";
+    const isCronAuthorized = Boolean(
+      expectedCronSecret && providedSecret === expectedCronSecret
+    );
+
+    if (!isAdminAuthorized && !isCronAuthorized) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
+
+    const importType: "automatic" | "manual" = isCronAuthorized
+      ? "automatic"
+      : "manual";
 
     // Запрос JSON с внешнего сервера
     const response = await fetch(API_URL, {
