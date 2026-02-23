@@ -34,8 +34,8 @@ npm install
 # Генерация Prisma Client
 npx prisma generate
 
-# Применение схемы к базе данных
-npx prisma db push
+# Применение миграций к базе данных
+npx prisma migrate deploy
 ```
 
 4. **Настройка переменных окружения**
@@ -106,7 +106,7 @@ nano .env
 
 Добавьте:
 ```env
-DATABASE_URL="file:./prisma/dev.db"
+DATABASE_URL="file:/var/lib/burker-watches/dev.db"
 CDEK_CLIENT_ID="ваш_client_id"
 CDEK_CLIENT_SECRET="ваш_client_secret"
 CRON_SECRET="ваш-секретный-ключ"
@@ -116,6 +116,7 @@ CRON_SECRET="ваш-секретный-ключ"
 ```bash
 npm install
 npx prisma generate
+npx prisma migrate deploy
 npm run build
 npm prune --production
 ```
@@ -141,6 +142,7 @@ cd /var/www/burker-watches.ru
 git pull origin main
 npm install
 npx prisma generate
+npx prisma migrate deploy
 npm run build
 npm prune --production
 pm2 restart burker-watches
@@ -423,12 +425,12 @@ node --version  # Должна быть 18.x или выше
 
 1. Проверьте путь к базе данных:
 ```bash
-ls -la prisma/dev.db
+ls -la /var/lib/burker-watches/dev.db
 ```
 
-2. Примените схему заново:
+2. Примените миграции заново:
 ```bash
-npx prisma db push
+npx prisma migrate deploy
 ```
 
 ### Проблема: API СДЭК не работает

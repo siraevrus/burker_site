@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { importProducts } from "@/lib/import/import";
 import { saveImportHistory } from "@/lib/import/history";
+import { requireAdmin } from "@/lib/admin-api";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
-    // Проверка авторизации (можно добавить проверку сессии)
-    // const session = await getServerSession();
-    // if (!session || !session.isAdmin) {
-    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    // }
+    const unauthorized = await requireAdmin(request);
+    if (unauthorized) return unauthorized;
+
+    const ip = getClientIp(request.headers);
+    const rate = checkRateLimit(`admin:import:${ip}`, 5, 60_000);
+    if (!rate.allowed) {
+      return NextResponse.json(
+        { error: `Слишком много запросов. Повторите через ${rate.retryAfterSec} сек.` },
+        { status: 429 }
+      );
+    }
 
     // Получение JSON данных из запроса
     const body = await request.json();
@@ -17,6 +25,13 @@ export async function POST(request: NextRequest) {
     if (!Array.isArray(body)) {
       return NextResponse.json(
         { error: "Данные должны быть массивом товаров" },
+        { status: 400 }
+      );
+    }
+
+    if (body.length > 10000) {
+      return NextResponse.json(
+        { error: "Слишком большой пакет импорта (максимум 10000 записей за запрос)" },
         { status: 400 }
       );
     }

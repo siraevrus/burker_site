@@ -4,10 +4,21 @@ import { getCurrentUser } from "@/lib/auth";
 import { createOrder } from "@/lib/orders";
 import { sendOrderConfirmation, sendAdminOrderNotification } from "@/lib/email";
 import { calculateShipping } from "@/lib/shipping";
+import { logError, logEvent } from "@/lib/ops-log";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: NextRequest) {
   try {
+    const requestId = crypto.randomUUID();
     const body = await request.json();
+    if (!body || typeof body !== "object") {
+      return NextResponse.json(
+        { error: "Некорректное тело запроса" },
+        { status: 400 }
+      );
+    }
+
     const {
       email,
       firstName,
@@ -49,6 +60,40 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { error: "Заполните все обязательные поля" },
+        { status: 400 }
+      );
+    }
+
+    if (typeof email !== "string" || !EMAIL_RE.test(email.toLowerCase())) {
+      return NextResponse.json(
+        { error: "Некорректный email" },
+        { status: 400 }
+      );
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return NextResponse.json(
+        { error: "Список товаров пуст" },
+        { status: 400 }
+      );
+    }
+
+    const invalidItem = items.find(
+      (item: any) =>
+        !item ||
+        typeof item !== "object" ||
+        typeof item.productId !== "string" ||
+        typeof item.productName !== "string" ||
+        typeof item.productPrice !== "number" ||
+        typeof item.quantity !== "number" ||
+        item.quantity <= 0 ||
+        item.productPrice < 0 ||
+        typeof item.selectedColor !== "string"
+    );
+
+    if (invalidItem) {
+      return NextResponse.json(
+        { error: "Некорректные данные товаров в заказе" },
         { status: 400 }
       );
     }
@@ -132,9 +177,14 @@ export async function POST(request: NextRequest) {
     });
 
     // Отправка email уведомлений
+    const emailNotification = {
+      customerEmailSent: false,
+      adminEmailSent: false,
+      error: undefined as string | undefined,
+    };
     try {
       const orderNumber = order.orderNumber || order.id;
-      await sendOrderConfirmation(order.email, orderNumber, {
+      emailNotification.customerEmailSent = await sendOrderConfirmation(order.email, orderNumber, {
         firstName: order.firstName,
         totalAmount: order.totalAmount,
         items: order.items.map((item) => ({
@@ -144,7 +194,7 @@ export async function POST(request: NextRequest) {
         })),
       });
 
-      await sendAdminOrderNotification(orderNumber, order.id, {
+      emailNotification.adminEmailSent = await sendAdminOrderNotification(orderNumber, order.id, {
         email: order.email,
         firstName: order.firstName,
         phone: order.phone,
@@ -154,15 +204,30 @@ export async function POST(request: NextRequest) {
       });
     } catch (emailError) {
       console.error("Error sending order emails:", emailError);
-      // Не прерываем создание заказа из-за ошибки email
+      emailNotification.error =
+        emailError instanceof Error ? emailError.message : "Ошибка отправки email";
     }
+
+    logEvent("order_create_success", {
+      requestId,
+      orderId: order.id,
+      orderNumber: order.orderNumber || order.id,
+      userId: currentUser?.userId || null,
+      emailCustomerSent: emailNotification.customerEmailSent,
+      emailAdminSent: emailNotification.adminEmailSent,
+      emailError: emailNotification.error || null,
+    });
 
     return NextResponse.json({
       success: true,
       order,
+      emailNotification,
     });
   } catch (error: any) {
-    console.error("Create order error:", error);
+    logError("order_create_error", {
+      requestId: crypto.randomUUID(),
+      error: error?.message || "Unknown error",
+    });
     return NextResponse.json(
       { error: error.message || "Ошибка при создании заказа" },
       { status: 500 }

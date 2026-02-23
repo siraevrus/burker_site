@@ -7,29 +7,48 @@ export default function AdminLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    // Проверяем, авторизован ли пользователь
-    if (typeof window !== "undefined") {
-      const isAuth = localStorage.getItem("admin_auth");
-      if (isAuth === "true") {
-        router.push("/admin");
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/api/admin/auth/me", { method: "GET" });
+        if (response.ok) {
+          router.push("/admin");
+        }
+      } catch {
+        // no-op
       }
-    }
+    };
+    checkAuth();
   }, [router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    // Простая проверка логина и пароля
-    // В продакшене нужно использовать безопасную аутентификацию
-    if (username === "admin" && password === "admin123") {
-      localStorage.setItem("admin_auth", "true");
+    try {
+      const response = await fetch("/api/admin/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error || "Неверный логин или пароль");
+        return;
+      }
+
       router.push("/admin");
-    } else {
-      setError("Неверный логин или пароль");
+    } catch {
+      setError("Ошибка входа. Попробуйте позже.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -71,14 +90,12 @@ export default function AdminLogin() {
           </div>
           <button
             type="submit"
+            disabled={loading}
             className="w-full bg-black text-white py-2 rounded-md hover:bg-gray-800 transition-colors font-semibold"
           >
-            Войти
+            {loading ? "Вход..." : "Войти"}
           </button>
         </form>
-        <p className="text-xs text-gray-500 text-center mt-4">
-          Логин: admin, Пароль: admin123
-        </p>
       </div>
     </div>
   );

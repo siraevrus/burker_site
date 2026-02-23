@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/admin/import/auto",
+      "path": "/api/cron/import",
       "schedule": "0 8,14,20 * * *"
     }
   ]

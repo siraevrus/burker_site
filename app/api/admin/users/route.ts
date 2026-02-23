@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/admin-api";
 
 export async function GET(request: NextRequest) {
   try {
+    const unauthorized = await requireAdmin(request);
+    if (unauthorized) return unauthorized;
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const orderStatus = searchParams.get("orderStatus") || "";

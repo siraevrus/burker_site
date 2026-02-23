@@ -9,7 +9,7 @@ module.exports = {
         NODE_ENV: "production",
         PORT: 3010,
         PATH: "/root/.nvm/versions/node/v24.13.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-        DATABASE_URL: "file:/var/www/burker-watches.ru/prisma/dev.db",
+        DATABASE_URL: "file:/var/lib/burker-watches/dev.db",
       },
       error_file: "/root/.pm2/logs/burker-watches-error.log",
       out_file: "/root/.pm2/logs/burker-watches-out.log",

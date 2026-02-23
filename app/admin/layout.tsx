@@ -14,20 +14,37 @@ export default function AdminLayout({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Проверяем авторизацию
-    if (typeof window !== "undefined") {
-      const auth = localStorage.getItem("admin_auth");
-      if (auth !== "true" && pathname !== "/admin/login") {
-        router.push("/admin/login");
-      } else {
+    const checkAuth = async () => {
+      if (pathname === "/admin/login") {
         setIsAuthenticated(true);
+        setIsLoading(false);
+        return;
       }
-      setIsLoading(false);
-    }
+
+      try {
+        const response = await fetch("/api/admin/auth/me", { method: "GET" });
+        if (!response.ok) {
+          router.push("/admin/login");
+          return;
+        }
+        setIsAuthenticated(true);
+      } catch {
+        router.push("/admin/login");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
   }, [router, pathname]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_auth");
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/auth/logout", { method: "POST" });
+    } finally {
+      setIsAuthenticated(false);
+      setIsLoading(false);
+    }
     router.push("/admin/login");
   };
 

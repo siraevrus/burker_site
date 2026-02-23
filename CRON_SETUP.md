@@ -41,14 +41,20 @@ Authorization: Bearer ВАШ_СЕКРЕТНЫЙ_КЛЮЧ
 - **`CRON_SECRET`** — используется Vercel при вызове cron (подставьте тот же ключ в настройках проекта).
 - **`CRON_SECRET_KEY`** — альтернатива для внешних cron (например, cron-job.org).
 
-#### Вариант B: Использовать `/api/admin/import/auto` (без защиты)
+#### Вариант B: Использовать `/api/admin/import/auto` (с защитой)
 
 **URL для вызова:**
 ```
-GET https://ваш-домен.ru/api/admin/import/auto
+GET https://ваш-домен.ru/api/admin/import/auto?secret=ВАШ_СЕКРЕТНЫЙ_КЛЮЧ
 ```
 
-⚠️ **Внимание:** Этот endpoint не защищен, используйте только если у вас есть другая защита (например, через Vercel Cron).
+**Или с заголовком:**
+```
+GET https://ваш-домен.ru/api/admin/import/auto
+Authorization: Bearer ВАШ_СЕКРЕТНЫЙ_КЛЮЧ
+```
+
+⚠️ **Важно:** если `CRON_SECRET` настроен, endpoint отклонит любой запрос без корректного секрета (401).
 
 ---
 

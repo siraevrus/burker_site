@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/admin-api";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const unauthorized = await requireAdmin(request);
+    if (unauthorized) return unauthorized;
+
     const banner = await prisma.topBanner.findUnique({
       where: { id: "single" },
     });
@@ -18,6 +22,9 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    const unauthorized = await requireAdmin(request);
+    if (unauthorized) return unauthorized;
+
     const body = await request.json();
     const { text } = body;
 

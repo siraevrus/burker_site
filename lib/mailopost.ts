@@ -37,6 +37,13 @@ interface MailopostResponse {
   };
 }
 
+const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
+const MAX_ATTEMPTS = 3;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Отправка email через Mailopost API
  */
@@ -60,37 +67,70 @@ export async function sendEmailViaMailopost(
     return { success: true };
   }
 
-  try {
-    const message: MailopostMessage = {
-      from_email: config.fromEmail,
-      from_name: config.fromName,
-      to,
-      subject,
-      html,
-      text: text || html.replace(/<[^>]*>/g, ""), // Извлекаем текст из HTML если не передан
-      payment: "credit_priority", // Используем приоритет писем
-    };
+  const message: MailopostMessage = {
+    from_email: config.fromEmail,
+    from_name: config.fromName,
+    to,
+    subject,
+    html,
+    text: text || html.replace(/<[^>]*>/g, ""), // Извлекаем текст из HTML если не передан
+    payment: "credit_priority", // Используем приоритет писем
+  };
 
-    const response = await fetch(`${config.apiUrl}/email/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${config.apiToken}`,
-      },
-      body: JSON.stringify(message),
-    });
+  let lastError = "Unknown error";
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMessage = errorData.errors?.[0]?.detail || `HTTP ${response.status}`;
-      console.error("Mailopost API error:", errorMessage);
-      return { success: false, error: errorMessage };
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const response = await fetch(`${config.apiUrl}/email/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${config.apiToken}`,
+        },
+        body: JSON.stringify(message),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errors = errorData.errors || [];
+        const errorMessage =
+          errors[0]?.detail || errors[0]?.code?.toString() || `HTTP ${response.status}`;
+        const errorCode = errors[0]?.code ?? response.status;
+        lastError = `${errorCode}: ${errorMessage}`;
+
+        console.error("[Mailopost] Ошибка отправки:", {
+          attempt,
+          status: response.status,
+          code: errorCode,
+          detail: errorMessage,
+          full: errorData,
+        });
+
+        if (attempt < MAX_ATTEMPTS && RETRYABLE_STATUSES.has(response.status)) {
+          await sleep(500 * attempt);
+          continue;
+        }
+        return { success: false, error: lastError };
+      }
+
+      const data: MailopostResponse = await response.json();
+      if (attempt > 1) {
+        console.log(`[Mailopost] Отправка успешна после ретрая: попытка ${attempt}`);
+      }
+      return { success: true, messageId: data.id };
+    } catch (error: unknown) {
+      const messageText = error instanceof Error ? error.message : "Unknown error";
+      lastError = messageText;
+      console.error("[Mailopost] Сетевая ошибка отправки:", {
+        attempt,
+        error: messageText,
+      });
+      if (attempt < MAX_ATTEMPTS) {
+        await sleep(500 * attempt);
+        continue;
+      }
     }
-
-    const data: MailopostResponse = await response.json();
-    return { success: true, messageId: data.id };
-  } catch (error: any) {
-    console.error("Error sending email via Mailopost:", error);
-    return { success: false, error: error.message || "Unknown error" };
   }
+
+  return { success: false, error: lastError };
 }

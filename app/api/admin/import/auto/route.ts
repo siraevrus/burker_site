@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { importProducts } from "@/lib/import/import";
 import { saveImportHistory } from "@/lib/import/history";
+import { logError, logEvent } from "@/lib/ops-log";
 
 const API_URL = "https://parcing.burker-watches.ru/api_json.php";
 
@@ -11,6 +12,7 @@ const API_URL = "https://parcing.burker-watches.ru/api_json.php";
  */
 export async function GET(request: NextRequest) {
   try {
+    const requestId = crypto.randomUUID();
     const authHeader = request.headers.get("authorization");
     const secretKey = request.nextUrl.searchParams.get("secret");
     const providedSecret = authHeader?.replace(/^Bearer\s+/i, "") || secretKey || "";
@@ -22,14 +24,13 @@ export async function GET(request: NextRequest) {
 
     let importType: "automatic" | "manual" = "manual";
     if (expectedCronSecret) {
-      if (providedSecret === expectedCronSecret) {
-        importType = "automatic";
-      } else if (providedSecret) {
+      if (providedSecret !== expectedCronSecret) {
         return NextResponse.json(
           { error: "Unauthorized" },
           { status: 401 }
         );
       }
+      importType = "automatic";
     }
 
     // Запрос JSON с внешнего сервера
@@ -63,6 +64,14 @@ export async function GET(request: NextRequest) {
 
     // Сохранение истории импорта
     await saveImportHistory(importType, result);
+    logEvent("admin_import_auto_success", {
+      requestId,
+      importType,
+      total: result.total,
+      added: result.added,
+      updated: result.updated,
+      errorsCount: result.errors.length,
+    });
 
     return NextResponse.json({
       success: true,
@@ -70,7 +79,9 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    console.error("Auto import error:", error);
+    logError("admin_import_auto_error", {
+      error: error?.message || "Unknown error",
+    });
     return NextResponse.json(
       {
         success: false,

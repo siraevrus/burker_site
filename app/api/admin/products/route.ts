@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllProductsForAdmin } from "@/lib/products";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/admin-api";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const unauthorized = await requireAdmin(request);
+    if (unauthorized) return unauthorized;
+
     console.log("[GET /api/admin/products] Starting fetch...");
     const products = await getAllProductsForAdmin();
     console.log("[GET /api/admin/products] Products fetched:", products.length);
@@ -19,6 +23,9 @@ export async function GET() {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const unauthorized = await requireAdmin(request);
+    if (unauthorized) return unauthorized;
+
     const body = await request.json();
     const { ids } = body;
 
