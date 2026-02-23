@@ -89,7 +89,7 @@ export async function getAllProductsForAdmin(): Promise<Product[]> {
   }
 }
 
-// Получить товар по slug (из названия) или по id
+// Получить товар по slug (только из названия)
 export async function getProductById(slug: string): Promise<Product | null> {
   const [dbProducts, rates] = await Promise.all([
     prisma.product.findMany({
@@ -104,9 +104,21 @@ export async function getProductById(slug: string): Promise<Product | null> {
   
   const dbProduct = dbProducts.find((p) => {
     const productSlug = generateProductSlug(p.name);
-    return productSlug === normalizedSlug || p.id === slug;
+    return productSlug === normalizedSlug;
   });
   
+  return dbProduct ? mapProductFromDbWithRates(dbProduct, rates) : null;
+}
+
+// Получить товар по внутреннему id (для админки)
+export async function getProductByAdminId(id: string): Promise<Product | null> {
+  const [dbProduct, rates] = await Promise.all([
+    prisma.product.findUnique({
+      where: { id },
+    }),
+    getExchangeRates(),
+  ]);
+
   return dbProduct ? mapProductFromDbWithRates(dbProduct, rates) : null;
 }
 

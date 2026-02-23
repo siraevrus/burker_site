@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getProductById } from "@/lib/products";
+import { getProductByAdminId } from "@/lib/products";
 import AdminProductEditClient from "./AdminProductEditClient";
 
 export default async function AdminProductEditPage({
@@ -8,7 +8,7 @@ export default async function AdminProductEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const product = await getProductById(id);
+  const product = await getProductByAdminId(id);
 
   if (!product) {
     notFound();
