@@ -53,20 +53,38 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now();
     const extension = file.name.split(".").pop() || "jpg";
     const filename = `proof-${orderId}-${timestamp}.${extension}`;
-    
-    const publicDir = join(process.cwd(), "public", "order-proofs");
-    
-    if (!existsSync(publicDir)) {
-      mkdirSync(publicDir, { recursive: true });
+
+    // Единая директория для всех загружаемых изображений (promo).
+    // В production (standalone) дублируем запись в .next/standalone/public/promo.
+    const targetDirs = [
+      join(process.cwd(), "public", "promo"),
+      join(process.cwd(), ".next", "standalone", "public", "promo"),
+    ];
+
+    let saved = 0;
+    for (const dir of targetDirs) {
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
+      const filepath = join(dir, filename);
+      try {
+        await writeFile(filepath, buffer);
+        saved += 1;
+      } catch {
+        // Пытаемся сохранить во все целевые директории; ошибку отдадим, если не сохранили никуда.
+      }
     }
 
-    const filepath = join(publicDir, filename);
-
-    await writeFile(filepath, buffer);
+    if (saved === 0) {
+      return NextResponse.json(
+        { error: "Ошибка сохранения файла" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      url: `/order-proofs/${filename}`,
+      url: `/promo/${filename}`,
     });
   } catch (error) {
     console.error("Error uploading proof:", error);
