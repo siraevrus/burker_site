@@ -143,7 +143,8 @@ export async function POST(request: NextRequest) {
       : undefined;
     const { totalCost: shippingCost } = calculateShipping(cartItems, shippingRates);
     const discountAmount = promoDiscount ? parseFloat(promoDiscount.toString()) : 0;
-    const totalAmount = Math.max(0, itemsTotal + shippingCost - discountAmount);
+    const shippingAfterDiscount = Math.max(0, shippingCost - discountAmount);
+    const totalAmount = itemsTotal + shippingAfterDiscount;
 
     // Создание заказа
     const order = await createOrder({
@@ -177,7 +178,7 @@ export async function POST(request: NextRequest) {
         quantity: item.quantity,
       })),
       totalAmount,
-      shippingCost,
+      shippingCost: shippingAfterDiscount,
     });
 
     // Отправка email уведомлений

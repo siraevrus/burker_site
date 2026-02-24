@@ -90,6 +90,8 @@ export interface Order {
   passportIssueDate: string; // Дата выдачи паспорта
   passportIssuedBy: string; // Кем выдан паспорт
   requiresConfirmation?: boolean; // Требуется ли связаться для подтверждения заказа
+  promoCode?: string | null; // Код промокода, примененный к заказу
+  promoDiscount?: number | null; // Сумма скидки по промокоду
   status: string;
   totalAmount: number;
   shippingCost: number;

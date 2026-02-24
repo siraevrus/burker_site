@@ -311,6 +311,12 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                         )}
                       </span>
                     </div>
+                    {order.promoCode && (order.promoDiscount ?? 0) > 0 && (
+                      <div className="flex justify-between mb-2 text-green-600">
+                        <span>Промокод {order.promoCode}:</span>
+                        <span className="font-medium">-{(order.promoDiscount ?? 0).toFixed(0)} ₽</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-xl font-bold">
                       <span>Итого:</span>
                       <span>{order.totalAmount.toFixed(0)} ₽</span>

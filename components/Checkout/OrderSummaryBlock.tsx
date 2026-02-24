@@ -34,7 +34,8 @@ export default function OrderSummaryBlock({
   onSubmit,
 }: OrderSummaryBlockProps) {
   const promoDiscount = appliedPromoCode ? appliedPromoCode.discount : 0;
-  const finalTotal = Math.max(0, totalPrice + shippingCost - promoDiscount);
+  const shippingAfterDiscount = Math.max(0, shippingCost - promoDiscount);
+  const finalTotal = totalPrice + shippingAfterDiscount;
 
   return (
     <div className="border-t border-gray-200 pt-4 mt-4">
@@ -51,8 +52,14 @@ export default function OrderSummaryBlock({
         </div>
         {appliedPromoCode && (
           <div className="flex justify-between text-green-600">
-            <span>Скидка по промокоду</span>
-            <span>-{promoDiscount.toFixed(0)} ₽</span>
+            <span>Скидка по промокоду (доставка)</span>
+            <span>-{Math.min(promoDiscount, shippingCost).toFixed(0)} ₽</span>
+          </div>
+        )}
+        {appliedPromoCode && (
+          <div className="flex justify-between">
+            <span>Доставка после скидки</span>
+            <span>{shippingAfterDiscount.toFixed(0)} ₽</span>
           </div>
         )}
         <div className="flex justify-between text-xl font-bold border-t border-gray-200 pt-2">

@@ -214,7 +214,8 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
     shippingRates.length > 0 ? shippingRates : undefined
   );
   const promoDiscount = appliedPromoCode ? appliedPromoCode.discount : 0;
-  const finalTotal = Math.max(0, totalPrice + shippingCost - promoDiscount);
+  const shippingAfterDiscount = Math.max(0, shippingCost - promoDiscount);
+  const finalTotal = totalPrice + shippingAfterDiscount;
 
   const submitForm = useCallback(() => {
     if (formRef.current) {
