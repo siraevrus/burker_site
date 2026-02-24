@@ -130,7 +130,17 @@ pm2 startup
 
 ### Обновление проекта (деплой)
 
-**Вариант 1: Использование скрипта deploy.sh**
+**Вариант 1: Использование скрипта deploy-prod.sh (рекомендуется)**
+```bash
+cd /var/www/burker-watches.ru
+./deploy-prod.sh
+```
+
+Скрипт проверяет «грязное» дерево Git: деплой **не** блокируется, если изменения только в:
+- `public/promo/*`, `public/products/*`, `public/order-proofs/*` (загружаемые файлы),
+- `ecosystem.config.js` (локальные настройки PM2/env на сервере).
+
+**Вариант 2: Использование скрипта deploy.sh**
 ```bash
 cd /var/www/burker-watches.ru
 ./deploy.sh

@@ -43,10 +43,23 @@ cd "${PROJECT_DIR}"
 log_info "Рабочая директория: ${PROJECT_DIR}"
 
 log_info "Проверка git-статуса..."
-if [[ -n "$(git status --porcelain)" ]]; then
-  log_warn "Есть локальные изменения. Прерываю деплой, чтобы не потерять правки."
-  git status --short
-  exit 1
+DIRTY=$(git status --porcelain)
+if [[ -n "$DIRTY" ]]; then
+  # Не блокируем деплой из-за изменений в загружаемом контенте и локальном ecosystem.config.js
+  REMAINING=""
+  while IFS= read -r line; do
+    path="${line:3}"
+    case "$path" in
+      public/promo/*|public/products/*|public/order-proofs/*|ecosystem.config.js) ;;
+      *) REMAINING="${REMAINING}${line}\n" ;;
+    esac
+  done <<< "$DIRTY"
+  if [[ -n "$REMAINING" ]]; then
+    log_warn "Есть локальные изменения (не только загрузки/ecosystem). Прерываю деплой."
+    echo -e "$REMAINING"
+    exit 1
+  fi
+  log_info "Изменения только в public/promo|products|order-proofs или ecosystem.config.js — продолжаю деплой."
 fi
 
 log_info "Обновление кода..."

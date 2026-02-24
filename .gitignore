@@ -49,3 +49,8 @@ next-env.d.ts
 *.db-journal
 prisma/dev.db
 dev.db
+
+# uploaded content (not in repo; server-only)
+public/promo/
+public/products/
+public/order-proofs/
