@@ -137,7 +137,11 @@ export async function POST(request: NextRequest) {
       inStock: true,
     }));
     
-    const { totalCost: shippingCost } = calculateShipping(cartItems);
+    const rateRows = await prisma.shippingRate.findMany({ orderBy: { weightKg: "asc" } });
+    const shippingRates = rateRows.length > 0
+      ? rateRows.map((r) => ({ weight: r.weightKg, price: r.priceRub }))
+      : undefined;
+    const { totalCost: shippingCost } = calculateShipping(cartItems, shippingRates);
     const discountAmount = promoDiscount ? parseFloat(promoDiscount.toString()) : 0;
     const totalAmount = Math.max(0, itemsTotal + shippingCost - discountAmount);
 

@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
 import CookieBanner from "@/components/CookieBanner/CookieBanner";
+import SeoMeta from "@/components/SeoMeta/SeoMeta";
 
 export default function ConditionalLayout({
   children,
@@ -13,16 +14,19 @@ export default function ConditionalLayout({
   const pathname = usePathname();
   const isAdminPage = pathname?.startsWith("/admin");
 
-  if (isAdminPage) {
-    return <>{children}</>;
-  }
-
   return (
     <>
-      <Header />
-      <main className="min-h-screen">{children}</main>
-      <Footer />
-      <CookieBanner />
+      <SeoMeta />
+      {isAdminPage ? (
+        <>{children}</>
+      ) : (
+        <>
+          <Header />
+          <main className="min-h-screen">{children}</main>
+          <Footer />
+          <CookieBanner />
+        </>
+      )}
     </>
   );
 }

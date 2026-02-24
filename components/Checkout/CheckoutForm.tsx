@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { CheckoutFormData } from "@/lib/types";
-import { calculateShipping } from "@/lib/shipping";
+import { calculateShipping, type ShippingRateEntry } from "@/lib/shipping";
 import Link from "next/link";
 
 interface CdekPoint {
@@ -51,6 +51,7 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
   const cart = useStore((state) => state.cart);
   const getTotalPrice = useStore((state) => state.getTotalPrice);
   const clearCart = useStore((state) => state.clearCart);
+  const [shippingRates, setShippingRates] = useState<ShippingRateEntry[]>([]);
 
   /** Только буквы (кириллица, латиница), пробел и дефис — для ФИО */
   const lettersOnly = (value: string): string =>
@@ -204,8 +205,18 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
     setPromoCodeError("");
   }, []);
 
+  useEffect(() => {
+    fetch("/api/shipping/rates")
+      .then((r) => r.json())
+      .then((d) => Array.isArray(d.rates) && d.rates.length > 0 && setShippingRates(d.rates))
+      .catch(() => {});
+  }, []);
+
   const totalPrice = getTotalPrice();
-  const { totalWeight, totalCost: shippingCost } = calculateShipping(cart);
+  const { totalWeight, totalCost: shippingCost } = calculateShipping(
+    cart,
+    shippingRates.length > 0 ? shippingRates : undefined
+  );
   const promoDiscount = appliedPromoCode ? appliedPromoCode.discount : 0;
   const finalTotal = Math.max(0, totalPrice + shippingCost - promoDiscount);
 

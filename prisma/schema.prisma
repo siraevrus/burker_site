@@ -197,3 +197,23 @@ model ImportHistory {
   
   @@index([createdAt])
 }
+
+model SeoPage {
+  id          String   @id @default(cuid())
+  path        String   @unique // путь страницы: /, /contact, /cart и т.д.
+  title       String   // meta title
+  description String? // meta description
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ShippingRate {
+  id       String  @id @default(cuid())
+  weightKg Float   // вес в кг (шаг 0.1)
+  priceRub Float   // стоимость доставки в ₽
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([weightKg])
+  @@index([weightKg])
+}

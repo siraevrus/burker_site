@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useStore, getCustomsCategory } from "@/lib/store";
-import { calculateShipping } from "@/lib/shipping";
+import { calculateShipping, type ShippingRateEntry } from "@/lib/shipping";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
@@ -18,6 +18,7 @@ export default function CartPage() {
   const getTotalPrice = useStore((state) => state.getTotalPrice);
   const getTotalQuantityByCategory = useStore((state) => state.getTotalQuantityByCategory);
   const [customsHintKey, setCustomsHintKey] = useState<string | null>(null);
+  const [shippingRates, setShippingRates] = useState<ShippingRateEntry[]>([]);
 
   useEffect(() => {
     if (!customsHintKey) return;
@@ -25,8 +26,18 @@ export default function CartPage() {
     return () => clearTimeout(t);
   }, [customsHintKey]);
 
+  useEffect(() => {
+    fetch("/api/shipping/rates")
+      .then((r) => r.json())
+      .then((d) => Array.isArray(d.rates) && d.rates.length > 0 && setShippingRates(d.rates))
+      .catch(() => {});
+  }, []);
+
   const totalPrice = getTotalPrice();
-  const { totalWeight, totalCost: shippingCost } = calculateShipping(cart);
+  const { totalWeight, totalCost: shippingCost } = calculateShipping(
+    cart,
+    shippingRates.length > 0 ? shippingRates : undefined
+  );
 
   if (cart.length === 0) {
     return (

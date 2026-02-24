@@ -173,6 +173,26 @@ export default function AdminLayout({
                 >
                   ФОС
                 </a>
+                <a
+                  href="/admin/seo"
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    pathname === "/admin/seo"
+                      ? "bg-gray-600 text-white"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  SEO
+                </a>
+                <a
+                  href="/admin/shipping"
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    pathname === "/admin/shipping"
+                      ? "bg-gray-600 text-white"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Стоимость доставки
+                </a>
               </div>
             </div>
             <div className="flex items-center gap-4">

@@ -34,84 +34,71 @@ const WEIGHT_COST_TABLE: Record<number, number> = {
   2.0: 3890,
 };
 
-const MAX_WEIGHT = 2.0; // Максимальный вес для расчета
+const MAX_WEIGHT = 2.0; // Максимальный вес для расчета (при использовании встроенной таблицы)
 
 export interface ShippingCalculation {
   totalWeight: number;
   totalCost: number;
 }
 
-/**
- * Получает стоимость доставки по весу с округлением вверх
- * 
- * @param weight - вес в кг
- * @returns стоимость доставки в ₽
- */
-function getShippingCostByWeight(weight: number): number {
-  // Если вес больше максимального, используем стоимость для максимального веса
-  if (weight > MAX_WEIGHT) {
-    return WEIGHT_COST_TABLE[MAX_WEIGHT];
+export type ShippingRateEntry = { weight: number; price: number };
+
+function getShippingCostByWeight(
+  weight: number,
+  table?: ShippingRateEntry[]
+): number {
+  const tableMap: Record<number, number> = {};
+  let maxW = 0;
+  if (table && table.length > 0) {
+    table.forEach((r) => {
+      tableMap[r.weight] = r.price;
+      if (r.weight > maxW) maxW = r.weight;
+    });
+  } else {
+    Object.assign(tableMap, WEIGHT_COST_TABLE);
+    maxW = MAX_WEIGHT;
   }
 
-  // Округляем вес вверх до ближайшего значения из таблицы
-  // Шаг таблицы: 0.1 кг
+  if (weight > maxW) return tableMap[maxW] ?? 0;
   const roundedWeight = Math.ceil(weight * 10) / 10;
-  
-  // Если точное совпадение есть в таблице, возвращаем стоимость
-  if (WEIGHT_COST_TABLE[roundedWeight] !== undefined) {
-    return WEIGHT_COST_TABLE[roundedWeight];
-  }
-
-  // Если после округления вес все еще больше максимального, используем максимум
-  if (roundedWeight > MAX_WEIGHT) {
-    return WEIGHT_COST_TABLE[MAX_WEIGHT];
-  }
-
-  // Находим ближайшее большее значение из таблицы
-  const weights = Object.keys(WEIGHT_COST_TABLE)
+  if (tableMap[roundedWeight] !== undefined) return tableMap[roundedWeight];
+  if (roundedWeight > maxW) return tableMap[maxW] ?? 0;
+  const weights = Object.keys(tableMap)
     .map(Number)
     .sort((a, b) => a - b);
-  
   const nextWeight = weights.find((w) => w >= roundedWeight);
-  
-  return nextWeight ? WEIGHT_COST_TABLE[nextWeight] : WEIGHT_COST_TABLE[MAX_WEIGHT];
+  return nextWeight != null ? tableMap[nextWeight] : tableMap[maxW] ?? 0;
 }
 
 /**
- * Рассчитывает вес и стоимость доставки на основе товаров в корзине
+ * Рассчитывает вес и стоимость доставки на основе товаров в корзине.
  * Товары группируются по категориям, для каждой категории считается общий вес
- * и стоимость доставки определяется по таблице веса
- * 
+ * и стоимость доставки по таблице веса.
+ *
  * @param cart - массив товаров в корзине
- * @returns объект с общим весом (кг) и стоимостью доставки (₽)
+ * @param rates - опционально таблица тарифов [{ weight, price }]; если не передана — используется встроенная
  */
-export function calculateShipping(cart: CartItem[]): ShippingCalculation {
+export function calculateShipping(
+  cart: CartItem[],
+  rates?: ShippingRateEntry[]
+): ShippingCalculation {
   let totalWeightWatches = 0;
   let totalWeightJewelry = 0;
 
-  // Группируем товары по категориям и считаем общий вес каждой категории
   cart.forEach((item) => {
     const isJewelry = item.collection === "Украшения";
     const weightPerUnit = isJewelry ? WEIGHT_PER_UNIT.jewelry : WEIGHT_PER_UNIT.watches;
     const categoryWeight = weightPerUnit * item.quantity;
-
-    if (isJewelry) {
-      totalWeightJewelry += categoryWeight;
-    } else {
-      totalWeightWatches += categoryWeight;
-    }
+    if (isJewelry) totalWeightJewelry += categoryWeight;
+    else totalWeightWatches += categoryWeight;
   });
 
-  // Рассчитываем стоимость доставки для каждой категории по таблице веса
-  const costWatches = totalWeightWatches > 0 ? getShippingCostByWeight(totalWeightWatches) : 0;
-  const costJewelry = totalWeightJewelry > 0 ? getShippingCostByWeight(totalWeightJewelry) : 0;
-
-  // Суммируем общий вес и общую стоимость
+  const costWatches =
+    totalWeightWatches > 0 ? getShippingCostByWeight(totalWeightWatches, rates) : 0;
+  const costJewelry =
+    totalWeightJewelry > 0 ? getShippingCostByWeight(totalWeightJewelry, rates) : 0;
   const totalWeight = totalWeightWatches + totalWeightJewelry;
   const totalCost = costWatches + costJewelry;
 
-  return {
-    totalWeight,
-    totalCost,
-  };
+  return { totalWeight, totalCost };
 }
