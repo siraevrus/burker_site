@@ -7,6 +7,7 @@ export interface Product {
   bestseller?: boolean; // Флаг бестселлера из JSON
   price: number;
   originalPrice: number;
+  originalPriceEur?: number; // Сырая цена в EUR для расчёта комиссии
   discount: number; // процент скидки
   colors: string[]; // золото, серебро, розовое золото
   images: string[];

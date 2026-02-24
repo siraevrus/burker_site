@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { CartItem } from "@/lib/types";
 import Link from "next/link";
@@ -17,13 +17,48 @@ interface CheckoutPageClientProps {
   } | null;
 }
 
-function getItemCommission(item: CartItem): number | null {
-  if (!item.originalPrice || item.originalPrice <= 0) return null;
-  return Math.max(0, (item.price - item.originalPrice) * item.quantity);
+interface ExchangeRates {
+  eurRate: number;
+  rubRate: number;
+}
+
+function getItemCommission(item: CartItem, rates: ExchangeRates | null): number | null {
+  console.log('=== Checkout Commission Debug ===');
+  console.log('item.name:', item.name);
+  console.log('originalPriceEur:', item.originalPriceEur);
+  console.log('item.price:', item.price);
+  console.log('rates:', rates);
+  
+  if (!rates || item.originalPriceEur == null || item.originalPriceEur <= 0) {
+    console.log('Early return: missing data - rates:', !!rates, 'originalPriceEur:', item.originalPriceEur);
+    return null;
+  }
+  
+  const originalPriceInRub = item.originalPriceEur / rates.eurRate * rates.rubRate;
+  const commission = (item.price - originalPriceInRub) * item.quantity;
+  
+  console.log('originalPriceInRub:', originalPriceInRub);
+  console.log('raw commission:', commission);
+  console.log('final commission:', Math.max(0, commission));
+  console.log('=== End Debug ===');
+  
+  return Math.max(0, commission);
 }
 
 export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
   const cart = useStore((state) => state.cart);
+  const [rates, setRates] = useState<ExchangeRates | null>(null);
+
+  useEffect(() => {
+    fetch("/api/exchange-rates")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.eurRate && data.rubRate) {
+          setRates({ eurRate: data.eurRate, rubRate: data.rubRate });
+        }
+      })
+      .catch(() => {});
+  }, []);
   const [formData, setFormData] = useState<{
     totalPrice: number;
     totalWeight: number;
@@ -114,7 +149,7 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
             <h2 className="text-xl font-bold mb-4">Ваш заказ</h2>
             <div className="space-y-3 mb-4">
               {cart.map((item) => {
-                const itemCommission = getItemCommission(item);
+                const itemCommission = getItemCommission(item, rates);
                 return (
                   <div key={`${item.id}-${item.selectedColor}`} className="flex gap-3">
                     <div className="w-48 h-48 sm:w-32 sm:h-32 bg-white border border-[#e5e6eb] rounded-md flex-shrink-0 relative overflow-hidden">

@@ -12,10 +12,32 @@ import { generateProductSlug } from "@/lib/utils";
 const CUSTOMS_HINT =
   "По таможенным правилам доставка одного типа товара не более 3 вещей в один заказ";
 
+interface ExchangeRates {
+  eurRate: number;
+  rubRate: number;
+}
 
-function getItemCommission(item: CartItem): number | null {
-  if (!item.originalPrice || item.originalPrice <= 0) return null;
-  return Math.max(0, (item.price - item.originalPrice) * item.quantity);
+function getItemCommission(item: CartItem, rates: ExchangeRates | null): number | null {
+  console.log('=== Commission Debug ===');
+  console.log('item.name:', item.name);
+  console.log('originalPriceEur:', item.originalPriceEur);
+  console.log('item.price:', item.price);
+  console.log('rates:', rates);
+  
+  if (!rates || item.originalPriceEur == null || item.originalPriceEur <= 0) {
+    console.log('Early return: missing data - rates:', !!rates, 'originalPriceEur:', item.originalPriceEur);
+    return null;
+  }
+  
+  const originalPriceInRub = item.originalPriceEur / rates.eurRate * rates.rubRate;
+  const commission = (item.price - originalPriceInRub) * item.quantity;
+  
+  console.log('originalPriceInRub:', originalPriceInRub);
+  console.log('raw commission:', commission);
+  console.log('final commission:', Math.max(0, commission));
+  console.log('=== End Debug ===');
+  
+  return Math.max(0, commission);
 }
 
 export default function CartPage() {
@@ -26,6 +48,7 @@ export default function CartPage() {
   const getTotalQuantityByCategory = useStore((state) => state.getTotalQuantityByCategory);
   const [customsHintKey, setCustomsHintKey] = useState<string | null>(null);
   const [shippingRates, setShippingRates] = useState<ShippingRateEntry[]>([]);
+  const [rates, setRates] = useState<ExchangeRates | null>(null);
 
   useEffect(() => {
     if (!customsHintKey) return;
@@ -34,9 +57,18 @@ export default function CartPage() {
   }, [customsHintKey]);
 
   useEffect(() => {
-    fetch("/api/shipping/rates")
-      .then((r) => r.json())
-      .then((d) => Array.isArray(d.rates) && d.rates.length > 0 && setShippingRates(d.rates))
+    Promise.all([
+      fetch("/api/shipping/rates").then((r) => r.json()),
+      fetch("/api/exchange-rates").then((r) => r.json()),
+    ])
+      .then(([shippingData, ratesData]) => {
+        if (Array.isArray(shippingData.rates) && shippingData.rates.length > 0) {
+          setShippingRates(shippingData.rates);
+        }
+        if (ratesData.eurRate && ratesData.rubRate) {
+          setRates({ eurRate: ratesData.eurRate, rubRate: ratesData.rubRate });
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -164,9 +196,9 @@ export default function CartPage() {
                   <p className="font-semibold text-lg mb-1">
                     Итого: {(item.price * item.quantity).toFixed(0)} ₽
                   </p>
-                  {getItemCommission(item) !== null && (
+                  {getItemCommission(item, rates) !== null && (
                     <p className="text-xs text-gray-400">
-                      В том числе вознаграждение комиссионера: {getItemCommission(item)?.toFixed(0)} ₽
+                      В том числе вознаграждение комиссионера: {getItemCommission(item, rates)?.toFixed(0)} ₽
                     </p>
                   )}
                 </div>
