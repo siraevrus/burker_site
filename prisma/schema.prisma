@@ -175,13 +175,14 @@ model Subscriber {
 }
 
 model Feedback {
-  id          String   @id @default(cuid())
-  name        String   // Имя
-  contact     String   // Контакт (ТГ или телефон)
-  comment     String   // Комментарий
-  processed   Boolean  @default(false) // Сообщение отработано
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String   // Имя
+  contact       String   // Контакт (ТГ или телефон)
+  comment       String   // Сообщение от пользователя
+  adminComment  String?  // Комментарий администратора к заявке
+  processed     Boolean  @default(false) // Сообщение отработано
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model ImportHistory {

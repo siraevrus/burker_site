@@ -2,11 +2,50 @@
 
 import { useState, useEffect } from "react";
 
+function AdminCommentField({
+  value,
+  onSave,
+}: {
+  value: string;
+  onSave: (value: string) => void;
+}) {
+  const [local, setLocal] = useState(value);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => setLocal(value), [value]);
+  const handleSave = () => {
+    if (local === value) return;
+    setSaving(true);
+    onSave(local);
+    setSaving(false);
+  };
+  return (
+    <div className="flex gap-2">
+      <textarea
+        value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        onBlur={handleSave}
+        placeholder="Заметка по заявке..."
+        className="flex-1 min-h-[60px] text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+        rows={2}
+      />
+      <button
+        type="button"
+        onClick={handleSave}
+        disabled={saving || local === value}
+        className="shrink-0 h-8 px-3 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Сохранить
+      </button>
+    </div>
+  );
+}
+
 interface FeedbackItem {
   id: string;
   name: string;
   contact: string;
   comment: string;
+  adminComment: string | null;
   processed: boolean;
   createdAt: string;
   updatedAt: string;
@@ -59,6 +98,25 @@ export default function AdminFeedbackPage() {
         setFeedback((prev) =>
           prev.map((item) =>
             item.id === id ? { ...item, processed } : item
+          )
+        );
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleSaveAdminComment = async (id: string, adminComment: string) => {
+    try {
+      const res = await fetch(`/api/admin/feedback/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminComment: adminComment || "" }),
+      });
+      if (res.ok) {
+        setFeedback((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, adminComment: adminComment || null } : item
           )
         );
       }
@@ -138,7 +196,14 @@ export default function AdminFeedbackPage() {
                   <p className="text-gray-700 text-sm mb-1">
                     <span className="text-gray-500">Контакт:</span> {item.contact}
                   </p>
-                  <p className="text-gray-800 whitespace-pre-wrap">{item.comment}</p>
+                  <p className="text-gray-800 whitespace-pre-wrap mb-3">{item.comment}</p>
+                  <div className="mt-2">
+                    <label className="block text-gray-500 text-sm font-medium mb-1">Комментарий</label>
+                    <AdminCommentField
+                      value={item.adminComment ?? ""}
+                      onSave={(value) => handleSaveAdminComment(item.id, value)}
+                    />
+                  </div>
                 </div>
                 <label className="flex items-center gap-2 shrink-0 cursor-pointer">
                   <input

@@ -9,10 +9,7 @@ export default function ContactPage() {
   return (
     <div className="container mx-auto px-4 py-16">
       <div className="max-w-lg mx-auto">
-        <h1 className="text-3xl font-bold mb-2 text-center">Форма обратной связи</h1>
-        <p className="text-gray-600 text-center mb-8">
-          Оставьте сообщение, и мы свяжемся с вами
-        </p>
+        <h1 className="text-3xl font-bold mb-8 text-center">Форма обратной связи</h1>
         <ContactForm />
       </div>
     </div>

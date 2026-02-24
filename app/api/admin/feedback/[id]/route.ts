@@ -12,11 +12,15 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { processed } = body;
+    const { processed, adminComment } = body;
+
+    const data: { processed?: boolean; adminComment?: string | null } = {};
+    if (typeof processed === "boolean") data.processed = processed;
+    if (adminComment !== undefined) data.adminComment = adminComment === "" ? null : String(adminComment);
 
     const updated = await prisma.feedback.update({
       where: { id },
-      data: { processed: !!processed },
+      data,
     });
 
     return NextResponse.json({ feedback: updated });

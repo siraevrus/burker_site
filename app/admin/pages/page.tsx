@@ -295,7 +295,7 @@ function PageForm({
               placeholder="about-us"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Страница будет доступна по адресу /{formData.slug}
+              Страница будет доступна по адресу /{formData.slug} (после включения «Опубликовать страницу»)
             </p>
           </div>
         </div>

@@ -13,8 +13,14 @@ interface HomeClientProps {
 
 const SCROLL_STEP = 280; // ширина карточки (w-64 = 256px) + gap
 
+const BRANDS = ["Macy", "Olivia", "Julia", "Isabell", "Ruby"];
+
+function getRandomBrand() {
+  return BRANDS[Math.floor(Math.random() * BRANDS.length)];
+}
+
 export default function HomeClient({ products, bestsellers }: HomeClientProps) {
-  const [activeBrand, setActiveBrand] = useState("Ruby");
+  const [activeBrand, setActiveBrand] = useState(() => getRandomBrand());
   const bestsellersRef = useRef<HTMLDivElement>(null);
 
   const scrollBestsellers = (direction: "left" | "right") => {
@@ -23,7 +29,7 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
     bestsellersRef.current.scrollBy({ left: delta, behavior: "smooth" });
   };
 
-  const brands = ["Macy", "Olivia", "Julia", "Isabell", "Ruby"];
+  const brands = BRANDS;
 
   return (
     <div>

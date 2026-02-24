@@ -172,6 +172,46 @@ export async function sendAdminOrderNotification(
 }
 
 /**
+ * Отправка уведомления админу о новом сообщении с формы обратной связи
+ */
+export async function sendFeedbackNotificationToAdmin(data: {
+  name: string;
+  contact: string;
+  comment: string;
+}): Promise<boolean> {
+  if (!ADMIN_EMAIL) {
+    console.warn("ADMIN_EMAIL не настроен, уведомление о заявке не отправлено");
+    return true;
+  }
+  const esc = (s: string) =>
+    String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  const name = esc(data.name);
+  const contact = esc(data.contact);
+  const comment = esc(data.comment).replace(/\n/g, "<br>");
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">Новое сообщение с формы обратной связи</h2>
+      <p><strong>Имя:</strong> ${name}</p>
+      <p><strong>Контакт:</strong> ${contact}</p>
+      <p><strong>Сообщение:</strong></p>
+      <p style="background: #f5f5f5; padding: 12px; border-radius: 6px;">${comment}</p>
+      <p><a href="${baseUrl}/admin/feedback" style="display: inline-block; margin-top: 16px; padding: 10px 20px; background-color: #A13D42; color: white; text-decoration: none; border-radius: 5px;">Открыть заявки в админке</a></p>
+    </div>
+  `;
+  const result = await sendEmailViaMailopost(
+    ADMIN_EMAIL,
+    "Новое сообщение с формы обратной связи — Mira Brands | Burker",
+    html
+  );
+  return result.success;
+}
+
+/**
  * Отправка кода для восстановления пароля
  * В режиме разработки код выводится в консоль
  */

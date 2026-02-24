@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { sendFeedbackNotificationToAdmin } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,13 +32,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await prisma.feedback.create({
+    const created = await prisma.feedback.create({
       data: {
         name: name.trim(),
         contact: contact.trim(),
         comment: comment.trim(),
       },
     });
+
+    // Уведомление администратору (не блокируем ответ при ошибке отправки)
+    sendFeedbackNotificationToAdmin({
+      name: created.name,
+      contact: created.contact,
+      comment: created.comment,
+    }).catch((err) => console.error("Feedback notification to admin:", err));
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
