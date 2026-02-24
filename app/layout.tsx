@@ -24,6 +24,9 @@ const openSans = Open_Sans({
 export const metadata: Metadata = {
   title: "Mira Brands | Burker | Официальный магазин",
   description: "Элегантные женские часы и украшения от Mira Brands | Burker",
+  verification: {
+    yandex: "b3064b64a4d24ac9",
+  },
 };
 
 export default function RootLayout({
