@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { Order } from "@/lib/types";
+import { Order, OrderItem } from "@/lib/types";
 
 interface ExchangeRates {
   eurRate: number;
@@ -67,6 +67,13 @@ function OrderConfirmationContent() {
     
     return hasOriginalPrices ? totalCommission : null;
   };
+
+  function getItemCommission(item: OrderItem, rates: ExchangeRates | null): number | null {
+    if (!rates || !item.originalPriceEur) return null;
+    const originalPriceInUsd = item.originalPriceEur / rates.eurRate;
+    const originalPriceInRub = originalPriceInUsd * rates.rubRate;
+    return (item.productPrice - originalPriceInRub) * item.quantity;
+  }
 
   const commission = calculateCommission();
 
@@ -205,19 +212,27 @@ function OrderConfirmationContent() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-bold mb-4">Товары</h2>
           <div className="space-y-3">
-            {order.items.map((item) => (
-              <div key={item.id} className="flex justify-between border-b border-gray-200 pb-3 last:border-b-0">
-                <div>
-                  <p className="font-medium">{item.productName}</p>
-                  <p className="text-sm text-gray-600">
-                    Цвет: {item.selectedColor} × {item.quantity}
+            {order.items.map((item) => {
+              const itemCommission = getItemCommission(item, rates);
+              return (
+                <div key={item.id} className="flex justify-between border-b border-gray-200 pb-3 last:border-b-0">
+                  <div>
+                    <p className="font-medium">{item.productName}</p>
+                    <p className="text-sm text-gray-600">
+                      Цвет: {item.selectedColor} × {item.quantity}
+                    </p>
+                    {itemCommission !== null && (
+                      <p className="text-sm text-amber-700 mt-0.5">
+                        В том числе вознаграждение комиссионера: {itemCommission.toFixed(0)} ₽
+                      </p>
+                    )}
+                  </div>
+                  <p className="font-semibold">
+                    {(item.productPrice * item.quantity).toFixed(0)} ₽
                   </p>
                 </div>
-                <p className="font-semibold">
-                  {(item.productPrice * item.quantity).toFixed(0)} ₽
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div className="mt-4 pt-4 border-t border-gray-200 bg-white">
             <div className="flex justify-between mb-2">
