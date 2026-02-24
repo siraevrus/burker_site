@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useStore, getCustomsCategory } from "@/lib/store";
 import { calculateShipping, type ShippingRateEntry } from "@/lib/shipping";
+import { CartItem } from "@/lib/types";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
@@ -10,6 +11,18 @@ import { generateProductSlug } from "@/lib/utils";
 
 const CUSTOMS_HINT =
   "По таможенным правилам доставка одного типа товара не более 3 вещей в один заказ";
+
+interface ExchangeRates {
+  eurRate: number;
+  rubRate: number;
+}
+
+function getItemCommission(item: CartItem, rates: ExchangeRates | null): number | null {
+  if (!rates || !item.originalPrice) return null;
+  const originalPriceInUsd = item.originalPrice / rates.eurRate;
+  const originalPriceInRub = originalPriceInUsd * rates.rubRate;
+  return (item.price - originalPriceInRub) * item.quantity;
+}
 
 export default function CartPage() {
   const cart = useStore((state) => state.cart);
@@ -19,6 +32,7 @@ export default function CartPage() {
   const getTotalQuantityByCategory = useStore((state) => state.getTotalQuantityByCategory);
   const [customsHintKey, setCustomsHintKey] = useState<string | null>(null);
   const [shippingRates, setShippingRates] = useState<ShippingRateEntry[]>([]);
+  const [rates, setRates] = useState<ExchangeRates | null>(null);
 
   useEffect(() => {
     if (!customsHintKey) return;
@@ -27,9 +41,18 @@ export default function CartPage() {
   }, [customsHintKey]);
 
   useEffect(() => {
-    fetch("/api/shipping/rates")
-      .then((r) => r.json())
-      .then((d) => Array.isArray(d.rates) && d.rates.length > 0 && setShippingRates(d.rates))
+    Promise.all([
+      fetch("/api/shipping/rates").then((r) => r.json()),
+      fetch("/api/exchange-rates").then((r) => r.json()),
+    ])
+      .then(([shippingData, ratesData]) => {
+        if (Array.isArray(shippingData.rates) && shippingData.rates.length > 0) {
+          setShippingRates(shippingData.rates);
+        }
+        if (ratesData.eurRate && ratesData.rubRate) {
+          setRates({ eurRate: ratesData.eurRate, rubRate: ratesData.rubRate });
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -154,9 +177,14 @@ export default function CartPage() {
 
                 {/* Subtotal */}
                 <div className="text-right">
-                  <p className="font-semibold text-lg">
+                  <p className="font-semibold text-lg mb-1">
                     Итого: {(item.price * item.quantity).toFixed(0)} ₽
                   </p>
+                  {getItemCommission(item, rates) !== null && (
+                    <p className="text-xs text-gray-400">
+                      В том числе вознаграждение комиссионера: {getItemCommission(item, rates)?.toFixed(0)} ₽
+                    </p>
+                  )}
                 </div>
               </motion.div>
             ))}

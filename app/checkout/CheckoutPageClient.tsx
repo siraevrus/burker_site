@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
+import { CartItem } from "@/lib/types";
 import Link from "next/link";
 import Image from "next/image";
 import CheckoutForm from "@/components/Checkout/CheckoutForm";
@@ -16,8 +17,32 @@ interface CheckoutPageClientProps {
   } | null;
 }
 
+interface ExchangeRates {
+  eurRate: number;
+  rubRate: number;
+}
+
+function getItemCommission(item: CartItem, rates: ExchangeRates | null): number | null {
+  if (!rates || !item.originalPrice) return null;
+  const originalPriceInUsd = item.originalPrice / rates.eurRate;
+  const originalPriceInRub = originalPriceInUsd * rates.rubRate;
+  return (item.price - originalPriceInRub) * item.quantity;
+}
+
 export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
   const cart = useStore((state) => state.cart);
+  const [rates, setRates] = useState<ExchangeRates | null>(null);
+
+  useEffect(() => {
+    fetch("/api/exchange-rates")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.eurRate && data.rubRate) {
+          setRates({ eurRate: data.eurRate, rubRate: data.rubRate });
+        }
+      })
+      .catch(() => {});
+  }, []);
   const [formData, setFormData] = useState<{
     totalPrice: number;
     totalWeight: number;
@@ -107,29 +132,37 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
           <div className="bg-white rounded-lg p-6 sticky top-24 border border-[#e5e6ea]">
             <h2 className="text-xl font-bold mb-4">Ваш заказ</h2>
             <div className="space-y-3 mb-4">
-              {cart.map((item) => (
-                <div key={`${item.id}-${item.selectedColor}`} className="flex gap-3">
-                  <div className="w-48 h-48 sm:w-32 sm:h-32 bg-white border border-[#e5e6eb] rounded-md flex-shrink-0 relative overflow-hidden">
-                    <Image
-                      src={item.images && item.images.length > 0 ? item.images[0] : "/Isabell_gold_burgundy_1.webp"}
-                      alt={item.name}
-                      fill
-                      className="object-cover"
-                      sizes="192px"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:justify-between sm:items-start">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[16.8px] font-medium truncate">{item.name}</p>
-                      <p className="text-[14.4px] text-gray-600">Цвет: {item.selectedColor}</p>
-                      <p className="text-[14.4px] text-gray-600">Кол-во: {item.quantity}</p>
+              {cart.map((item) => {
+                const itemCommission = getItemCommission(item, rates);
+                return (
+                  <div key={`${item.id}-${item.selectedColor}`} className="flex gap-3">
+                    <div className="w-48 h-48 sm:w-32 sm:h-32 bg-white border border-[#e5e6eb] rounded-md flex-shrink-0 relative overflow-hidden">
+                      <Image
+                        src={item.images && item.images.length > 0 ? item.images[0] : "/Isabell_gold_burgundy_1.webp"}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                        sizes="192px"
+                      />
                     </div>
-                    <p className="text-[16.8px] font-semibold mt-1 sm:mt-0 sm:ml-3 flex-shrink-0">
-                      {(item.price * item.quantity).toFixed(0)} ₽
-                    </p>
+                    <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:justify-between sm:items-start">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[16.8px] font-medium truncate">{item.name}</p>
+                        <p className="text-[14.4px] text-gray-600">Цвет: {item.selectedColor}</p>
+                        <p className="text-[14.4px] text-gray-600">Кол-во: {item.quantity}</p>
+                        {itemCommission !== null && (
+                          <p className="text-[12px] text-gray-400 mt-1">
+                            В том числе вознаграждение комиссионера: {itemCommission.toFixed(0)} ₽
+                          </p>
+                        )}
+                      </div>
+                      <p className="text-[16.8px] font-semibold mt-1 sm:mt-0 sm:ml-3 flex-shrink-0">
+                        {(item.price * item.quantity).toFixed(0)} ₽
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             {formData && (
               <OrderSummaryBlock
