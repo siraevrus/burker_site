@@ -22,39 +22,50 @@ interface ExchangeRates {
   rubRate: number;
 }
 
-function getItemCommission(item: CartItem, rates: ExchangeRates | null): number | null {
-  console.log('=== Checkout Commission Debug ===');
-  console.log('item.name:', item.name);
-  console.log('originalPriceEur:', item.originalPriceEur);
-  console.log('item.price:', item.price);
-  console.log('rates:', rates);
+function getItemCommission(
+  item: CartItem, 
+  rates: ExchangeRates | null, 
+  productOriginalPrices: Record<string, number>
+): number | null {
+  if (!rates) return null;
   
-  if (!rates || item.originalPriceEur == null || item.originalPriceEur <= 0) {
-    console.log('Early return: missing data - rates:', !!rates, 'originalPriceEur:', item.originalPriceEur);
-    return null;
-  }
+  // Используем originalPriceEur из item или из кэша
+  const originalPriceEur = item.originalPriceEur ?? productOriginalPrices[item.id];
   
-  const originalPriceInRub = item.originalPriceEur / rates.eurRate * rates.rubRate;
+  if (!originalPriceEur || originalPriceEur <= 0) return null;
+  
+  // Используем ту же формулу, что и на /order-confirmation
+  const originalPriceInUsd = originalPriceEur / rates.eurRate;
+  const originalPriceInRub = originalPriceInUsd * rates.rubRate;
   const commission = (item.price - originalPriceInRub) * item.quantity;
-  
-  console.log('originalPriceInRub:', originalPriceInRub);
-  console.log('raw commission:', commission);
-  console.log('final commission:', Math.max(0, commission));
-  console.log('=== End Debug ===');
-  
+  // Гарантируем неотрицательный результат
   return Math.max(0, commission);
 }
 
 export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
   const cart = useStore((state) => state.cart);
   const [rates, setRates] = useState<ExchangeRates | null>(null);
+  // Кэш originalPriceEur для товаров в корзине
+  const [productOriginalPrices, setProductOriginalPrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    fetch("/api/exchange-rates")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.eurRate && data.rubRate) {
-          setRates({ eurRate: data.eurRate, rubRate: data.rubRate });
+    Promise.all([
+      fetch("/api/exchange-rates").then((res) => res.json()),
+      fetch("/api/products").then((res) => res.json()),
+    ])
+      .then(([ratesData, productsData]) => {
+        if (ratesData.eurRate && ratesData.rubRate) {
+          setRates({ eurRate: ratesData.eurRate, rubRate: ratesData.rubRate });
+        }
+        // Загружаем originalPriceEur для товаров в корзине
+        if (productsData.products && Array.isArray(productsData.products)) {
+          const pricesMap: Record<string, number> = {};
+          productsData.products.forEach((product: any) => {
+            if (product.originalPriceEur != null && product.originalPriceEur > 0) {
+              pricesMap[product.id] = product.originalPriceEur;
+            }
+          });
+          setProductOriginalPrices(pricesMap);
         }
       })
       .catch(() => {});
@@ -149,7 +160,7 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
             <h2 className="text-xl font-bold mb-4">Ваш заказ</h2>
             <div className="space-y-3 mb-4">
               {cart.map((item) => {
-                const itemCommission = getItemCommission(item, rates);
+                const itemCommission = getItemCommission(item, rates, productOriginalPrices);
                 return (
                   <div key={`${item.id}-${item.selectedColor}`} className="flex gap-3">
                     <div className="w-48 h-48 sm:w-32 sm:h-32 bg-white border border-[#e5e6eb] rounded-md flex-shrink-0 relative overflow-hidden">

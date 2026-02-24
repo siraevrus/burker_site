@@ -17,26 +17,23 @@ interface ExchangeRates {
   rubRate: number;
 }
 
-function getItemCommission(item: CartItem, rates: ExchangeRates | null): number | null {
-  console.log('=== Commission Debug ===');
-  console.log('item.name:', item.name);
-  console.log('originalPriceEur:', item.originalPriceEur);
-  console.log('item.price:', item.price);
-  console.log('rates:', rates);
+function getItemCommission(
+  item: CartItem, 
+  rates: ExchangeRates | null, 
+  productOriginalPrices: Record<string, number>
+): number | null {
+  if (!rates) return null;
   
-  if (!rates || item.originalPriceEur == null || item.originalPriceEur <= 0) {
-    console.log('Early return: missing data - rates:', !!rates, 'originalPriceEur:', item.originalPriceEur);
-    return null;
-  }
+  // Используем originalPriceEur из item или из кэша
+  const originalPriceEur = item.originalPriceEur ?? productOriginalPrices[item.id];
   
-  const originalPriceInRub = item.originalPriceEur / rates.eurRate * rates.rubRate;
+  if (!originalPriceEur || originalPriceEur <= 0) return null;
+  
+  // Используем ту же формулу, что и на /order-confirmation
+  const originalPriceInUsd = originalPriceEur / rates.eurRate;
+  const originalPriceInRub = originalPriceInUsd * rates.rubRate;
   const commission = (item.price - originalPriceInRub) * item.quantity;
-  
-  console.log('originalPriceInRub:', originalPriceInRub);
-  console.log('raw commission:', commission);
-  console.log('final commission:', Math.max(0, commission));
-  console.log('=== End Debug ===');
-  
+  // Гарантируем неотрицательный результат
   return Math.max(0, commission);
 }
 
@@ -49,6 +46,8 @@ export default function CartPage() {
   const [customsHintKey, setCustomsHintKey] = useState<string | null>(null);
   const [shippingRates, setShippingRates] = useState<ShippingRateEntry[]>([]);
   const [rates, setRates] = useState<ExchangeRates | null>(null);
+  // Кэш originalPriceEur для товаров в корзине
+  const [productOriginalPrices, setProductOriginalPrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!customsHintKey) return;
@@ -60,13 +59,24 @@ export default function CartPage() {
     Promise.all([
       fetch("/api/shipping/rates").then((r) => r.json()),
       fetch("/api/exchange-rates").then((r) => r.json()),
+      fetch("/api/products").then((r) => r.json()),
     ])
-      .then(([shippingData, ratesData]) => {
+      .then(([shippingData, ratesData, productsData]) => {
         if (Array.isArray(shippingData.rates) && shippingData.rates.length > 0) {
           setShippingRates(shippingData.rates);
         }
         if (ratesData.eurRate && ratesData.rubRate) {
           setRates({ eurRate: ratesData.eurRate, rubRate: ratesData.rubRate });
+        }
+        // Загружаем originalPriceEur для товаров в корзине
+        if (productsData.products && Array.isArray(productsData.products)) {
+          const pricesMap: Record<string, number> = {};
+          productsData.products.forEach((product: any) => {
+            if (product.originalPriceEur != null && product.originalPriceEur > 0) {
+              pricesMap[product.id] = product.originalPriceEur;
+            }
+          });
+          setProductOriginalPrices(pricesMap);
         }
       })
       .catch(() => {});
@@ -196,9 +206,9 @@ export default function CartPage() {
                   <p className="font-semibold text-lg mb-1">
                     Итого: {(item.price * item.quantity).toFixed(0)} ₽
                   </p>
-                  {getItemCommission(item, rates) !== null && (
+                  {getItemCommission(item, rates, productOriginalPrices) !== null && (
                     <p className="text-xs text-gray-400">
-                      В том числе вознаграждение комиссионера: {getItemCommission(item, rates)?.toFixed(0)} ₽
+                      В том числе вознаграждение комиссионера: {getItemCommission(item, rates, productOriginalPrices)?.toFixed(0)} ₽
                     </p>
                   )}
                 </div>
