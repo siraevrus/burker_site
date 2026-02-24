@@ -215,21 +215,27 @@ function OrderConfirmationContent() {
             {order.items.map((item) => {
               const itemCommission = getItemCommission(item, rates);
               return (
-                <div key={item.id} className="flex justify-between border-b border-gray-200 pb-3 last:border-b-0">
-                  <div>
+                <div key={item.id} className="border-b border-gray-200 pb-3 last:border-b-0">
+                  <div className="flex justify-between mb-2">
                     <p className="font-medium">{item.productName}</p>
+                    <p className="font-semibold">
+                      {(item.productPrice * item.quantity).toFixed(0)} ₽
+                    </p>
+                  </div>
+                  <div className="space-y-1">
                     <p className="text-sm text-gray-600">
-                      Цвет: {item.selectedColor} × {item.quantity}
+                      Цвет: {item.selectedColor}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Количество: {item.quantity}
                     </p>
                     {itemCommission !== null && (
-                      <p className="text-sm text-amber-700 mt-0.5">
-                        В том числе вознаграждение комиссионера: {itemCommission.toFixed(0)} ₽
-                      </p>
+                      <div className="flex justify-between text-sm text-gray-500">
+                        <span>В том числе вознаграждение комиссионера:</span>
+                        <span>{itemCommission.toFixed(0)} ₽</span>
+                      </div>
                     )}
                   </div>
-                  <p className="font-semibold">
-                    {(item.productPrice * item.quantity).toFixed(0)} ₽
-                  </p>
                 </div>
               );
             })}
@@ -253,12 +259,10 @@ function OrderConfirmationContent() {
         </div>
 
         {commission !== null && (
-          <div className="bg-amber-50 rounded-lg shadow-sm border border-amber-200 p-6 mb-6">
-            <h2 className="text-xl font-bold mb-4 text-amber-800">Вознаграждение комиссионера</h2>
-            <div className="flex justify-between text-lg">
-              <span className="text-amber-700">Сумма:</span>
-              <span className="font-bold text-amber-900">{commission.toFixed(0)} ₽</span>
-            </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <p className="text-gray-700">
+              Итого вознаграждение комиссионера: <span className="font-semibold">{commission.toFixed(0)} ₽</span>
+            </p>
           </div>
         )}
 
