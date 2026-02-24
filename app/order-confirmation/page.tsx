@@ -257,20 +257,17 @@ function OrderConfirmationContent() {
                 <span className="font-medium">-{(order.promoDiscount ?? 0).toFixed(0)} ₽</span>
               </div>
             )}
-            <div className="flex justify-between text-xl font-bold">
+            <div className="flex justify-between text-xl font-bold mb-1">
               <span>Итого:</span>
               <span>{order.totalAmount.toFixed(0)} ₽</span>
             </div>
+            {commission !== null && (
+              <p className="text-xs text-gray-400">
+                Итого вознаграждение комиссионера: {commission.toFixed(0)} ₽
+              </p>
+            )}
           </div>
         </div>
-
-        {commission !== null && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <p className="text-gray-700">
-              Итого вознаграждение комиссионера: <span className="font-semibold">{commission.toFixed(0)} ₽</span>
-            </p>
-          </div>
-        )}
 
         <div className="flex gap-4 justify-center">
           <Link
