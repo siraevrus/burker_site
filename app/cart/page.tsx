@@ -12,16 +12,10 @@ import { generateProductSlug } from "@/lib/utils";
 const CUSTOMS_HINT =
   "По таможенным правилам доставка одного типа товара не более 3 вещей в один заказ";
 
-interface ExchangeRates {
-  eurRate: number;
-  rubRate: number;
-}
 
-function getItemCommission(item: CartItem, rates: ExchangeRates | null): number | null {
-  if (!rates || !item.originalPrice) return null;
-  const originalPriceInUsd = item.originalPrice / rates.eurRate;
-  const originalPriceInRub = originalPriceInUsd * rates.rubRate;
-  return (item.price - originalPriceInRub) * item.quantity;
+function getItemCommission(item: CartItem): number | null {
+  if (!item.originalPrice || item.originalPrice <= 0) return null;
+  return Math.max(0, (item.price - item.originalPrice) * item.quantity);
 }
 
 export default function CartPage() {
@@ -32,7 +26,6 @@ export default function CartPage() {
   const getTotalQuantityByCategory = useStore((state) => state.getTotalQuantityByCategory);
   const [customsHintKey, setCustomsHintKey] = useState<string | null>(null);
   const [shippingRates, setShippingRates] = useState<ShippingRateEntry[]>([]);
-  const [rates, setRates] = useState<ExchangeRates | null>(null);
 
   useEffect(() => {
     if (!customsHintKey) return;
@@ -41,18 +34,9 @@ export default function CartPage() {
   }, [customsHintKey]);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/shipping/rates").then((r) => r.json()),
-      fetch("/api/exchange-rates").then((r) => r.json()),
-    ])
-      .then(([shippingData, ratesData]) => {
-        if (Array.isArray(shippingData.rates) && shippingData.rates.length > 0) {
-          setShippingRates(shippingData.rates);
-        }
-        if (ratesData.eurRate && ratesData.rubRate) {
-          setRates({ eurRate: ratesData.eurRate, rubRate: ratesData.rubRate });
-        }
-      })
+    fetch("/api/shipping/rates")
+      .then((r) => r.json())
+      .then((d) => Array.isArray(d.rates) && d.rates.length > 0 && setShippingRates(d.rates))
       .catch(() => {});
   }, []);
 
@@ -180,9 +164,9 @@ export default function CartPage() {
                   <p className="font-semibold text-lg mb-1">
                     Итого: {(item.price * item.quantity).toFixed(0)} ₽
                   </p>
-                  {getItemCommission(item, rates) !== null && (
+                  {getItemCommission(item) !== null && (
                     <p className="text-xs text-gray-400">
-                      В том числе вознаграждение комиссионера: {getItemCommission(item, rates)?.toFixed(0)} ₽
+                      В том числе вознаграждение комиссионера: {getItemCommission(item)?.toFixed(0)} ₽
                     </p>
                   )}
                 </div>
