@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { Order } from "@/lib/types";
+import { useState, useEffect } from "react";
+import { Order, OrderItem } from "@/lib/types";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
 interface OrdersPageClientProps {
   orders: Order[];
+}
+
+interface ExchangeRates {
+  eurRate: number;
+  rubRate: number;
 }
 
 const statusLabels: Record<string, string> = {
@@ -25,8 +30,27 @@ const statusColors: Record<string, string> = {
   delivered: "bg-green-100 text-green-800",
 };
 
+function getItemCommission(item: OrderItem, rates: ExchangeRates | null): number | null {
+  if (!rates || !item.originalPriceEur) return null;
+  const originalPriceInUsd = item.originalPriceEur / rates.eurRate;
+  const originalPriceInRub = originalPriceInUsd * rates.rubRate;
+  return (item.productPrice - originalPriceInRub) * item.quantity;
+}
+
 export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [rates, setRates] = useState<ExchangeRates | null>(null);
+
+  useEffect(() => {
+    fetch("/api/exchange-rates")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.eurRate && data.rubRate) {
+          setRates({ eurRate: data.eurRate, rubRate: data.rubRate });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const toggleOrder = (orderId: string) => {
     const newExpanded = new Set(expandedOrders);
@@ -126,24 +150,31 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                 <div className="px-6 py-4 border-t border-gray-200">
                   <h3 className="text-lg font-bold mb-4">Товары</h3>
                   <div className="space-y-3 mb-6">
-                    {order.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="border border-gray-200 rounded-lg p-4"
-                      >
-                        <div className="flex justify-between">
-                          <div>
+                    {order.items.map((item) => {
+                      const itemCommission = getItemCommission(item, rates);
+                      return (
+                        <div
+                          key={item.id}
+                          className="border border-gray-200 rounded-lg p-4"
+                        >
+                          <div className="flex justify-between mb-2">
                             <p className="font-medium">{item.productName}</p>
-                            <p className="text-sm text-gray-600">
-                              Цвет: {item.selectedColor} × {item.quantity}
+                            <p className="font-semibold">
+                              {(item.productPrice * item.quantity).toFixed(0)} ₽
                             </p>
                           </div>
-                          <p className="font-semibold">
-                            {(item.productPrice * item.quantity).toFixed(0)} ₽
-                          </p>
+                          <div className="text-sm text-gray-600 space-y-1">
+                            <p>Цвет: {item.selectedColor}</p>
+                            <p>Кол-во: {item.quantity}</p>
+                            {itemCommission !== null && (
+                              <p className="text-gray-500">
+                                В том числе вознаграждение комиссионера: {itemCommission.toFixed(0)} ₽
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
