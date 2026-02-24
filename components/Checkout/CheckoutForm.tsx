@@ -57,10 +57,6 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
   const lettersOnly = (value: string): string =>
     value.replace(/[^a-zA-Zа-яА-ЯёЁ\s-]/g, "");
 
-  /** Буквы, цифры и допустимые символы (№ . , - / и т.д.) — для «Кем выдан паспорт» */
-  const passportIssuedByFilter = (value: string): string =>
-    value.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s№.,\-/()]/g, "");
-
   /** Только цифры, опционально ограничение длины */
   const digitsOnly = (value: string, maxLen?: number): string => {
     const digits = value.replace(/\D/g, "");
@@ -267,17 +263,6 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
       !formData.passportIssuedBy
     ) {
       setError("Заполните все обязательные поля");
-      setLoading(false);
-      return;
-    }
-
-    // Кем выдан паспорт: должны быть буквы, цифры и символы
-    const issuedBy = formData.passportIssuedBy.trim();
-    const hasLetter = /[a-zA-Zа-яА-ЯёЁ]/.test(issuedBy);
-    const hasDigit = /\d/.test(issuedBy);
-    const hasSymbol = /[^a-zA-Zа-яА-ЯёЁ0-9]/.test(issuedBy);
-    if (!hasLetter || !hasDigit || !hasSymbol) {
-      setError('Поле «Кем выдан паспорт» должно содержать буквы, цифры и символы (например: УФМС №1 России по г Москве)');
       setLoading(false);
       return;
     }
@@ -578,14 +563,11 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
                 id="passportIssuedBy"
                 type="text"
                 value={formData.passportIssuedBy}
-                onChange={(e) => setFormData({ ...formData, passportIssuedBy: passportIssuedByFilter(e.target.value) })}
+                onChange={(e) => setFormData({ ...formData, passportIssuedBy: e.target.value })}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
                 required
                 placeholder="например: УФМС №1 России по г Москве"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Укажите буквы, цифры и символы (например №, точка, запятая)
-              </p>
             </div>
           </div>
         </div>

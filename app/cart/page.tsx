@@ -195,7 +195,7 @@ export default function CartPage() {
             </Link>
 
             {/* Information Block */}
-            <div className="mt-6 bg-white border border-blue-200 rounded-lg p-4">
+            <div className="mt-6 bg-white border border-gray-300 rounded-lg p-4">
               <div className="space-y-3 text-sm text-gray-700">
                 <p>
                   <strong>Выкуп осуществляется с официального сайта производителя.</strong> Товар поставляется под индивидуальный заказ клиента.
@@ -209,7 +209,7 @@ export default function CartPage() {
                 <p>
                   Средний срок доставки — около 30 дней с момента выкупа.
                 </p>
-                <p className="pt-2 border-t border-blue-200">
+                <p className="pt-2 border-t border-gray-200">
                   <strong>Оплачивая заказ, вы подтверждаете согласие с условиями сервиса.</strong>
                 </p>
               </div>
