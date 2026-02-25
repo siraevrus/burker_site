@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-api";
 import { getExchangeRates } from "@/lib/exchange-rates";
 
 /**
  * GET — текущие курсы (на момент парсинга / используемые в приложении)
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 

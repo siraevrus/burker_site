@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-api";
 import { updateExchangeRates } from "@/lib/exchange-rates";
 import { fetchCbrRates } from "@/lib/cbr-rates";
@@ -10,7 +10,7 @@ const DEFAULT_EUR_RATE = 80 / 95;
 /**
  * POST — ручное обновление курсов (ЦБ РФ или дефолты при ошибке)
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
