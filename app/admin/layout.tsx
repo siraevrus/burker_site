@@ -194,6 +194,7 @@ export default function AdminLayout({
               <NavDropdown
                 label="Настройки"
                 items={[
+                  { label: "Курсы валют", href: "/admin/exchange-rates" },
                   { label: "SEO", href: "/admin/seo" },
                   { label: "Стоимость доставки", href: "/admin/shipping" },
                   { label: "ФОС", href: "/admin/feedback" },

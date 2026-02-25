@@ -163,6 +163,17 @@ model ExchangeRate {
   updatedAt DateTime @updatedAt
 }
 
+// История парсинга курсов (каждое обновление — cron или ручное)
+model ExchangeRateHistory {
+  id        String   @id @default(cuid())
+  eurRate   Float
+  rubRate   Float
+  source    String   // "cbr" | "default" (источник: ЦБ РФ или дефолт при ошибке)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model PromoCode {
   id              String   @id @default(cuid())
   code            String   @unique

@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
   try {
     const { eurRate, rubRate } = await fetchCbrRates();
-    await updateExchangeRates(eurRate, rubRate);
+    await updateExchangeRates(eurRate, rubRate, "cbr");
 
     const dateReq = new Date().toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\./g, "/");
 

@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       source = "default";
     }
 
-    await updateExchangeRates(eurRate, rubRate);
+    await updateExchangeRates(eurRate, rubRate, source);
 
     return NextResponse.json({
       success: true,
