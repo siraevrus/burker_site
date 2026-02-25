@@ -7,7 +7,13 @@ interface OrderSummaryBlockProps {
   promoCode: string;
   setPromoCode: (value: string) => void;
   promoCodeError: string;
-  appliedPromoCode: { code: string; discount: number } | null;
+  appliedPromoCode: {
+    code: string;
+    discount: number;
+    discountType: "fixed" | "percent";
+    minOrderAmount: number | null;
+  } | null;
+  promoDiscount: number;
   checkingPromoCode: boolean;
   onCheckPromoCode: () => void;
   onCancelPromoCode: () => void;
@@ -25,6 +31,7 @@ export default function OrderSummaryBlock({
   setPromoCode,
   promoCodeError,
   appliedPromoCode,
+  promoDiscount,
   checkingPromoCode,
   onCheckPromoCode,
   onCancelPromoCode,
@@ -33,9 +40,14 @@ export default function OrderSummaryBlock({
   loading,
   onSubmit,
 }: OrderSummaryBlockProps) {
-  const promoDiscount = appliedPromoCode ? appliedPromoCode.discount : 0;
   const shippingAfterDiscount = Math.max(0, shippingCost - promoDiscount);
   const finalTotal = totalPrice + shippingAfterDiscount;
+
+  const discountLabel = appliedPromoCode
+    ? appliedPromoCode.discountType === "percent"
+      ? `Скидка ${appliedPromoCode.discount}% на комиссию`
+      : "Скидка по промокоду (комиссия)"
+    : "";
 
   return (
     <div className="border-t border-gray-200 pt-4 mt-4">
@@ -50,13 +62,13 @@ export default function OrderSummaryBlock({
             {totalWeight.toFixed(1)} кг / {shippingCost.toFixed(0)} ₽
           </span>
         </div>
-        {appliedPromoCode && (
+        {appliedPromoCode && promoDiscount > 0 && (
           <div className="flex justify-between text-green-600">
-            <span>Скидка по промокоду (доставка)</span>
+            <span>{discountLabel}</span>
             <span>-{Math.min(promoDiscount, shippingCost).toFixed(0)} ₽</span>
           </div>
         )}
-        {appliedPromoCode && (
+        {appliedPromoCode && promoDiscount > 0 && (
           <div className="flex justify-between">
             <span>Доставка после скидки</span>
             <span>{shippingAfterDiscount.toFixed(0)} ₽</span>
@@ -109,7 +121,10 @@ export default function OrderSummaryBlock({
         )}
         {appliedPromoCode && (
           <p className="text-sm text-green-600 mt-1">
-            Промокод "{appliedPromoCode.code}" применен. Скидка: {appliedPromoCode.discount.toFixed(0)} ₽
+            Промокод &quot;{appliedPromoCode.code}&quot; применён. Скидка:{" "}
+            {appliedPromoCode.discountType === "percent"
+              ? `${appliedPromoCode.discount}% (${Math.min(promoDiscount, shippingCost).toFixed(0)} ₽)`
+              : `${Math.min(promoDiscount, shippingCost).toFixed(0)} ₽`}
           </p>
         )}
       </div>

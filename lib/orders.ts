@@ -48,6 +48,9 @@ function mapOrderFromDb(dbOrder: any): Order {
     status: dbOrder.status,
     totalAmount: dbOrder.totalAmount,
     shippingCost: dbOrder.shippingCost,
+    promoCode: dbOrder.promoCode ?? undefined,
+    promoDiscount: dbOrder.promoDiscount ?? undefined,
+    promoDiscountType: dbOrder.promoDiscountType ?? undefined,
     eurRate: dbOrder.eurRate ?? undefined,
     rubRate: dbOrder.rubRate ?? undefined,
     purchaseProofImage: dbOrder.purchaseProofImage || undefined,
@@ -129,6 +132,7 @@ export async function createOrder(orderData: {
   requiresConfirmation?: boolean;
   promoCode?: string;
   promoDiscount?: number;
+  promoDiscountType?: string | null; // "fixed" | "percent"
   items: Array<{
     productId: string;
     productName: string;
@@ -163,6 +167,7 @@ export async function createOrder(orderData: {
     requiresConfirmation: orderData.requiresConfirmation || false,
     promoCode: orderData.promoCode || null,
     promoDiscount: orderData.promoDiscount || 0,
+    promoDiscountType: orderData.promoDiscountType ?? null,
     status: "accepted",
     totalAmount: orderData.totalAmount,
     shippingCost: orderData.shippingCost,

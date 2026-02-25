@@ -37,6 +37,7 @@ interface Order {
   requiresConfirmation?: boolean;
   promoCode?: string | null;
   promoDiscount?: number | null;
+  promoDiscountType?: string | null; // "fixed" | "percent"
   eurRate?: number | null;
   rubRate?: number | null;
   purchaseProofImage?: string | null;
@@ -717,7 +718,14 @@ function AdminOrdersPageContent() {
                     </div>
                     {order.promoCode && (order.promoDiscount ?? 0) > 0 && (
                       <div className="flex justify-between mb-2 text-green-600">
-                        <span>Промокод {order.promoCode}:</span>
+                        <span>
+                          Промокод {order.promoCode}
+                          {order.promoDiscountType && (
+                            <span className="text-gray-500 font-normal ml-1">
+                              (тип: {order.promoDiscountType === "percent" ? "%" : "₽"})
+                            </span>
+                          )}:
+                        </span>
                         <span className="font-medium">-{(order.promoDiscount ?? 0).toFixed(0)} ₽</span>
                       </div>
                     )}

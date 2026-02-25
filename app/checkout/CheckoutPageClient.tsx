@@ -76,7 +76,13 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
     shippingCost: number;
     promoCode: string;
     promoCodeError: string;
-    appliedPromoCode: { code: string; discount: number } | null;
+    appliedPromoCode: {
+      code: string;
+      discount: number;
+      discountType: "fixed" | "percent";
+      minOrderAmount: number | null;
+    } | null;
+    promoDiscount: number;
     checkingPromoCode: boolean;
     requiresConfirmation: boolean;
     loading: boolean;
@@ -201,6 +207,7 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                 setPromoCode={formData.setPromoCode}
                 promoCodeError={formData.promoCodeError}
                 appliedPromoCode={formData.appliedPromoCode}
+                promoDiscount={formData.promoDiscount}
                 checkingPromoCode={formData.checkingPromoCode}
                 onCheckPromoCode={formData.onCheckPromoCode}
                 onCancelPromoCode={formData.onCancelPromoCode}

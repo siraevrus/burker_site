@@ -143,7 +143,65 @@ export async function POST(request: NextRequest) {
       ? rateRows.map((r) => ({ weight: r.weightKg, price: r.priceRub }))
       : undefined;
     const { totalCost: shippingCost } = calculateShipping(cartItems, shippingRates);
-    const discountAmount = promoDiscount ? parseFloat(promoDiscount.toString()) : 0;
+    // Серверная валидация промокода
+    let discountAmount = 0;
+    let validatedPromoCodeId: string | null = null;
+    let validatedPromoDiscountType: string | null = null;
+
+    if (promoCode) {
+      const promoRecord = await prisma.promoCode.findUnique({
+        where: { code: promoCode.toUpperCase() },
+      });
+
+      if (!promoRecord || !promoRecord.isActive) {
+        return NextResponse.json({ error: "Промокод не действителен" }, { status: 400 });
+      }
+
+      const now = new Date();
+      if (now < promoRecord.validFrom || now > promoRecord.validUntil) {
+        return NextResponse.json({ error: "Срок действия промокода истёк" }, { status: 400 });
+      }
+
+      const emailLower = email.toLowerCase();
+
+      const usageCount = await prisma.promoCodeUsage.count({
+        where: { promoCodeId: promoRecord.id, email: emailLower },
+      });
+      if (usageCount >= promoRecord.usageLimit) {
+        return NextResponse.json(
+          { error: "Вы уже воспользовались данным промокодом" },
+          { status: 400 }
+        );
+      }
+
+      if (promoRecord.firstOrderOnly) {
+        const paidOrders = await prisma.order.count({
+          where: { email: emailLower, status: { not: "cancelled" } },
+        });
+        if (paidOrders > 0) {
+          return NextResponse.json(
+            { error: "Промокод распространяется только на первый заказ" },
+            { status: 400 }
+          );
+        }
+      }
+
+      if (promoRecord.minOrderAmount && itemsTotal < promoRecord.minOrderAmount) {
+        return NextResponse.json(
+          { error: `Минимальная сумма заказа для промокода — ${promoRecord.minOrderAmount.toFixed(0)} ₽` },
+          { status: 400 }
+        );
+      }
+
+      discountAmount =
+        promoRecord.discountType === "percent"
+          ? Math.round(shippingCost * promoRecord.discount / 100)
+          : promoRecord.discount;
+
+      validatedPromoCodeId = promoRecord.id;
+      validatedPromoDiscountType = promoRecord.discountType;
+    }
+
     const shippingAfterDiscount = Math.max(0, shippingCost - discountAmount);
     const totalAmount = itemsTotal + shippingAfterDiscount;
 
@@ -172,6 +230,7 @@ export async function POST(request: NextRequest) {
       requiresConfirmation: requiresConfirmation || false,
       promoCode: promoCode || null,
       promoDiscount: discountAmount,
+      promoDiscountType: validatedPromoDiscountType,
       items: items.map((item: any) => ({
         productId: item.productId,
         productName: item.productName,
@@ -185,6 +244,17 @@ export async function POST(request: NextRequest) {
       eurRate: rates.eurRate,
       rubRate: rates.rubRate,
     });
+
+    // Запись использования промокода
+    if (validatedPromoCodeId && promoCode) {
+      await prisma.promoCodeUsage.create({
+        data: {
+          promoCodeId: validatedPromoCodeId,
+          email: email.toLowerCase(),
+          orderId: order.id,
+        },
+      });
+    }
 
     // Отправка email уведомлений
     const emailNotification = {

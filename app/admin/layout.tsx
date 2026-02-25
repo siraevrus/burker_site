@@ -3,6 +3,70 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
+function NavDropdown({
+  label,
+  items,
+  pathname,
+  isOpen,
+  onOpen,
+  onClose,
+  openKey,
+}: {
+  label: string;
+  items: { label: string; href: string }[];
+  pathname: string;
+  isOpen: boolean;
+  onOpen: (key: string) => void;
+  onClose: () => void;
+  openKey: string;
+}) {
+  const isActive = items.some((item) => pathname === item.href);
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => onOpen(openKey)}
+      onMouseLeave={onClose}
+    >
+      <button
+        type="button"
+        onClick={() => onOpen(isOpen ? "" : openKey)}
+        className={`flex items-center gap-1 px-4 py-2 rounded-md transition-colors cursor-default ${
+          isActive ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-100"
+        }`}
+      >
+        {label}
+        <svg
+          className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {isOpen && (
+        <div className="absolute left-0 top-full pt-1 min-w-[200px] z-50">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+          {items.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className={`block px-4 py-2 text-sm transition-colors ${
+                pathname === item.href
+                  ? "bg-gray-600 text-white"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              {item.label}
+            </a>
+          ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminLayout({
   children,
 }: {
@@ -12,6 +76,7 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -48,6 +113,10 @@ export default function AdminLayout({
     router.push("/admin/login");
   };
 
+  const handleOpenDropdown = (key: string) => {
+    setOpenDropdown(key || null);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -66,155 +135,87 @@ export default function AdminLayout({
 
   return (
     <>
-      {/* Навигация */}
       <nav className="bg-white shadow-sm border-b border-gray-200">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-8">
-              <h1 className="text-xl font-bold">Админ-панель</h1>
-              <div className="flex gap-4">
-                <a
-                  href="/admin"
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    pathname === "/admin"
-                      ? "bg-gray-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  Продукты
-                </a>
-                <a
-                  href="/admin/pages"
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    pathname === "/admin/pages"
-                      ? "bg-gray-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  Страницы
-                </a>
-                <a
-                  href="/admin/promo"
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    pathname === "/admin/promo"
-                      ? "bg-gray-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  Промоблок
-                </a>
-                <a
-                  href="/admin/promo-codes"
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    pathname === "/admin/promo-codes"
-                      ? "bg-gray-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  Промокоды
-                </a>
-                <a
-                  href="/admin/top-banner"
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    pathname === "/admin/top-banner"
-                      ? "bg-gray-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  Верхняя строка
-                </a>
-                <a
-                  href="/admin/import"
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    pathname === "/admin/import"
-                      ? "bg-gray-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  Импорт товаров
-                </a>
-                <a
-                  href="/admin/orders"
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    pathname === "/admin/orders"
-                      ? "bg-gray-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  Заказы
-                </a>
-                <a
-                  href="/admin/users"
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    pathname === "/admin/users"
-                      ? "bg-gray-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  Пользователи
-                </a>
-                <a
-                  href="/admin/subscribers"
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    pathname === "/admin/subscribers"
-                      ? "bg-gray-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  Подписчики
-                </a>
-                <a
-                  href="/admin/feedback"
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    pathname === "/admin/feedback"
-                      ? "bg-gray-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  ФОС
-                </a>
-                <a
-                  href="/admin/seo"
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    pathname === "/admin/seo"
-                      ? "bg-gray-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  SEO
-                </a>
-                <a
-                  href="/admin/shipping"
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    pathname === "/admin/shipping"
-                      ? "bg-gray-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  Стоимость доставки
-                </a>
-                <a
-                  href="/admin/exchange-rates"
-                  className={`px-4 py-2 rounded-md transition-colors ${
-                    pathname === "/admin/exchange-rates"
-                      ? "bg-gray-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  Курсы валют
-                </a>
-              </div>
+          <div className="flex items-center justify-between h-14">
+            <h1 className="text-xl font-bold text-gray-800 mr-8">Админ-панель</h1>
+            <div
+              className="flex items-center gap-1 flex-1"
+              onMouseLeave={() => setOpenDropdown(null)}
+            >
+              <NavDropdown
+                label="Пользователи"
+                items={[
+                  { label: "Пользователи", href: "/admin/users" },
+                  { label: "Заказы", href: "/admin/orders" },
+                ]}
+                pathname={pathname}
+                isOpen={openDropdown === "users"}
+                onOpen={handleOpenDropdown}
+                onClose={() => setOpenDropdown(null)}
+                openKey="users"
+              />
+              <NavDropdown
+                label="Продукты"
+                items={[
+                  { label: "Продукты", href: "/admin" },
+                  { label: "Импорт товаров", href: "/admin/import" },
+                ]}
+                pathname={pathname}
+                isOpen={openDropdown === "products"}
+                onOpen={handleOpenDropdown}
+                onClose={() => setOpenDropdown(null)}
+                openKey="products"
+              />
+              <NavDropdown
+                label="Реклама"
+                items={[
+                  { label: "Верхняя строка", href: "/admin/top-banner" },
+                  { label: "Промоблок", href: "/admin/promo" },
+                  { label: "Промокоды", href: "/admin/promo-codes" },
+                  { label: "Подписчики", href: "/admin/subscribers" },
+                ]}
+                pathname={pathname}
+                isOpen={openDropdown === "ads"}
+                onOpen={handleOpenDropdown}
+                onClose={() => setOpenDropdown(null)}
+                openKey="ads"
+              />
+              <a
+                href="/admin/pages"
+                className={`px-4 py-2 rounded-md transition-colors ${
+                  pathname === "/admin/pages"
+                    ? "bg-gray-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Страницы
+              </a>
+              <NavDropdown
+                label="Настройки"
+                items={[
+                  { label: "SEO", href: "/admin/seo" },
+                  { label: "Стоимость доставки", href: "/admin/shipping" },
+                  { label: "ФОС", href: "/admin/feedback" },
+                ]}
+                pathname={pathname}
+                isOpen={openDropdown === "settings"}
+                onOpen={handleOpenDropdown}
+                onClose={() => setOpenDropdown(null)}
+                openKey="settings"
+              />
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <a
                 href="/"
-                className="px-4 py-2 text-gray-700 hover:text-gray-900"
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
               >
                 На сайт
               </a>
               <button
+                type="button"
                 onClick={handleLogout}
-                className="px-4 py-2 text-red-600 hover:text-red-800"
+                className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
               >
                 Выйти
               </button>

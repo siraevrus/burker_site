@@ -118,8 +118,9 @@ model Order {
   passportIssueDate String   // Дата выдачи паспорта (обязательное поле)
   passportIssuedBy String    // Кем выдан паспорт (обязательное поле)
   requiresConfirmation Boolean @default(false) // Требуется ли связаться для подтверждения заказа
-  promoCode        String?   // Промокод, примененный к заказу
-  promoDiscount    Float?    @default(0) // Сумма скидки по промокоду
+  promoCode         String?   // Промокод, примененный к заказу
+  promoDiscount     Float?    @default(0) // Сумма скидки по промокоду
+  promoDiscountType String?   // "fixed" (₽) или "percent" (%) — на момент заказа
   
   status          String      @default("accepted") // accepted, purchased, in_transit_de, in_transit_ru, delivered
   totalAmount     Float
@@ -163,14 +164,34 @@ model ExchangeRate {
 }
 
 model PromoCode {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  discountType    String   @default("fixed") // "fixed" (₽) или "percent" (%)
+  discount        Float    // Размер скидки
+  validFrom       DateTime
+  validUntil      DateTime
+  minOrderAmount  Float?   // Минимальная сумма заказа
+  firstOrderOnly  Boolean  @default(false) // Только на первый заказ
+  usageLimit      Int      @default(1) // Лимит использований на одного пользователя
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  usages          PromoCodeUsage[]
+}
+
+model PromoCodeUsage {
   id          String   @id @default(cuid())
-  code        String   @unique // Уникальный код промокода
-  discount    Float    // Сумма скидки в рублях
-  validFrom   DateTime // Дата начала действия
-  validUntil  DateTime // Дата окончания действия
-  isActive    Boolean  @default(true) // Активен ли промокод
+  promoCodeId String
+  email       String   // email пользователя
+  orderId     String?  // id заказа
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  promoCode   PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+
+  @@index([promoCodeId])
+  @@index([email])
+  @@index([promoCodeId, email])
 }
 
 model Subscriber {

@@ -10,9 +10,13 @@ export default function AdminPromoCodesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     code: "",
+    discountType: "fixed" as "fixed" | "percent",
     discount: "",
     validFrom: "",
     validUntil: "",
+    minOrderAmount: "",
+    firstOrderOnly: false,
+    usageLimit: "1",
     isActive: true,
   });
   const [error, setError] = useState("");
@@ -47,13 +51,18 @@ export default function AdminPromoCodesPage() {
 
       const response = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...(editingId && { id: editingId }),
-          ...formData,
+          code: formData.code,
+          discountType: formData.discountType,
           discount: parseFloat(formData.discount),
+          validFrom: formData.validFrom,
+          validUntil: formData.validUntil,
+          minOrderAmount: formData.minOrderAmount || null,
+          firstOrderOnly: formData.firstOrderOnly,
+          usageLimit: formData.usageLimit,
+          isActive: formData.isActive,
         }),
       });
 
@@ -76,24 +85,23 @@ export default function AdminPromoCodesPage() {
     setEditingId(promoCode.id);
     setFormData({
       code: promoCode.code,
+      discountType: promoCode.discountType || "fixed",
       discount: promoCode.discount.toString(),
       validFrom: new Date(promoCode.validFrom).toISOString().slice(0, 16),
       validUntil: new Date(promoCode.validUntil).toISOString().slice(0, 16),
+      minOrderAmount: promoCode.minOrderAmount?.toString() || "",
+      firstOrderOnly: promoCode.firstOrderOnly ?? false,
+      usageLimit: (promoCode.usageLimit ?? 1).toString(),
       isActive: promoCode.isActive,
     });
     setShowForm(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Вы уверены, что хотите удалить этот промокод?")) {
-      return;
-    }
+    if (!confirm("Вы уверены, что хотите удалить этот промокод?")) return;
 
     try {
-      const response = await fetch(`/api/promo-codes?id=${id}`, {
-        method: "DELETE",
-      });
-
+      const response = await fetch(`/api/promo-codes?id=${id}`, { method: "DELETE" });
       if (response.ok) {
         await loadPromoCodes();
       } else {
@@ -109,9 +117,13 @@ export default function AdminPromoCodesPage() {
   const resetForm = () => {
     setFormData({
       code: "",
+      discountType: "fixed",
       discount: "",
       validFrom: "",
       validUntil: "",
+      minOrderAmount: "",
+      firstOrderOnly: false,
+      usageLimit: "1",
       isActive: true,
     });
     setEditingId(null);
@@ -124,6 +136,9 @@ export default function AdminPromoCodesPage() {
     const now = new Date();
     return now >= new Date(promoCode.validFrom) && now <= new Date(promoCode.validUntil);
   };
+
+  const formatDiscount = (pc: PromoCode) =>
+    pc.discountType === "percent" ? `${pc.discount}%` : `${pc.discount.toFixed(0)} ₽`;
 
   if (loading) {
     return (
@@ -138,10 +153,7 @@ export default function AdminPromoCodesPage() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Промокоды</h1>
         <button
-          onClick={() => {
-            resetForm();
-            setShowForm(true);
-          }}
+          onClick={() => { resetForm(); setShowForm(true); }}
           className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors"
         >
           + Создать промокод
@@ -159,82 +171,123 @@ export default function AdminPromoCodesPage() {
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Код промокода *
-              </label>
-              <input
-                type="text"
-                value={formData.code}
-                onChange={(e) =>
-                  setFormData({ ...formData, code: e.target.value.toUpperCase() })
-                }
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-                required
-                placeholder="Например: SUMMER2024"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Код промокода *</label>
+                <input
+                  type="text"
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  required
+                  placeholder="SUMMER2024"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Тип скидки *</label>
+                <select
+                  value={formData.discountType}
+                  onChange={(e) =>
+                    setFormData({ ...formData, discountType: e.target.value as "fixed" | "percent" })
+                  }
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="fixed">Фиксированная (₽)</option>
+                  <option value="percent">Процент (%)</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Сумма скидки (₽) *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.discount}
-                onChange={(e) =>
-                  setFormData({ ...formData, discount: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-                required
-                placeholder="1000"
-              />
-            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Дата начала действия *
+                  Размер скидки {formData.discountType === "percent" ? "(%)" : "(₽)"} *
                 </label>
+                <input
+                  type="number"
+                  step={formData.discountType === "percent" ? "1" : "0.01"}
+                  min="0"
+                  max={formData.discountType === "percent" ? "100" : undefined}
+                  value={formData.discount}
+                  onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  required
+                  placeholder={formData.discountType === "percent" ? "10" : "1000"}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Минимальная сумма заказа (₽)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.minOrderAmount}
+                  onChange={(e) => setFormData({ ...formData, minOrderAmount: e.target.value })}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  placeholder="Не ограничена"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Дата начала действия *</label>
                 <input
                   type="datetime-local"
                   value={formData.validFrom}
-                  onChange={(e) =>
-                    setFormData({ ...formData, validFrom: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, validFrom: e.target.value })}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Дата окончания действия *
-                </label>
+                <label className="block text-sm font-medium mb-2">Дата окончания действия *</label>
                 <input
                   type="datetime-local"
                   value={formData.validUntil}
-                  onChange={(e) =>
-                    setFormData({ ...formData, validUntil: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                   required
                 />
               </div>
             </div>
-            <div>
-              <label className="flex items-center gap-2 cursor-pointer">
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Лимит на пользователя</label>
                 <input
-                  type="checkbox"
-                  checked={formData.isActive}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isActive: e.target.checked })
-                  }
-                  className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black"
+                  type="number"
+                  min="1"
+                  value={formData.usageLimit}
+                  onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value })}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
                 />
-                <span className="text-sm">Активен</span>
-              </label>
+              </div>
+              <div className="flex items-end pb-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.firstOrderOnly}
+                    onChange={(e) => setFormData({ ...formData, firstOrderOnly: e.target.checked })}
+                    className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black"
+                  />
+                  <span className="text-sm">Только на первый заказ</span>
+                </label>
+              </div>
+              <div className="flex items-end pb-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                    className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black"
+                  />
+                  <span className="text-sm">Активен</span>
+                </label>
+              </div>
             </div>
-            <div className="flex gap-4">
+
+            <div className="flex gap-4 pt-2">
               <button
                 type="submit"
                 className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors"
@@ -254,85 +307,101 @@ export default function AdminPromoCodesPage() {
       )}
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Код
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Скидка
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Период действия
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Статус
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Действия
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {promoCodes.length === 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
               <tr>
-                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                  Нет промокодов
-                </td>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Код
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Скидка
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Период
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Мин. сумма
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Первый заказ
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Использ.
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Статус
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Действия
+                </th>
               </tr>
-            ) : (
-              promoCodes.map((promoCode) => {
-                const isValid = isPromoCodeValid(promoCode);
-                return (
-                  <tr key={promoCode.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {promoCode.code}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {promoCode.discount.toFixed(0)} ₽
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {new Date(promoCode.validFrom).toLocaleDateString("ru-RU")} -{" "}
-                        {new Date(promoCode.validUntil).toLocaleDateString("ru-RU")}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          isValid
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {isValid ? "Действителен" : "Не действителен"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(promoCode)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
-                      >
-                        Редактировать
-                      </button>
-                      <button
-                        onClick={() => handleDelete(promoCode.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Удалить
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {promoCodes.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-4 text-center text-gray-500">
+                    Нет промокодов
+                  </td>
+                </tr>
+              ) : (
+                promoCodes.map((pc) => {
+                  const isValid = isPromoCodeValid(pc);
+                  return (
+                    <tr key={pc.id}>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span className="text-sm font-mono font-medium text-gray-900">
+                          {pc.code}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatDiscount(pc)}
+                      </td>
+                      <td className="px-4 py-4 text-sm text-gray-900">
+                        {new Date(pc.validFrom).toLocaleDateString("ru-RU")} –{" "}
+                        {new Date(pc.validUntil).toLocaleDateString("ru-RU")}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {pc.minOrderAmount ? `${pc.minOrderAmount.toFixed(0)} ₽` : "—"}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {pc.firstOrderOnly ? "Да" : "Нет"}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {pc.usageCount ?? 0}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            isValid
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {isValid ? "Действителен" : "Не действителен"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => handleEdit(pc)}
+                          className="text-blue-600 hover:text-blue-900 mr-4"
+                        >
+                          Редактировать
+                        </button>
+                        <button
+                          onClick={() => handleDelete(pc.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Удалить
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

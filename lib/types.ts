@@ -93,6 +93,7 @@ export interface Order {
   requiresConfirmation?: boolean; // Требуется ли связаться для подтверждения заказа
   promoCode?: string | null; // Код промокода, примененный к заказу
   promoDiscount?: number | null; // Сумма скидки по промокоду
+  promoDiscountType?: string | null; // "fixed" (₽) или "percent" (%) на момент заказа
   status: string;
   totalAmount: number;
   shippingCost: number;
@@ -152,10 +153,15 @@ export interface Page {
 export interface PromoCode {
   id: string;
   code: string;
+  discountType: "fixed" | "percent";
   discount: number;
   validFrom: Date;
   validUntil: Date;
+  minOrderAmount: number | null;
+  firstOrderOnly: boolean;
+  usageLimit: number;
   isActive: boolean;
+  usageCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -33,7 +33,13 @@ interface CheckoutFormProps {
     shippingCost: number;
     promoCode: string;
     promoCodeError: string;
-    appliedPromoCode: { code: string; discount: number } | null;
+    appliedPromoCode: {
+      code: string;
+      discount: number;
+      discountType: "fixed" | "percent";
+      minOrderAmount: number | null;
+    } | null;
+    promoDiscount: number;
     checkingPromoCode: boolean;
     requiresConfirmation: boolean;
     loading: boolean;
@@ -123,7 +129,12 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
   const [cityForPvz, setCityForPvz] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [promoCodeError, setPromoCodeError] = useState("");
-  const [appliedPromoCode, setAppliedPromoCode] = useState<{ code: string; discount: number } | null>(null);
+  const [appliedPromoCode, setAppliedPromoCode] = useState<{
+    code: string;
+    discount: number;
+    discountType: "fixed" | "percent";
+    minOrderAmount: number | null;
+  } | null>(null);
   const [checkingPromoCode, setCheckingPromoCode] = useState(false);
 
   const loadDeliveryPoints = useCallback(async () => {
@@ -166,11 +177,20 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
       return;
     }
 
+    if (!formData.email.trim()) {
+      setPromoCodeError("Сначала введите email");
+      return;
+    }
+
     setCheckingPromoCode(true);
     setPromoCodeError("");
 
     try {
-      const response = await fetch(`/api/promo-codes?code=${encodeURIComponent(promoCode.trim())}`);
+      const params = new URLSearchParams({
+        code: promoCode.trim(),
+        email: formData.email.trim().toLowerCase(),
+      });
+      const response = await fetch(`/api/promo-codes?${params}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -180,9 +200,21 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
       }
 
       if (data.success && data.promoCode) {
+        const pc = data.promoCode;
+
+        if (pc.minOrderAmount && getTotalPrice() < pc.minOrderAmount) {
+          setPromoCodeError(
+            `Минимальная сумма заказа для промокода — ${pc.minOrderAmount.toFixed(0)} ₽`
+          );
+          setAppliedPromoCode(null);
+          return;
+        }
+
         setAppliedPromoCode({
-          code: data.promoCode.code,
-          discount: data.promoCode.discount,
+          code: pc.code,
+          discount: pc.discount,
+          discountType: pc.discountType || "fixed",
+          minOrderAmount: pc.minOrderAmount,
         });
         setPromoCodeError("");
       }
@@ -193,7 +225,7 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
     } finally {
       setCheckingPromoCode(false);
     }
-  }, [promoCode]);
+  }, [promoCode, formData.email, getTotalPrice]);
 
   const handleCancelPromoCode = useCallback(() => {
     setAppliedPromoCode(null);
@@ -213,7 +245,11 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
     cart,
     shippingRates.length > 0 ? shippingRates : undefined
   );
-  const promoDiscount = appliedPromoCode ? appliedPromoCode.discount : 0;
+  const promoDiscount = appliedPromoCode
+    ? appliedPromoCode.discountType === "percent"
+      ? Math.round(shippingCost * appliedPromoCode.discount / 100)
+      : appliedPromoCode.discount
+    : 0;
   const shippingAfterDiscount = Math.max(0, shippingCost - promoDiscount);
   const finalTotal = totalPrice + shippingAfterDiscount;
 
@@ -232,6 +268,7 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
         promoCode,
         promoCodeError,
         appliedPromoCode,
+        promoDiscount,
         checkingPromoCode,
         requiresConfirmation: Boolean(formData.requiresConfirmation),
         loading,
@@ -242,7 +279,7 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
         setRequiresConfirmation: (value: boolean) => setFormData((prev) => ({ ...prev, requiresConfirmation: value })),
       });
     }
-  }, [totalPrice, totalWeight, shippingCost, promoCode, promoCodeError, appliedPromoCode, checkingPromoCode, formData.requiresConfirmation, loading, submitForm, handleCheckPromoCode, handleCancelPromoCode, onFormDataChange]);
+  }, [totalPrice, totalWeight, shippingCost, promoCode, promoCodeError, appliedPromoCode, promoDiscount, checkingPromoCode, formData.requiresConfirmation, loading, submitForm, handleCheckPromoCode, handleCancelPromoCode, onFormDataChange]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -294,7 +331,7 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
         body: JSON.stringify({
           ...formData,
           promoCode: appliedPromoCode?.code || null,
-          promoDiscount: appliedPromoCode?.discount || 0,
+          promoDiscount: promoDiscount,
           items: orderItems,
         }),
       });
