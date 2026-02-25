@@ -157,8 +157,28 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
               </label>
             </div>
             
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded-md space-y-1.5">
+              <p className="text-sm font-medium text-gray-700">Оригинальная цена в евро</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {product.originalPriceEur != null && product.originalPriceEur > 0
+                  ? `${product.originalPriceEur.toFixed(2)} €`
+                  : "—"}
+              </p>
+              {product.discount > 0 && (
+                <>
+                  <p className="text-sm font-medium text-gray-700 mt-2">Цена со скидкой</p>
+                  <p className="text-lg font-semibold text-green-700">
+                    {formData.price.toFixed(0)} ₽
+                    <span className="text-sm font-normal text-gray-500 ml-1">
+                      (скидка {product.discount}%)
+                    </span>
+                  </p>
+                </>
+              )}
+            </div>
+
             <div>
-              <label className="block text-sm font-medium mb-2">Цена</label>
+              <label className="block text-sm font-medium mb-2">Цена (₽)</label>
               <input
                 type="number"
                 step="0.01"
@@ -170,7 +190,7 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Оригинальная цена</label>
+              <label className="block text-sm font-medium mb-2">Оригинальная цена (₽)</label>
               <input
                 type="number"
                 step="0.01"

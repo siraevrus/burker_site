@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useStore, getCustomsCategory } from "@/lib/store";
 import { calculateShipping, type ShippingRateEntry } from "@/lib/shipping";
 import { CartItem } from "@/lib/types";
@@ -87,6 +87,33 @@ export default function CartPage() {
     cart,
     shippingRates.length > 0 ? shippingRates : undefined
   );
+
+  // Сумма оригинальных цен в EUR по корзине (цена на сайте Burker)
+  const totalEur = cart.reduce((sum, item) => {
+    const eur = item.originalPriceEur ?? productOriginalPrices[item.id];
+    return sum + (eur && eur > 0 ? eur * item.quantity : 0);
+  }, 0);
+
+  const rubPerEur = rates ? rates.rubRate / rates.eurRate : 0;
+  const duty =
+    totalEur > 200 && rates
+      ? (totalEur - 200) * 0.15 * rubPerEur + 690
+      : 0;
+  const showDutyBlock = duty > 0;
+
+  const [dutyPopupOpen, setDutyPopupOpen] = useState(false);
+  const dutyPopupRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!dutyPopupOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dutyPopupRef.current && !dutyPopupRef.current.contains(e.target as Node)) {
+        setDutyPopupOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dutyPopupOpen]);
 
   if (cart.length === 0) {
     return (
@@ -242,6 +269,33 @@ export default function CartPage() {
                 </span>
               </div>
             </div>
+            {showDutyBlock && (
+              <div ref={dutyPopupRef} className="relative mb-4">
+                <p className="text-sm text-gray-500 flex items-center gap-1">
+                  Таможенная пошлина: {duty.toFixed(0)} ₽
+                  <button
+                    type="button"
+                    onClick={() => setDutyPopupOpen((v) => !v)}
+                    className="inline-flex items-center justify-center w-4 h-4 rounded-full text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    aria-label="Подробнее о пошлине"
+                  >
+                    ⓘ
+                  </button>
+                </p>
+                {dutyPopupOpen && (
+                  <div className="absolute bottom-full left-0 mb-1 z-10 min-w-[220px] max-w-[280px] p-3 bg-white border border-gray-200 rounded-lg shadow-lg text-sm text-gray-700">
+                    <p className="mb-2">Дополнительная информация по пошлине</p>
+                    <Link
+                      href="/tax"
+                      className="text-blue-600 hover:underline"
+                      onClick={() => setDutyPopupOpen(false)}
+                    >
+                      Дополнительная информация по пошлине
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
             <Link
               href="/checkout"
               className="block w-full bg-black text-white py-3 rounded-md hover:bg-gray-800 transition-colors font-semibold text-center"
