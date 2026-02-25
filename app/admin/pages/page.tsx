@@ -232,6 +232,8 @@ function PageForm({
       content: "",
       category: undefined,
       published: false,
+      seoTitle: undefined,
+      seoDescription: undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
@@ -248,10 +250,12 @@ function PageForm({
           .replace(/(^-|-$)/g, "");
       }
     }
-    // Убеждаемся, что category корректно обработан
+    // Убеждаемся, что category и SEO поля корректно обработаны
     const pageToSave = {
       ...formData,
       category: formData.category || undefined,
+      seoTitle: formData.seoTitle || undefined,
+      seoDescription: formData.seoDescription || undefined,
     };
     onSave(pageToSave);
   };
@@ -320,6 +324,42 @@ function PageForm({
           <p className="text-xs text-gray-500 mt-1">
             Выберите категорию для отображения страницы в соответствующем разделе футера
           </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              SEO: заголовок (title)
+            </label>
+            <input
+              type="text"
+              value={formData.seoTitle ?? ""}
+              onChange={(e) =>
+                setFormData({ ...formData, seoTitle: e.target.value || undefined })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              placeholder={formData.title || "Если пусто — используется название страницы"}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Заголовок для вкладки браузера и поисковиков
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              SEO: описание (description)
+            </label>
+            <textarea
+              value={formData.seoDescription ?? ""}
+              onChange={(e) =>
+                setFormData({ ...formData, seoDescription: e.target.value || undefined })
+              }
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              placeholder="Краткое описание страницы для поисковиков"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Мета-описание для выдачи в поиске
+            </p>
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">

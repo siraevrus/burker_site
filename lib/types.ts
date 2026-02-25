@@ -143,6 +143,8 @@ export interface Page {
   content: string;
   category?: "customer-service" | "policies"; // Категория страницы
   published: boolean;
+  seoTitle?: string | null;    // SEO: заголовок для <title>
+  seoDescription?: string | null; // SEO: описание для <meta name="description">
   createdAt: Date;
   updatedAt: Date;
 }

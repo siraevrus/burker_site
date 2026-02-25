@@ -619,6 +619,38 @@ function AdminOrdersPageContent() {
                                 <span className="ml-2 font-mono font-medium">{order.rubRate!.toFixed(2)}</span>
                               </div>
                             </div>
+                            <div className="mb-4 p-3 bg-white rounded border border-gray-200">
+                              <p className="text-sm font-semibold text-gray-800 mb-2">Формула расчёта вознаграждения комиссионера с подстановкой реальных цифр</p>
+                              <p className="text-xs text-gray-600 mb-2">
+                                По позиции: <strong>вознаграждение = (цена в ₽ − (оригинал € ÷ курс_EUR × курс_RUB)) × кол-во</strong>
+                              </p>
+                              <ul className="space-y-1.5 text-xs font-mono text-gray-800">
+                                {order.items.map((item) => {
+                                  const itemComm = commission?.perItem.get(item.id) ?? null;
+                                  const eur = order.eurRate!;
+                                  const rub = order.rubRate!;
+                                  const hasEur = item.originalPriceEur != null && item.originalPriceEur > 0;
+                                  const costRub = hasEur ? (item.originalPriceEur! / eur) * rub : null;
+                                  const name = item.productName.length > 30 ? item.productName.slice(0, 27) + "…" : item.productName;
+                                  return (
+                                    <li key={item.id} className="break-all">
+                                      {hasEur && costRub != null && itemComm != null ? (
+                                        <>
+                                          {name}: ({item.productPrice} − ({item.originalPriceEur!.toFixed(2)} ÷ {eur.toFixed(4)} × {rub.toFixed(2)})) × {item.quantity} = ({item.productPrice} − {costRub.toFixed(0)}) × {item.quantity} = <strong>{itemComm.toFixed(0)} ₽</strong>
+                                        </>
+                                      ) : (
+                                        <>{name}: — (нет данных по оригинальной цене в EUR)</>
+                                      )}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                              {commission != null && commission.total > 0 && (
+                                <p className="text-xs font-mono text-gray-800 mt-2 pt-2 border-t border-gray-200">
+                                  Итого вознаграждение комиссионера: {order.items.filter((i) => commission.perItem.has(i.id)).map((i) => commission.perItem.get(i.id)!.toFixed(0)).join(" + ")} = <strong>{commission.total.toFixed(0)} ₽</strong>
+                                </p>
+                              )}
+                            </div>
                             <div className="overflow-x-auto">
                               <table className="w-full text-sm border-collapse">
                                 <thead>

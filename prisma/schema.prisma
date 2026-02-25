@@ -48,14 +48,16 @@ model PromoBanner {
 }
 
 model Page {
-  id        String   @id @default(cuid())
-  title     String
-  slug      String   @unique
-  content   String
-  category  String?  // "customer-service" или "policies"
-  published Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  title           String
+  slug            String   @unique
+  content         String
+  category        String?  // "customer-service" или "policies"
+  published       Boolean  @default(false)
+  seoTitle        String?  // SEO: заголовок для <title>
+  seoDescription  String?  // SEO: описание для <meta name="description">
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model TopBanner {

@@ -11,9 +11,11 @@ export async function generateMetadata({ params }: Props) {
     where: { slug, published: true },
   });
   if (!page) return { title: "Mira Brands | Burker" };
+  const title = page.seoTitle?.trim() || page.title;
+  const description = page.seoDescription?.trim() || page.title;
   return {
-    title: `${page.title} | Mira Brands | Burker`,
-    description: page.title,
+    title: `${title} | Mira Brands | Burker`,
+    description,
   };
 }
 

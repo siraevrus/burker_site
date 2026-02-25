@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, slug, content, category, published } = body;
+    const { title, slug, content, category, published, seoTitle, seoDescription } = body;
 
     if (!title || !slug || !content) {
       return NextResponse.json(
@@ -47,6 +47,8 @@ export async function POST(request: NextRequest) {
       slug,
       content,
       published: published || false,
+      seoTitle: seoTitle != null && seoTitle !== "" ? seoTitle : null,
+      seoDescription: seoDescription != null && seoDescription !== "" ? seoDescription : null,
     };
 
     // Добавляем category только если оно указано
@@ -71,7 +73,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, title, slug, content, category, published } = body;
+    const { id, title, slug, content, category, published, seoTitle, seoDescription } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -85,6 +87,8 @@ export async function PUT(request: NextRequest) {
       slug,
       content,
       published: published || false,
+      seoTitle: seoTitle != null && seoTitle !== "" ? seoTitle : null,
+      seoDescription: seoDescription != null && seoDescription !== "" ? seoDescription : null,
     };
 
     // Добавляем category только если оно указано, иначе устанавливаем null
