@@ -7,6 +7,7 @@ interface OrderItem {
   id: string;
   productName: string;
   productPrice: number;
+  originalPriceEur?: number | null;
   quantity: number;
   selectedColor: string;
 }
@@ -36,6 +37,8 @@ interface Order {
   requiresConfirmation?: boolean;
   promoCode?: string | null;
   promoDiscount?: number | null;
+  eurRate?: number | null;
+  rubRate?: number | null;
   purchaseProofImage?: string | null;
   sellerTrackNumber?: string | null;
   russiaTrackNumber?: string | null;
@@ -98,6 +101,29 @@ function AdminOrdersPageContent() {
     in_transit_ru: "bg-indigo-100 text-indigo-800",
     delivered: "bg-green-100 text-green-800",
   };
+
+  function getItemCommission(item: OrderItem, eurRate: number, rubRate: number): number | null {
+    if (item.originalPriceEur == null || item.originalPriceEur <= 0) return null;
+    const originalPriceInUsd = item.originalPriceEur / eurRate;
+    const originalPriceInRub = originalPriceInUsd * rubRate;
+    return Math.max(0, (item.productPrice - originalPriceInRub) * item.quantity);
+  }
+
+  function getOrderCommission(order: Order): { total: number; perItem: Map<string, number> } | null {
+    const eur = order.eurRate;
+    const rub = order.rubRate;
+    if (eur == null || rub == null || eur <= 0 || rub <= 0) return null;
+    const perItem = new Map<string, number>();
+    let total = 0;
+    for (const item of order.items) {
+      const c = getItemCommission(item, eur, rub);
+      if (c != null) {
+        perItem.set(item.id, c);
+        total += c;
+      }
+    }
+    return perItem.size > 0 ? { total, perItem } : null;
+  }
 
   useEffect(() => {
     const t = setTimeout(() => setSearchQuery(searchInput.trim()), 400);
@@ -574,6 +600,77 @@ function AdminOrdersPageContent() {
                       </div>
                     ))}
                   </div>
+
+                  {(() => {
+                    const commission = getOrderCommission(order);
+                    const hasRates = order.eurRate != null && order.rubRate != null;
+                    return (
+                      <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h4 className="text-sm font-semibold text-gray-800 mb-3">Расчёт вознаграждения комиссионера</h4>
+                        {hasRates ? (
+                          <>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm mb-4">
+                              <div>
+                                <span className="text-gray-600">Курс EUR (к USD) на момент оплаты:</span>
+                                <span className="ml-2 font-mono font-medium">{order.eurRate!.toFixed(4)}</span>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Курс RUB (к USD) на момент оплаты:</span>
+                                <span className="ml-2 font-mono font-medium">{order.rubRate!.toFixed(2)}</span>
+                              </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-sm border-collapse">
+                                <thead>
+                                  <tr className="border-b border-gray-300 text-left">
+                                    <th className="py-2 pr-2">Товар</th>
+                                    <th className="py-2 pr-2 whitespace-nowrap">Цена в EUR</th>
+                                    <th className="py-2 pr-2 whitespace-nowrap">Себестоимость в ₽</th>
+                                    <th className="py-2 pr-2">Кол-во</th>
+                                    <th className="py-2 text-right whitespace-nowrap">Вознаграждение</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {order.items.map((item) => {
+                                    const itemComm = commission?.perItem.get(item.id) ?? null;
+                                    const eur = order.eurRate!;
+                                    const rub = order.rubRate!;
+                                    const costRub = item.originalPriceEur != null && item.originalPriceEur > 0
+                                      ? (item.originalPriceEur / eur) * rub
+                                      : null;
+                                    return (
+                                      <tr key={item.id} className="border-b border-gray-200">
+                                        <td className="py-2 pr-2">{item.productName}</td>
+                                        <td className="py-2 pr-2 font-mono">
+                                          {item.originalPriceEur != null ? `${item.originalPriceEur.toFixed(2)} €` : "—"}
+                                        </td>
+                                        <td className="py-2 pr-2">
+                                          {costRub != null ? `${costRub.toFixed(0)} ₽` : "—"}
+                                        </td>
+                                        <td className="py-2 pr-2">{item.quantity}</td>
+                                        <td className="py-2 text-right font-medium">
+                                          {itemComm != null ? `${itemComm.toFixed(0)} ₽` : "—"}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                            {commission != null && commission.total > 0 && (
+                              <p className="mt-3 text-sm font-semibold text-gray-800">
+                                Итого вознаграждение комиссионера: {commission.total.toFixed(0)} ₽
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-600">
+                            Курсы на момент оплаты не сохранены (заказ создан до обновления). Итоговая комиссия не рассчитана.
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   <div className="border-t border-gray-200 pt-4">
                     <div className="flex justify-between mb-2">

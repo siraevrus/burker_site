@@ -48,6 +48,8 @@ function mapOrderFromDb(dbOrder: any): Order {
     status: dbOrder.status,
     totalAmount: dbOrder.totalAmount,
     shippingCost: dbOrder.shippingCost,
+    eurRate: dbOrder.eurRate ?? undefined,
+    rubRate: dbOrder.rubRate ?? undefined,
     purchaseProofImage: dbOrder.purchaseProofImage || undefined,
     sellerTrackNumber: dbOrder.sellerTrackNumber || undefined,
     russiaTrackNumber: dbOrder.russiaTrackNumber || undefined,
@@ -137,6 +139,8 @@ export async function createOrder(orderData: {
   }>;
   totalAmount: number;
   shippingCost: number;
+  eurRate?: number | null;
+  rubRate?: number | null;
 }): Promise<Order> {
   const orderDataForCreate: any = {
     email: orderData.email,
@@ -162,6 +166,8 @@ export async function createOrder(orderData: {
     status: "accepted",
     totalAmount: orderData.totalAmount,
     shippingCost: orderData.shippingCost,
+    eurRate: orderData.eurRate ?? null,
+    rubRate: orderData.rubRate ?? null,
     items: {
       create: orderData.items.map((item) => ({
         productId: item.productId,

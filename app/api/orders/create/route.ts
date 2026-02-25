@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { createOrder } from "@/lib/orders";
+import { getExchangeRates } from "@/lib/exchange-rates";
 import { sendOrderConfirmation, sendAdminOrderNotification } from "@/lib/email";
 import { calculateShipping } from "@/lib/shipping";
 import { logError, logEvent } from "@/lib/ops-log";
@@ -146,7 +147,9 @@ export async function POST(request: NextRequest) {
     const shippingAfterDiscount = Math.max(0, shippingCost - discountAmount);
     const totalAmount = itemsTotal + shippingAfterDiscount;
 
-    // Создание заказа
+    const rates = await getExchangeRates();
+
+    // Создание заказа (курсы сохраняем для точного расчёта комиссии в админке)
     const order = await createOrder({
       userId: currentUser?.userId,
       email: email.toLowerCase(),
@@ -179,6 +182,8 @@ export async function POST(request: NextRequest) {
       })),
       totalAmount,
       shippingCost: shippingAfterDiscount,
+      eurRate: rates.eurRate,
+      rubRate: rates.rubRate,
     });
 
     // Отправка email уведомлений

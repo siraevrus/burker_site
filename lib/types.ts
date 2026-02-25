@@ -96,6 +96,8 @@ export interface Order {
   status: string;
   totalAmount: number;
   shippingCost: number;
+  eurRate?: number | null; // Курс EUR к USD на момент оформления
+  rubRate?: number | null; // Курс RUB к USD на момент оформления
   purchaseProofImage?: string; // URL изображения подтверждения выкупа
   sellerTrackNumber?: string; // Трек-номер продавца
   russiaTrackNumber?: string; // Трек-номер для РФ

@@ -123,6 +123,10 @@ model Order {
   totalAmount     Float
   shippingCost    Float       @default(5.0)
   
+  // Курсы на момент оформления заказа (для точного расчёта комиссии в админке)
+  eurRate         Float?      // Курс EUR к USD
+  rubRate         Float?      // Курс RUB к USD
+  
   // Данные для отслеживания статусов
   purchaseProofImage String?   // URL изображения подтверждения выкупа (для статуса purchased)
   sellerTrackNumber  String?   // Трек-номер продавца (для статуса in_transit_de)
