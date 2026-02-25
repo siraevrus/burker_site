@@ -49,29 +49,35 @@ function OrderConfirmationContent() {
     }
   }, [orderId]);
 
+  // Курсы на момент заказа (приоритет) или текущие из API для старых заказов
+  const ratesForCommission =
+    order?.eurRate != null && order?.rubRate != null
+      ? { eurRate: order.eurRate, rubRate: order.rubRate }
+      : rates;
+
   const calculateCommission = () => {
-    if (!order || !rates) return null;
-    
+    if (!order || !ratesForCommission) return null;
+
     let totalCommission = 0;
     let hasOriginalPrices = false;
-    
+
     for (const item of order.items) {
       if (item.originalPriceEur) {
         hasOriginalPrices = true;
-        const originalPriceInUsd = item.originalPriceEur / rates.eurRate;
-        const originalPriceInRub = originalPriceInUsd * rates.rubRate;
+        const originalPriceInUsd = item.originalPriceEur / ratesForCommission.eurRate;
+        const originalPriceInRub = originalPriceInUsd * ratesForCommission.rubRate;
         const commission = (item.productPrice - originalPriceInRub) * item.quantity;
         totalCommission += commission;
       }
     }
-    
+
     return hasOriginalPrices ? totalCommission : null;
   };
 
-  function getItemCommission(item: OrderItem, rates: ExchangeRates | null): number | null {
-    if (!rates || !item.originalPriceEur) return null;
-    const originalPriceInUsd = item.originalPriceEur / rates.eurRate;
-    const originalPriceInRub = originalPriceInUsd * rates.rubRate;
+  function getItemCommission(item: OrderItem, ratesToUse: ExchangeRates | null): number | null {
+    if (!ratesToUse || !item.originalPriceEur) return null;
+    const originalPriceInUsd = item.originalPriceEur / ratesToUse.eurRate;
+    const originalPriceInRub = originalPriceInUsd * ratesToUse.rubRate;
     return (item.productPrice - originalPriceInRub) * item.quantity;
   }
 
@@ -213,7 +219,7 @@ function OrderConfirmationContent() {
           <h2 className="text-xl font-bold mb-4">Товары</h2>
           <div className="space-y-3">
             {order.items.map((item) => {
-              const itemCommission = getItemCommission(item, rates);
+              const itemCommission = getItemCommission(item, ratesForCommission);
               return (
                 <div key={item.id} className="border-b border-gray-200 pb-3 last:border-b-0">
                   <div className="flex justify-between mb-2">
