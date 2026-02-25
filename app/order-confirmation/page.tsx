@@ -230,9 +230,9 @@ function OrderConfirmationContent() {
                       Количество: {item.quantity}
                     </p>
                     {itemCommission !== null && (
-                      <div className="flex justify-between text-sm text-gray-500">
-                        <span>В том числе вознаграждение комиссионера:</span>
-                        <span>{itemCommission.toFixed(0)} ₽</span>
+                      <div className="flex justify-between items-baseline gap-x-2 text-sm text-gray-500">
+                        <span className="min-w-0">В том числе вознаграждение комиссионера:</span>
+                        <span className="whitespace-nowrap flex-shrink-0">{itemCommission.toFixed(0)} ₽</span>
                       </div>
                     )}
                   </div>

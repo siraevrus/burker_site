@@ -178,8 +178,9 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                         <p className="text-[14.4px] text-gray-600">Цвет: {item.selectedColor}</p>
                         <p className="text-[14.4px] text-gray-600">Кол-во: {item.quantity}</p>
                         {itemCommission !== null && (
-                          <p className="text-[12px] text-gray-400 mt-1">
-                            В том числе вознаграждение комиссионера: {itemCommission.toFixed(0)} ₽
+                          <p className="text-[12px] text-gray-400 mt-1 flex flex-wrap items-baseline gap-x-1">
+                            <span>В том числе вознаграждение комиссионера:</span>
+                            <span className="whitespace-nowrap flex-shrink-0">{itemCommission.toFixed(0)} ₽</span>
                           </p>
                         )}
                       </div>

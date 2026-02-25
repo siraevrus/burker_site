@@ -207,8 +207,9 @@ export default function CartPage() {
                     Итого: {(item.price * item.quantity).toFixed(0)} ₽
                   </p>
                   {getItemCommission(item, rates, productOriginalPrices) !== null && (
-                    <p className="text-xs text-gray-400">
-                      В том числе вознаграждение комиссионера: {getItemCommission(item, rates, productOriginalPrices)?.toFixed(0)} ₽
+                    <p className="text-xs text-gray-400 flex flex-wrap items-baseline gap-x-1">
+                      <span>В том числе вознаграждение комиссионера:</span>
+                      <span className="whitespace-nowrap flex-shrink-0">{getItemCommission(item, rates, productOriginalPrices)?.toFixed(0)} ₽</span>
                     </p>
                   )}
                 </div>
