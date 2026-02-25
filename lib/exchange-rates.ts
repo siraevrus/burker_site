@@ -1,8 +1,8 @@
 import { prisma } from "./db";
 
-// Дефолтные значения курсов (fallback)
-const DEFAULT_EUR_RATE = 0.85;
+// Дефолтные значения курсов (fallback): 80 ₽/USD, 95 ₽/EUR
 const DEFAULT_RUB_RATE = 80.0;
+const DEFAULT_EUR_RATE = 80 / 95; // коэффициент для пересчёта (RUB/USD)/(RUB/EUR)
 
 // Кэш курсов в памяти
 let cachedRates: { eurRate: number; rubRate: number; updatedAt: Date } | null = null;

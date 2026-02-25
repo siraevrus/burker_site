@@ -193,6 +193,16 @@ export default function AdminLayout({
                 >
                   Стоимость доставки
                 </a>
+                <a
+                  href="/admin/exchange-rates"
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    pathname === "/admin/exchange-rates"
+                      ? "bg-gray-600 text-white"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Курсы валют
+                </a>
               </div>
             </div>
             <div className="flex items-center gap-4">
