@@ -65,7 +65,10 @@ function LoginPageContent() {
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           {activeTab === "login" ? (
-            <LoginForm onSwitchToRegister={() => handleTabChange("register")} />
+            <LoginForm
+              redirect={searchParams.get("redirect") || undefined}
+              onSwitchToRegister={() => handleTabChange("register")}
+            />
           ) : (
             <RegisterForm onSwitchToLogin={() => handleTabChange("login")} />
           )}

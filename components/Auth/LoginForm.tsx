@@ -6,10 +6,11 @@ import Link from "next/link";
 import { useStore } from "@/lib/store";
 
 interface LoginFormProps {
+  redirect?: string;
   onSwitchToRegister?: () => void;
 }
 
-export default function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
+export default function LoginForm({ redirect, onSwitchToRegister }: LoginFormProps = {}) {
   const router = useRouter();
   const loadUser = useStore((state) => state.loadUser);
   const [formData, setFormData] = useState({
@@ -49,9 +50,10 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
         return;
       }
 
-      // Успешный вход - загружаем данные пользователя и переходим на главную
+      // Успешный вход - загружаем данные пользователя и переходим
       await loadUser();
-      router.push("/");
+      const target = redirect && redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "/";
+      router.push(target);
     } catch (error) {
       console.error("Login error:", error);
       setError("Ошибка при входе. Попробуйте позже.");

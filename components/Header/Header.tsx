@@ -365,6 +365,9 @@ export default function Header() {
                 <Link href="/orders" className="text-sm hover:text-gray-600">
                   Заказы
                 </Link>
+                <Link href="/profile" className="text-sm hover:text-gray-600">
+                  Профиль
+                </Link>
                 <div className="relative group">
                   <button className="flex items-center gap-2 hover:text-gray-600">
                     <svg
@@ -387,6 +390,12 @@ export default function Header() {
                       <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
                         {user.email}
                       </div>
+                      <Link
+                        href="/profile"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        Профиль
+                      </Link>
                       <button
                         onClick={logout}
                         className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
@@ -549,6 +558,13 @@ export default function Header() {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Мои заказы
+                </Link>
+                <Link
+                  href="/profile"
+                  className="block py-2 hover:text-gray-600"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Профиль
                 </Link>
                 <button
                   onClick={() => {
