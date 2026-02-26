@@ -11,7 +11,8 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "test:tbank": "tsx scripts/test-tbank.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
