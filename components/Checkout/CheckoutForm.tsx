@@ -265,11 +265,13 @@ export default function CheckoutForm({ user, rates = null, productOriginalPrices
           return sum + itemCommission;
         }, 0)
       : 0;
-  const promoDiscount = appliedPromoCode
+  // Скидка не может превышать комиссию (комиссия после скидки не меньше 0)
+  const rawPromoDiscount = appliedPromoCode
     ? appliedPromoCode.discountType === "percent"
       ? Math.round(totalCommission * appliedPromoCode.discount / 100)
-      : Math.min(appliedPromoCode.discount, totalCommission)
+      : appliedPromoCode.discount
     : 0;
+  const promoDiscount = Math.min(rawPromoDiscount, totalCommission);
   const shippingAfterDiscount = Math.max(0, shippingCost - promoDiscount);
   const finalTotal = totalPrice + shippingAfterDiscount;
 

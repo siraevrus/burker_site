@@ -211,10 +211,12 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      discountAmount =
+      // Скидка не может превышать комиссию (комиссия после скидки не меньше 0)
+      const rawDiscount =
         promoRecord.discountType === "percent"
           ? Math.round(totalCommission * promoRecord.discount / 100)
-          : Math.min(promoRecord.discount, totalCommission);
+          : promoRecord.discount;
+      discountAmount = Math.min(rawDiscount, totalCommission);
 
       validatedPromoCodeId = promoRecord.id;
       validatedPromoDiscountType = promoRecord.discountType;
