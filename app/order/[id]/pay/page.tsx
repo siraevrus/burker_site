@@ -92,9 +92,9 @@ export default function OrderPayPage() {
     return (
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto text-center">
-          <h1 className="text-xl font-semibold mb-2">Оплата временно недоступна</h1>
+          <h1 className="text-xl font-semibold mb-2">Оплата через СБП — ссылка не сформирована</h1>
           <p className="text-gray-600 mb-6">
-            Ссылка на оплату не была сформирована. Мы свяжемся с вами или вы можете перейти к подтверждению заказа.
+            Оплата заказов подключена через СБП (Т-Банк), но ссылка на этот заказ не была создана. Обратитесь в поддержку или попробуйте оформить заказ позже.
           </p>
           <Link
             href={`/order-confirmation?id=${order.id}`}
@@ -110,7 +110,8 @@ export default function OrderPayPage() {
   return (
     <div className="container mx-auto px-4 py-16">
       <div className="max-w-lg mx-auto">
-        <h1 className="text-2xl font-bold mb-2">Оплата заказа</h1>
+        <h1 className="text-2xl font-bold mb-2">Оплата заказа (СБП)</h1>
+        <p className="text-gray-600 mb-1">Система быстрых платежей — оплата картой любого банка</p>
         <p className="text-gray-600 mb-6">Номер заказа: #{order.orderNumber || order.id}</p>
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
           <div className="flex justify-between items-baseline mb-6">
@@ -118,7 +119,7 @@ export default function OrderPayPage() {
             <span className="text-2xl font-bold">{order.totalAmount.toFixed(0)} ₽</span>
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            Перейдите по ссылке и оплатите заказ через СБП в вашем банке.
+            Нажмите кнопку ниже — откроется страница оплаты Т-Банка. Выберите свой банк и завершите платёж через СБП.
           </p>
           <a
             href={order.paymentLink!}
@@ -126,7 +127,7 @@ export default function OrderPayPage() {
             rel="noopener noreferrer"
             className="block w-full text-center bg-black text-white py-3 px-6 rounded-md hover:bg-gray-800 font-medium"
           >
-            Перейти к оплате
+            Перейти к оплате (СБП)
           </a>
         </div>
         <div className="text-center">

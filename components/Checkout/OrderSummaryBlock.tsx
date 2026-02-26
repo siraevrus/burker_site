@@ -143,6 +143,9 @@ export default function OrderSummaryBlock({
         </label>
       </div>
 
+      <p className="text-xs text-gray-500 mb-2">
+        После оформления — оплата через СБП (система быстрых платежей, карта любого банка).
+      </p>
       <button
         type="button"
         onClick={onSubmit}

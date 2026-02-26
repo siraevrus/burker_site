@@ -165,14 +165,19 @@ function OrderConfirmationContent() {
           </p>
         </div>
 
-        {(order.paymentStatus === "pending" && order.paymentLink) && (
+        {order.paymentStatus === "pending" && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-amber-800 mb-3">Заказ ожидает оплаты.</p>
+            <p className="text-sm font-medium text-amber-800 mb-1">Оплата через СБП (Система быстрых платежей)</p>
+            <p className="text-sm text-amber-800 mb-3">
+              {order.paymentLink
+                ? "Заказ ожидает оплаты. Нажмите кнопку ниже, чтобы перейти к оплате в вашем банке."
+                : "Ссылка на оплату не была сформирована. Вы можете перейти на страницу оплаты и попробовать снова или связаться с нами."}
+            </p>
             <Link
               href={`/order/${order.id}/pay`}
               className="inline-block bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
             >
-              Оплатить заказ
+              {order.paymentLink ? "Оплатить заказ (СБП)" : "Страница оплаты"}
             </Link>
           </div>
         )}
@@ -269,7 +274,7 @@ function OrderConfirmationContent() {
               <span className="font-medium">{statusLabels[order.status] || order.status}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Оплата:</span>
+              <span className="text-gray-600">Оплата (СБП):</span>
               <span className="font-medium">
                 {paymentStatusLabels[order.paymentStatus ?? "pending"] ?? order.paymentStatus ?? "Ожидает оплаты"}
               </span>
