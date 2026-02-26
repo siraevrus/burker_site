@@ -13,6 +13,9 @@ export default function ProfilePageClient({ user }: { user: ProfileUser }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -87,46 +90,112 @@ export default function ProfilePageClient({ user }: { user: ProfileUser }) {
               <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
                 Текущий пароль
               </label>
-              <input
-                id="currentPassword"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-800 focus:border-transparent"
-                autoComplete="current-password"
-              />
+              <div className="relative">
+                <input
+                  id="currentPassword"
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  required
+                  className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-800 focus:border-transparent"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+                  aria-label={showCurrentPassword ? "Скрыть пароль" : "Показать пароль"}
+                >
+                  {showCurrentPassword ? (
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.58 10.58a2 2 0 002.83 2.83" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.88 5.09A9.77 9.77 0 0112 5c5 0 9 4 10 7a11.83 11.83 0 01-4.13 5.94" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.1 6.1A11.85 11.85 0 002 12c1 3 5 7 10 7a9.77 9.77 0 004.25-.93" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
             <div>
               <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
                 Новый пароль
               </label>
-              <input
-                id="newPassword"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-800 focus:border-transparent"
-                autoComplete="new-password"
-              />
+              <div className="relative">
+                <input
+                  id="newPassword"
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-800 focus:border-transparent"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+                  aria-label={showNewPassword ? "Скрыть пароль" : "Показать пароль"}
+                >
+                  {showNewPassword ? (
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.58 10.58a2 2 0 002.83 2.83" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.88 5.09A9.77 9.77 0 0112 5c5 0 9 4 10 7a11.83 11.83 0 01-4.13 5.94" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.1 6.1A11.85 11.85 0 002 12c1 3 5 7 10 7a9.77 9.77 0 004.25-.93" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
               <p className="text-xs text-gray-500 mt-1">Минимум 6 символов</p>
             </div>
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                 Подтвердите новый пароль
               </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-800 focus:border-transparent"
-                autoComplete="new-password"
-              />
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-800 focus:border-transparent"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+                  aria-label={showConfirmPassword ? "Скрыть пароль" : "Показать пароль"}
+                >
+                  {showConfirmPassword ? (
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.58 10.58a2 2 0 002.83 2.83" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.88 5.09A9.77 9.77 0 0112 5c5 0 9 4 10 7a11.83 11.83 0 01-4.13 5.94" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.1 6.1A11.85 11.85 0 002 12c1 3 5 7 10 7a9.77 9.77 0 004.25-.93" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
             <button
               type="submit"
