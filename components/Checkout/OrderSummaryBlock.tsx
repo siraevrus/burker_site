@@ -45,8 +45,8 @@ export default function OrderSummaryBlock({
 
   const discountLabel = appliedPromoCode
     ? appliedPromoCode.discountType === "percent"
-      ? `Скидка ${appliedPromoCode.discount}% на комиссию`
-      : "Скидка по промокоду (комиссия)"
+      ? `Скидка ${appliedPromoCode.discount}% с вознаграждения комиссионера`
+      : "Скидка по промокоду (с вознаграждения комиссионера)"
     : "";
 
   return (
@@ -65,7 +65,7 @@ export default function OrderSummaryBlock({
         {appliedPromoCode && promoDiscount > 0 && (
           <div className="flex justify-between text-green-600">
             <span>{discountLabel}</span>
-            <span>-{Math.min(promoDiscount, shippingCost).toFixed(0)} ₽</span>
+            <span>-{promoDiscount.toFixed(0)} ₽</span>
           </div>
         )}
         {appliedPromoCode && promoDiscount > 0 && (
@@ -123,8 +123,8 @@ export default function OrderSummaryBlock({
           <p className="text-sm text-green-600 mt-1">
             Промокод &quot;{appliedPromoCode.code}&quot; применён. Скидка:{" "}
             {appliedPromoCode.discountType === "percent"
-              ? `${appliedPromoCode.discount}% (${Math.min(promoDiscount, shippingCost).toFixed(0)} ₽)`
-              : `${Math.min(promoDiscount, shippingCost).toFixed(0)} ₽`}
+              ? `${appliedPromoCode.discount}% (${promoDiscount.toFixed(0)} ₽)`
+              : `${promoDiscount.toFixed(0)} ₽`}
           </p>
         )}
       </div>

@@ -148,7 +148,20 @@ export async function POST(request: NextRequest) {
       ? rateRows.map((r) => ({ weight: r.weightKg, price: r.priceRub }))
       : undefined;
     const { totalCost: shippingCost } = calculateShipping(cartItems, shippingRates);
-    // Серверная валидация промокода
+
+    const rates = await getExchangeRates();
+    // Сумма вознаграждения комиссионера (промокод применяется только к ней)
+    let totalCommission = 0;
+    for (const item of items) {
+      const originalPriceEur = productPricesEur.get(item.productId);
+      if (originalPriceEur != null && originalPriceEur > 0 && rates) {
+        const originalPriceInRub = (originalPriceEur / rates.eurRate) * rates.rubRate;
+        const itemCommission = Math.max(0, (item.productPrice - originalPriceInRub) * item.quantity);
+        totalCommission += itemCommission;
+      }
+    }
+
+    // Серверная валидация промокода; скидка только с вознаграждения комиссионера
     let discountAmount = 0;
     let validatedPromoCodeId: string | null = null;
     let validatedPromoDiscountType: string | null = null;
@@ -200,8 +213,8 @@ export async function POST(request: NextRequest) {
 
       discountAmount =
         promoRecord.discountType === "percent"
-          ? Math.round(shippingCost * promoRecord.discount / 100)
-          : promoRecord.discount;
+          ? Math.round(totalCommission * promoRecord.discount / 100)
+          : Math.min(promoRecord.discount, totalCommission);
 
       validatedPromoCodeId = promoRecord.id;
       validatedPromoDiscountType = promoRecord.discountType;
@@ -209,8 +222,6 @@ export async function POST(request: NextRequest) {
 
     const shippingAfterDiscount = Math.max(0, shippingCost - discountAmount);
     const totalAmount = itemsTotal + shippingAfterDiscount;
-
-    const rates = await getExchangeRates();
 
     // Создание заказа (курсы сохраняем для точного расчёта комиссии в админке)
     const order = await createOrder({

@@ -20,6 +20,11 @@ interface CdekPoint {
   phones: string[];
 }
 
+interface ExchangeRates {
+  eurRate: number;
+  rubRate: number;
+}
+
 interface CheckoutFormProps {
   user?: {
     email: string;
@@ -27,6 +32,10 @@ interface CheckoutFormProps {
     lastName?: string;
     phone?: string;
   };
+  /** Курсы для расчёта комиссии; промокод применяется только к вознаграждению комиссионера */
+  rates?: ExchangeRates | null;
+  /** originalPriceEur по productId для расчёта комиссии */
+  productOriginalPrices?: Record<string, number>;
   onFormDataChange?: (data: {
     totalPrice: number;
     totalWeight: number;
@@ -51,7 +60,7 @@ interface CheckoutFormProps {
   }) => void;
 }
 
-export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormProps) {
+export default function CheckoutForm({ user, rates = null, productOriginalPrices = {}, onFormDataChange }: CheckoutFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const cart = useStore((state) => state.cart);
@@ -245,10 +254,21 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
     cart,
     shippingRates.length > 0 ? shippingRates : undefined
   );
+  // Сумма вознаграждения комиссионера; промокод применяется только к ней
+  const totalCommission =
+    rates && Object.keys(productOriginalPrices).length > 0
+      ? cart.reduce((sum, item) => {
+          const originalPriceEur = item.originalPriceEur ?? productOriginalPrices[item.id];
+          if (!originalPriceEur || originalPriceEur <= 0) return sum;
+          const originalPriceInRub = (originalPriceEur / rates.eurRate) * rates.rubRate;
+          const itemCommission = Math.max(0, (item.price - originalPriceInRub) * item.quantity);
+          return sum + itemCommission;
+        }, 0)
+      : 0;
   const promoDiscount = appliedPromoCode
     ? appliedPromoCode.discountType === "percent"
-      ? Math.round(shippingCost * appliedPromoCode.discount / 100)
-      : appliedPromoCode.discount
+      ? Math.round(totalCommission * appliedPromoCode.discount / 100)
+      : Math.min(appliedPromoCode.discount, totalCommission)
     : 0;
   const shippingAfterDiscount = Math.max(0, shippingCost - promoDiscount);
   const finalTotal = totalPrice + shippingAfterDiscount;

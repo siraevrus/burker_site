@@ -155,6 +155,8 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                 lastName: user.lastName ?? undefined,
                 phone: user.phone ?? undefined,
               } : undefined}
+              rates={rates}
+              productOriginalPrices={productOriginalPrices}
               onFormDataChange={setFormData}
             />
           </div>
