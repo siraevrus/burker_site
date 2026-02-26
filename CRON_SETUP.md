@@ -11,10 +11,17 @@
 
 **Ручной вызов (с секретом):**
 ```bash
+# Вариант 1: заголовок (Vercel, crontab)
 curl -X GET "https://ваш-домен.ru/api/cron/update-rates" -H "X-Cron-Secret: ВАШ_CRON_SECRET"
+
+# Вариант 2: query (cron-job.org и др.)
+curl -X GET "https://ваш-домен.ru/api/cron/update-rates?secret=ВАШ_CRON_SECRET"
+
+# Вариант 3: Authorization
+curl -X GET "https://ваш-домен.ru/api/cron/update-rates" -H "Authorization: Bearer ВАШ_CRON_SECRET"
 ```
 
-Тот же заголовок `X-Cron-Secret` использует Vercel при вызове cron. Переменная окружения — **`CRON_SECRET`**.
+Секрет проверяется из заголовка **`X-Cron-Secret`**, **`Authorization: Bearer ...`** или query **`?secret=...`**. Переменные окружения: **`CRON_SECRET`** или **`CRON_SECRET_KEY`**.
 
 ---
 
@@ -79,9 +86,13 @@ Authorization: Bearer ВАШ_СЕКРЕТНЫЙ_КЛЮЧ
 #### Cron-job.org (бесплатный)
 
 1. Зарегистрируйтесь на https://cron-job.org
-2. Создайте новую задачу:
+2. Импорт — создайте задачу:
    - **URL:** `https://ваш-домен.ru/api/cron/import?secret=ВАШ_СЕКРЕТНЫЙ_КЛЮЧ`
-   - **Расписание:** `0 8,14,20 * * *` (3 раза в день: 8:00, 14:00, 20:00 UTC)
+   - **Расписание:** `0 8,14,20 * * *` (8:00, 14:00, 20:00 UTC)
+   - **Метод:** GET
+3. Курсы валют — создайте вторую задачу:
+   - **URL:** `https://ваш-домен.ru/api/cron/update-rates?secret=ВАШ_СЕКРЕТНЫЙ_КЛЮЧ`
+   - **Расписание:** `0 5 * * *` (раз в сутки в 05:00 UTC)
    - **Метод:** GET
 
 #### EasyCron
@@ -131,8 +142,7 @@ crontab -e
 ```
 
 Важно:
-- **Импорт** принимает секрет в query: `?secret=...` или в заголовке `Authorization: Bearer ...`.
-- **Курсы валют** принимают секрет **только в заголовке** `X-Cron-Secret: ...`.
+- **Импорт** и **курсы валют** принимают секрет в query `?secret=...`, в заголовке `X-Cron-Secret` или `Authorization: Bearer ...`.
 
 Замените `ваш-домен.ru` на ваш домен (например `burker-watches.ru`) и `ВАШ_CRON_SECRET` на то же значение, что в `CRON_SECRET`.
 

@@ -229,9 +229,11 @@ function OrderConfirmationContent() {
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm text-gray-600">
-                      Цвет: {item.selectedColor}
-                    </p>
+                    {item.selectedColor ? (
+                      <p className="text-sm text-gray-600">
+                        Цвет: {item.selectedColor}
+                      </p>
+                    ) : null}
                     <p className="text-sm text-gray-600">
                       Количество: {item.quantity}
                     </p>

@@ -89,7 +89,7 @@ export default function ProductPageClient({
     addToCart({
       ...product,
       quantity: 1,
-      selectedColor: selectedColor || product.colors[0] || "золото",
+      selectedColor: product.colors?.length ? (selectedColor || product.colors[0]) : "",
     });
   };
 
@@ -412,7 +412,7 @@ export default function ProductPageClient({
                           addToCart({
                             ...related,
                             quantity: 1,
-                            selectedColor: related.colors[0] || "золото",
+                            selectedColor: related.colors?.length ? related.colors[0] : "",
                           });
                         }}
                         className="p-2 hover:bg-gray-100 rounded-md transition-colors"

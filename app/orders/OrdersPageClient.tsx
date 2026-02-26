@@ -164,7 +164,7 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                             </p>
                           </div>
                           <div className="text-sm text-gray-600 space-y-1">
-                            <p>Цвет: {item.selectedColor}</p>
+                            {item.selectedColor ? <p>Цвет: {item.selectedColor}</p> : null}
                             <p>Кол-во: {item.quantity}</p>
                             {itemCommission !== null && (
                               <p className="text-gray-500 flex flex-wrap items-baseline gap-x-1">

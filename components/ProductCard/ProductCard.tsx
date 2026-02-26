@@ -38,7 +38,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     addToCart({
       ...product,
       quantity: 1,
-      selectedColor: product.colors[0] || "золото",
+      selectedColor: product.colors?.length ? product.colors[0] : "",
     });
   };
 

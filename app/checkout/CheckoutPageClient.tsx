@@ -181,7 +181,9 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                     <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:justify-between sm:items-start">
                       <div className="min-w-0 flex-1">
                         <p className="text-[16.8px] font-medium truncate">{item.name}</p>
-                        <p className="text-[14.4px] text-gray-600">Цвет: {item.selectedColor}</p>
+                        {(item.colors?.length > 0 && item.selectedColor) ? (
+                          <p className="text-[14.4px] text-gray-600">Цвет: {item.selectedColor}</p>
+                        ) : null}
                         <p className="text-[14.4px] text-gray-600">Кол-во: {item.quantity}</p>
                         {itemCommission !== null && (
                           <p className="text-[12px] text-gray-400 mt-1 flex flex-wrap items-baseline gap-x-1">

@@ -171,9 +171,11 @@ export default function CartPage() {
                   >
                     {item.name}
                   </Link>
-                  <p className="text-sm text-gray-600 mb-2">
-                    Цвет: {item.selectedColor}
-                  </p>
+                  {(item.colors?.length > 0 && item.selectedColor) ? (
+                    <p className="text-sm text-gray-600 mb-2">
+                      Цвет: {item.selectedColor}
+                    </p>
+                  ) : null}
                   <div className="flex items-center gap-2 mb-4">
                     <span className="text-lg font-bold">{item.price.toFixed(0)} ₽</span>
                     {item.originalPrice > item.price && (

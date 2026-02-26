@@ -128,14 +128,17 @@ export function transformJsonProduct(jsonProduct: any): ProductData {
   // Флаг бестселлера: 1 = true, 0 = false
   const bestseller = jsonProduct.bestseller === 1 || jsonProduct.bestseller === true;
 
-  // Цвета: извлечь name из объектов, где available === true
-  const colorNames =
-    Array.isArray(jsonProduct.colors) && jsonProduct.colors.length > 0
-      ? jsonProduct.colors
-          .filter((color: any) => color?.available === true)
-          .map((color: any) => color?.name)
-          .filter((name: any) => name)
-      : [];
+  // Цвета: извлечь name из объектов, где available === true. Если поле не заполнено, null или пусто — не учитываем
+  let colorNames: string[] = [];
+  if (Array.isArray(jsonProduct.colors) && jsonProduct.colors.length > 0) {
+    colorNames = jsonProduct.colors
+      .filter((color: any) => color != null && color?.available === true)
+      .map((color: any) => (color?.name != null ? String(color.name).trim() : ""))
+      .filter((name: string) => name.length > 0);
+  } else if (jsonProduct.color != null && jsonProduct.color !== "") {
+    const single = String(jsonProduct.color).trim();
+    if (single) colorNames = [single];
+  }
   const colors = JSON.stringify(colorNames);
 
   // Изображения: извлечь url из объектов
@@ -152,10 +155,16 @@ export function transformJsonProduct(jsonProduct: any): ProductData {
       : [];
   const images = JSON.stringify(imageUrls);
 
-  // Наличие товара: если хотя бы один цвет доступен
+  // Наличие товара: если есть цвета — по доступности цвета; если цветов нет — по soldOut
   const inStock =
-    Array.isArray(jsonProduct.colors) &&
-    jsonProduct.colors.some((color: any) => color?.available === true);
+    colorNames.length > 0
+      ? Array.isArray(jsonProduct.colors) &&
+        jsonProduct.colors.some((color: any) => color?.available === true)
+      : !(
+          jsonProduct.Sold_out === 1 ||
+          jsonProduct.Sold_out === true ||
+          jsonProduct.Sold_out === "1"
+        );
 
   // Sold_out: 1 = распродан (soldOut = true), 0 = в наличии (soldOut = false)
   // Если поле отсутствует, считаем товар в наличии (soldOut = false)

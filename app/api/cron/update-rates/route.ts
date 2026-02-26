@@ -1,12 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { updateExchangeRates } from "@/lib/exchange-rates";
 import { fetchCbrRates } from "@/lib/cbr-rates";
 
-export async function GET(request: Request) {
-  const cronSecret = request.headers.get("X-Cron-Secret");
-  const expectedSecret = process.env.CRON_SECRET;
+export async function GET(request: NextRequest) {
+  const headerSecret = request.headers.get("X-Cron-Secret");
+  const authHeader = request.headers.get("authorization");
+  let querySecret = request.nextUrl.searchParams.get("secret") || "";
+  // В query символ + приходит как пробел — восстанавливаем для сравнения
+  if (querySecret) querySecret = querySecret.replace(/ /g, "+");
+  const providedSecret = headerSecret || authHeader?.replace(/^Bearer\s+/i, "") || querySecret || "";
+  const expectedSecret = process.env.CRON_SECRET || process.env.CRON_SECRET_KEY;
 
-  if (expectedSecret && cronSecret !== expectedSecret) {
+  if (expectedSecret && providedSecret !== expectedSecret) {
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 401 }
