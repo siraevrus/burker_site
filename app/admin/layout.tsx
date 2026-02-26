@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
+const AUTH_CHECK_TIMEOUT_MS = 12_000;
+
 function NavDropdown({
   label,
   items,
@@ -79,28 +81,44 @@ export default function AdminLayout({
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      if (pathname === "/admin/login") {
-        setIsAuthenticated(true);
-        setIsLoading(false);
-        return;
-      }
+    if (pathname == null) {
+      return;
+    }
 
+    if (pathname === "/admin/login") {
+      setIsAuthenticated(true);
+      setIsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = setTimeout(() => {
+      if (cancelled) return;
+      setIsLoading(false);
+      router.push("/admin/login");
+    }, AUTH_CHECK_TIMEOUT_MS);
+
+    const checkAuth = async () => {
       try {
         const response = await fetch("/api/admin/auth/me", { method: "GET" });
+        if (cancelled) return;
         if (!response.ok) {
           router.push("/admin/login");
           return;
         }
         setIsAuthenticated(true);
       } catch {
-        router.push("/admin/login");
+        if (!cancelled) router.push("/admin/login");
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     checkAuth();
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
   }, [router, pathname]);
 
   const handleLogout = async () => {
@@ -119,8 +137,8 @@ export default function AdminLayout({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Загрузка...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-lg text-gray-700">Загрузка...</p>
       </div>
     );
   }
