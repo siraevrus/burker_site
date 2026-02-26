@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Product } from "@/lib/types";
 import { useStore, getCustomsCategory } from "@/lib/store";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { generateProductSlug } from "@/lib/utils";
 
@@ -19,12 +19,19 @@ export default function ProductCard({ product }: ProductCardProps) {
   const addToCart = useStore((state) => state.addToCart);
   const getTotalQuantityByCategory = useStore((state) => state.getTotalQuantityByCategory);
   const [showCustomsHint, setShowCustomsHint] = useState(false);
+  const [showAddedToCartToast, setShowAddedToCartToast] = useState(false);
 
   useEffect(() => {
     if (!showCustomsHint) return;
     const t = setTimeout(() => setShowCustomsHint(false), 4000);
     return () => clearTimeout(t);
   }, [showCustomsHint]);
+
+  useEffect(() => {
+    if (!showAddedToCartToast) return;
+    const t = setTimeout(() => setShowAddedToCartToast(false), 2000);
+    return () => clearTimeout(t);
+  }, [showAddedToCartToast]);
 
   const handleAddToCart = () => {
     if (product.soldOut) {
@@ -40,6 +47,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       quantity: 1,
       selectedColor: product.colors?.length ? product.colors[0] : "",
     });
+    setShowAddedToCartToast(true);
   };
 
   const discountPercentage = Math.round(
@@ -47,6 +55,30 @@ export default function ProductCard({ product }: ProductCardProps) {
   );
 
   return (
+    <>
+      <AnimatePresence>
+        {showAddedToCartToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-4 py-3 bg-black text-white shadow-lg"
+          >
+            <span className="font-medium">Товар добавлен в корзину</span>
+            <button
+              type="button"
+              onClick={() => setShowAddedToCartToast(false)}
+              className="ml-4 p-1 rounded hover:bg-white/20 transition-colors"
+              aria-label="Закрыть"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     <motion.div
       className="group relative rounded-lg overflow-hidden transition-all duration-300 w-[90%] mx-auto"
       whileHover={{ y: -6, scale: 1.02 }}
@@ -151,5 +183,6 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       </div>
     </motion.div>
+    </>
   );
 }
