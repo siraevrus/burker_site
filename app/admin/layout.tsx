@@ -103,12 +103,17 @@ export default function AdminLayout({
         const response = await fetch("/api/admin/auth/me", { method: "GET" });
         if (cancelled) return;
         if (!response.ok) {
+          clearTimeout(timeoutId);
           router.push("/admin/login");
           return;
         }
+        clearTimeout(timeoutId); // успешная авторизация — таймер не должен сбрасывать страницу
         setIsAuthenticated(true);
       } catch {
-        if (!cancelled) router.push("/admin/login");
+        if (!cancelled) {
+          clearTimeout(timeoutId);
+          router.push("/admin/login");
+        }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
