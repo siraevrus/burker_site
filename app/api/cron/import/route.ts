@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { importProducts } from "@/lib/import/import";
 import { saveImportHistory } from "@/lib/import/history";
+import { notifyImportResult } from "@/lib/telegram";
 
 const API_URL = "https://parcing.burker-watches.ru/api_json.php";
 
@@ -54,6 +55,13 @@ export async function GET(request: NextRequest) {
 
     // Сохранение истории импорта (тип "automatic" - автоматический импорт через cron)
     await saveImportHistory("automatic", result);
+
+    await notifyImportResult({
+      added: result.added,
+      updated: result.updated,
+      errors: result.errors.length,
+      total: result.total,
+    });
 
     return NextResponse.json({
       success: true,

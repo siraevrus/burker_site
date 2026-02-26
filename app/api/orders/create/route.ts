@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { createOrder } from "@/lib/orders";
 import { getExchangeRates } from "@/lib/exchange-rates";
 import { sendOrderConfirmation, sendAdminOrderNotification } from "@/lib/email";
+import { notifyNewOrder } from "@/lib/telegram";
 import { calculateShipping } from "@/lib/shipping";
 import { logError, logEvent } from "@/lib/ops-log";
 import {
@@ -350,6 +351,16 @@ export async function POST(request: NextRequest) {
         firstName: order.firstName,
         phone: order.phone,
         address: order.address || order.cdekAddress,
+        totalAmount: order.totalAmount,
+        itemsCount: order.items.length,
+      });
+
+      await notifyNewOrder({
+        orderNumber,
+        orderId: order.id,
+        email: order.email,
+        firstName: order.firstName,
+        phone: order.phone,
         totalAmount: order.totalAmount,
         itemsCount: order.items.length,
       });

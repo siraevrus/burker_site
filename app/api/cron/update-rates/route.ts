@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateExchangeRates } from "@/lib/exchange-rates";
 import { fetchCbrRates } from "@/lib/cbr-rates";
+import { notifyRatesUpdated } from "@/lib/telegram";
 
 export async function GET(request: NextRequest) {
   const headerSecret = request.headers.get("X-Cron-Secret");
@@ -27,6 +28,8 @@ export async function GET(request: NextRequest) {
     console.log(
       `Exchange rates updated (CBR): EUR=${eurRate.toFixed(4)}, RUB=${rubRate.toFixed(4)}`
     );
+
+    await notifyRatesUpdated({ eurRate, rubRate, source: "cbr" });
 
     return NextResponse.json({
       success: true,

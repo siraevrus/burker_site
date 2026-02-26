@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hashPassword, generateVerificationCode } from "@/lib/auth";
 import { sendVerificationCode } from "@/lib/email";
+import { notifyNewRegistration } from "@/lib/telegram";
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,6 +65,8 @@ export async function POST(request: NextRequest) {
 
     // Отправка email с кодом
     await sendVerificationCode(user.email, code);
+
+    await notifyNewRegistration({ email: user.email, firstName: user.firstName });
 
     return NextResponse.json({
       success: true,
