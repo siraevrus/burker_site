@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
+    const paymentStatus = searchParams.get("paymentStatus");
     const search = searchParams.get("search")?.trim() || "";
     const pageRaw = parseInt(searchParams.get("page") || "1", 10);
     const limitRaw = parseInt(searchParams.get("limit") || "50", 10);
@@ -20,6 +21,9 @@ export async function GET(request: NextRequest) {
     const where: any = {};
     if (status && status !== "all") {
       where.status = status;
+    }
+    if (paymentStatus && paymentStatus !== "all") {
+      where.paymentStatus = paymentStatus;
     }
     if (search.length > 0) {
       where.OR = [

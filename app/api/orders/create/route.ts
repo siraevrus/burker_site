@@ -6,6 +6,11 @@ import { getExchangeRates } from "@/lib/exchange-rates";
 import { sendOrderConfirmation, sendAdminOrderNotification } from "@/lib/email";
 import { calculateShipping } from "@/lib/shipping";
 import { logError, logEvent } from "@/lib/ops-log";
+import {
+  createOneTimePaymentLink,
+  isTbankConfigured,
+  getAccountNumber,
+} from "@/lib/tbank";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -256,6 +261,59 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Платёжная ссылка T-Bank СБП
+    let paymentLink: string | null = null;
+    let paymentId: string | null = null;
+    let paymentLinkAvailable = false;
+    const orderNumber = order.orderNumber || order.id;
+    const purpose = `Оплата заказа ${orderNumber}`.slice(0, 210);
+    let origin =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      request.headers.get("origin") ||
+      "";
+    if (!origin && request.headers.get("x-forwarded-proto") && request.headers.get("x-forwarded-host")) {
+      origin = `${request.headers.get("x-forwarded-proto")}://${request.headers.get("x-forwarded-host")}`;
+    }
+    if (!origin && request.headers.get("host")) {
+      origin = `https://${request.headers.get("host")}`;
+    }
+    const redirectUrl = origin
+      ? `${origin}/order-confirmation?id=${order.id}&paid=1`
+      : "";
+
+    if (isTbankConfigured() && redirectUrl) {
+      const accountNumber = getAccountNumber();
+      if (accountNumber) {
+        try {
+          const result = await createOneTimePaymentLink({
+            accountNumber,
+            sum: totalAmount,
+            purpose,
+            ttl: 3,
+            vat: "0",
+            redirectUrl,
+          });
+          await prisma.order.update({
+            where: { id: order.id },
+            data: {
+              paymentId: result.qrId,
+              paymentLink: result.link,
+            },
+          });
+          paymentLink = result.link;
+          paymentId = result.qrId;
+          paymentLinkAvailable = true;
+        } catch (tbankError) {
+          console.error("T-Bank createOneTimePaymentLink failed:", tbankError);
+          logEvent("order_payment_link_failed", {
+            requestId,
+            orderId: order.id,
+            error: tbankError instanceof Error ? tbankError.message : String(tbankError),
+          });
+        }
+      }
+    }
+
     // Отправка email уведомлений
     const emailNotification = {
       customerEmailSent: false,
@@ -300,7 +358,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      order,
+      order: {
+        ...order,
+        paymentLink: paymentLink ?? order.paymentLink ?? undefined,
+        paymentId: paymentId ?? order.paymentId ?? undefined,
+      },
+      paymentLink: paymentLink ?? undefined,
+      paymentLinkAvailable,
       emailNotification,
     });
   } catch (error: any) {

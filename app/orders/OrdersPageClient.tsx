@@ -30,6 +30,14 @@ const statusColors: Record<string, string> = {
   delivered: "bg-green-100 text-green-800",
 };
 
+const paymentStatusLabels: Record<string, string> = {
+  paid: "Оплачен",
+  pending: "Ожидает оплаты",
+  expired: "Истекла ссылка",
+  cancelled: "Отменена",
+  failed: "Ошибка",
+};
+
 function getItemCommission(item: OrderItem, rates: ExchangeRates | null): number | null {
   if (!rates || !item.originalPriceEur) return null;
   const originalPriceInUsd = item.originalPriceEur / rates.eurRate;
@@ -115,7 +123,7 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                       })}
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 flex-wrap">
                     <span className="text-sm text-gray-600">Статус</span>
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
@@ -123,6 +131,17 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                       }`}
                     >
                       {statusLabels[order.status] || order.status}
+                    </span>
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                        order.paymentStatus === "paid"
+                          ? "bg-green-100 text-green-800"
+                          : order.paymentStatus === "pending"
+                            ? "bg-amber-100 text-amber-800"
+                            : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
+                      {paymentStatusLabels[order.paymentStatus ?? "pending"] ?? order.paymentStatus ?? "Ожидает оплаты"}
                     </span>
                   </div>
                 </div>
@@ -148,6 +167,17 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
               {/* Раскрывающийся контент */}
               {isExpanded && (
                 <div className="px-6 py-4 border-t border-gray-200">
+                  {order.paymentStatus === "pending" && order.paymentLink && (
+                    <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between flex-wrap gap-2">
+                      <span className="text-sm text-amber-800">Заказ ожидает оплаты</span>
+                      <Link
+                        href={`/order/${order.id}/pay`}
+                        className="inline-block bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
+                      >
+                        Оплатить
+                      </Link>
+                    </div>
+                  )}
                   <h3 className="text-lg font-bold mb-4">Товары</h3>
                   <div className="space-y-3 mb-6">
                     {order.items.map((item) => {

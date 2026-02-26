@@ -102,6 +102,11 @@ export interface Order {
   purchaseProofImage?: string; // URL изображения подтверждения выкупа
   sellerTrackNumber?: string; // Трек-номер продавца
   russiaTrackNumber?: string; // Трек-номер для РФ
+  // Оплата (T-Bank СБП)
+  paymentStatus?: string; // pending | paid | failed | expired | cancelled
+  paymentId?: string | null;
+  paymentLink?: string | null;
+  paidAt?: Date | null;
   items: OrderItem[];
   createdAt: Date;
   updatedAt: Date;

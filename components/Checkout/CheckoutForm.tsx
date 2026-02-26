@@ -347,8 +347,12 @@ export default function CheckoutForm({ user, onFormDataChange }: CheckoutFormPro
       // Очистка корзины
       clearCart();
 
-      // Редирект на страницу подтверждения
-      router.push(`/order-confirmation?id=${data.order.id}`);
+      // Редирект: при наличии платёжной ссылки — на страницу оплаты, иначе — подтверждение заказа
+      if (data.paymentLinkAvailable && data.order?.id) {
+        router.push(`/order/${data.order.id}/pay`);
+      } else {
+        router.push(`/order-confirmation?id=${data.order.id}`);
+      }
     } catch (error) {
       console.error("Checkout error:", error);
       setError("Ошибка при оформлении заказа. Попробуйте позже.");

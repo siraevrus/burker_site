@@ -135,6 +135,12 @@ model Order {
   sellerTrackNumber  String?   // Трек-номер продавца (для статуса in_transit_de)
   russiaTrackNumber  String?   // Трек-номер для РФ (для статуса in_transit_ru)
   
+  // Оплата (T-Bank СБП B2B)
+  paymentStatus  String   @default("pending") // pending | paid | failed | expired | cancelled
+  paymentId      String?  // qrId из T-Bank
+  paymentLink    String?  // URL для оплаты
+  paidAt         DateTime? // момент успешной оплаты по вебхуку
+  
   items           OrderItem[]
   
   createdAt       DateTime    @default(now())

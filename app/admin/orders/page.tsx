@@ -43,6 +43,10 @@ interface Order {
   purchaseProofImage?: string | null;
   sellerTrackNumber?: string | null;
   russiaTrackNumber?: string | null;
+  paymentStatus?: string | null;
+  paymentId?: string | null;
+  paymentLink?: string | null;
+  paidAt?: string | null;
   user: {
     id: string;
     email: string;
@@ -65,6 +69,7 @@ function AdminOrdersPageContent() {
   const [loading, setLoading] = useState(true);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [paymentFilter, setPaymentFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [pagination, setPagination] = useState({
@@ -103,6 +108,14 @@ function AdminOrdersPageContent() {
     delivered: "bg-green-100 text-green-800",
   };
 
+  const paymentStatusLabels: Record<string, string> = {
+    paid: "Оплачен",
+    pending: "Ожидает оплаты",
+    expired: "Истекла",
+    cancelled: "Отменена",
+    failed: "Ошибка",
+  };
+
   function getItemCommission(item: OrderItem, eurRate: number, rubRate: number): number | null {
     if (item.originalPriceEur == null || item.originalPriceEur <= 0) return null;
     const originalPriceInUsd = item.originalPriceEur / eurRate;
@@ -133,7 +146,7 @@ function AdminOrdersPageContent() {
 
   useEffect(() => {
     loadOrders();
-  }, [statusFilter, searchQuery, pagination.page]);
+  }, [statusFilter, paymentFilter, searchQuery, pagination.page]);
 
   useEffect(() => {
     const orderId = searchParams.get("orderId");
@@ -158,6 +171,7 @@ function AdminOrdersPageContent() {
         page: String(pagination.page),
         limit: String(pagination.limit),
       });
+      if (paymentFilter !== "all") params.set("paymentStatus", paymentFilter);
       if (searchQuery) params.set("search", searchQuery);
       const response = await fetch(`/api/admin/orders?${params}`);
       if (response.ok) {
@@ -369,6 +383,20 @@ function AdminOrdersPageContent() {
             <option value="in_transit_ru">В пути в РФ</option>
             <option value="delivered">Доставлен</option>
           </select>
+          <select
+            value={paymentFilter}
+            onChange={(e) => {
+              setPaymentFilter(e.target.value);
+              setPagination((p) => ({ ...p, page: 1 }));
+            }}
+            className="px-4 py-2 border border-gray-300 rounded-md"
+          >
+            <option value="all">Все по оплате</option>
+            <option value="pending">Ожидает оплаты</option>
+            <option value="paid">Оплачен</option>
+            <option value="expired">Истекла ссылка</option>
+            <option value="cancelled">Отменена</option>
+          </select>
           <div className="text-sm text-gray-600">
             Всего: {pagination.total}
           </div>
@@ -430,6 +458,17 @@ function AdminOrdersPageContent() {
                       <option value="in_transit_ru">В пути в РФ</option>
                       <option value="delivered">Доставлен</option>
                     </select>
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                        order.paymentStatus === "paid"
+                          ? "bg-green-100 text-green-800"
+                          : order.paymentStatus === "pending"
+                            ? "bg-amber-100 text-amber-800"
+                            : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
+                      {paymentStatusLabels[order.paymentStatus ?? "pending"] ?? order.paymentStatus ?? "Ожидает оплаты"}
+                    </span>
                   </div>
                 </div>
                 <div className="ml-4">
@@ -509,6 +548,50 @@ function AdminOrdersPageContent() {
                         </div>
                       </div>
                     )}
+
+                    <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Оплата (СБП)</h4>
+                      <div className="flex flex-wrap items-center gap-4">
+                        <div>
+                          <p className="text-sm text-gray-600 mb-0.5">Статус оплаты</p>
+                          <p className="font-medium">
+                            {paymentStatusLabels[order.paymentStatus ?? "pending"] ?? order.paymentStatus ?? "Ожидает оплаты"}
+                          </p>
+                        </div>
+                        {order.paidAt && (
+                          <div>
+                            <p className="text-sm text-gray-600 mb-0.5">Дата оплаты</p>
+                            <p className="font-medium">
+                              {new Date(order.paidAt).toLocaleString("ru-RU", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </p>
+                          </div>
+                        )}
+                        {order.paymentId && (
+                          <div>
+                            <p className="text-sm text-gray-600 mb-0.5">ID платежа (T-Bank)</p>
+                            <p className="font-mono text-sm">{order.paymentId}</p>
+                          </div>
+                        )}
+                        {order.paymentStatus === "pending" && order.paymentLink && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(order.paymentLink!);
+                              alert("Ссылка скопирована в буфер обмена");
+                            }}
+                            className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md text-sm font-medium"
+                          >
+                            Скопировать ссылку на оплату
+                          </button>
+                        )}
+                      </div>
+                    </div>
 
                     {(order.purchaseProofImage || order.sellerTrackNumber || order.russiaTrackNumber) && (
                       <>

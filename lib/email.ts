@@ -452,3 +452,47 @@ export async function sendOrderDeliveredEmail(
 
   return result.success;
 }
+
+/**
+ * Отправка уведомления об оплате заказа (после вебхука T-Bank СБП)
+ */
+export async function sendOrderPaidEmail(
+  email: string,
+  orderNumber: string,
+  firstName: string,
+  totalAmount: number
+): Promise<boolean> {
+  console.log("\n" + "=".repeat(60));
+  console.log("💳 УВЕДОМЛЕНИЕ: ЗАКАЗ ОПЛАЧЕН");
+  console.log("=".repeat(60));
+  console.log(`Заказ #${orderNumber}`);
+  console.log(`Email: ${email}`);
+  console.log(`Сумма: ${totalAmount.toFixed(0)} ₽`);
+  console.log("=".repeat(60) + "\n");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">Заказ оплачен</h2>
+      <p>Здравствуйте, ${firstName}!</p>
+      <p>Мы получили оплату по заказу <strong>#${orderNumber}</strong> на сумму <strong>${totalAmount.toFixed(0)} ₽</strong>.</p>
+      
+      <div style="background-color: #e8f5e9; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center;">
+        <p style="font-size: 48px; margin: 0;">✅</p>
+        <p style="margin: 10px 0 0 0; font-weight: bold; color: #2e7d32;">Оплата получена</p>
+      </div>
+      
+      <p>Заказ передан в обработку. Мы свяжемся с вами при изменении статуса доставки.</p>
+      
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      <p style="color: #999; font-size: 12px;">Mira Brands | Burker - Официальный магазин</p>
+    </div>
+  `;
+
+  const result = await sendEmailViaMailopost(
+    email,
+    `Заказ #${orderNumber} оплачен`,
+    html
+  );
+
+  return result.success;
+}

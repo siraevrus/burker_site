@@ -56,6 +56,10 @@ function mapOrderFromDb(dbOrder: any): Order {
     purchaseProofImage: dbOrder.purchaseProofImage || undefined,
     sellerTrackNumber: dbOrder.sellerTrackNumber || undefined,
     russiaTrackNumber: dbOrder.russiaTrackNumber || undefined,
+    paymentStatus: dbOrder.paymentStatus ?? "pending",
+    paymentId: dbOrder.paymentId ?? undefined,
+    paymentLink: dbOrder.paymentLink ?? undefined,
+    paidAt: dbOrder.paidAt ?? undefined,
     items: dbOrder.items?.map((item: any) => ({
       id: item.id,
       orderId: item.orderId,
@@ -173,6 +177,10 @@ export async function createOrder(orderData: {
     shippingCost: orderData.shippingCost,
     eurRate: orderData.eurRate ?? null,
     rubRate: orderData.rubRate ?? null,
+    paymentStatus: "pending",
+    paymentId: null,
+    paymentLink: null,
+    paidAt: null,
     items: {
       create: orderData.items.map((item) => ({
         productId: item.productId,

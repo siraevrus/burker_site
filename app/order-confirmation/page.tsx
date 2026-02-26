@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { Order, OrderItem } from "@/lib/types";
 
@@ -10,9 +10,18 @@ interface ExchangeRates {
   rubRate: number;
 }
 
+const paymentStatusLabels: Record<string, string> = {
+  paid: "Оплачено",
+  pending: "Ожидает оплаты",
+  expired: "Ссылка истекла",
+  cancelled: "Отменена",
+  failed: "Ошибка",
+};
+
 function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("id");
+  const paidParam = searchParams.get("paid");
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [rates, setRates] = useState<ExchangeRates | null>(null);
@@ -24,6 +33,16 @@ function OrderConfirmationContent() {
     in_transit_ru: "В пути в РФ",
     delivered: "Доставлен",
   };
+
+  const fetchOrder = useCallback(() => {
+    if (!orderId) return;
+    fetch(`/api/orders/${orderId}`)
+      .then((res) => res.json())
+      .then((orderData) => {
+        if (orderData.order) setOrder(orderData.order);
+      })
+      .catch(() => {});
+  }, [orderId]);
 
   useEffect(() => {
     if (orderId) {
@@ -48,6 +67,13 @@ function OrderConfirmationContent() {
       setLoading(false);
     }
   }, [orderId]);
+
+  // После редиректа с оплаты (?paid=1) опрашиваем заказ через 2 с (вебхук может прийти с задержкой)
+  useEffect(() => {
+    if (!orderId || paidParam !== "1") return;
+    const t = setTimeout(fetchOrder, 2000);
+    return () => clearTimeout(t);
+  }, [orderId, paidParam, fetchOrder]);
 
   // Курсы на момент заказа (приоритет) или текущие из API для старых заказов
   const ratesForCommission =
@@ -139,6 +165,36 @@ function OrderConfirmationContent() {
           </p>
         </div>
 
+        {(order.paymentStatus === "pending" && order.paymentLink) && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-amber-800 mb-3">Заказ ожидает оплаты.</p>
+            <Link
+              href={`/order/${order.id}/pay`}
+              className="inline-block bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
+            >
+              Оплатить заказ
+            </Link>
+          </div>
+        )}
+        {order.paymentStatus === "paid" && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-green-800 font-medium">
+              Оплачено
+              {order.paidAt && (
+                <span className="ml-1">
+                  {new Date(order.paidAt).toLocaleString("ru-RU", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              )}
+            </p>
+          </div>
+        )}
+
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-bold mb-4">Детали заказа</h2>
           <div className="space-y-2 text-sm">
@@ -211,6 +267,12 @@ function OrderConfirmationContent() {
             <div className="flex justify-between">
               <span className="text-gray-600">Статус:</span>
               <span className="font-medium">{statusLabels[order.status] || order.status}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Оплата:</span>
+              <span className="font-medium">
+                {paymentStatusLabels[order.paymentStatus ?? "pending"] ?? order.paymentStatus ?? "Ожидает оплаты"}
+              </span>
             </div>
           </div>
         </div>
