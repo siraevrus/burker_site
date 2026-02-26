@@ -222,8 +222,8 @@ export async function POST(request: NextRequest) {
       validatedPromoDiscountType = promoRecord.discountType;
     }
 
-    const shippingAfterDiscount = Math.max(0, shippingCost - discountAmount);
-    const totalAmount = itemsTotal + shippingAfterDiscount;
+    // Скидка только с комиссии; доставку не уменьшаем, итог = товары + доставка − скидка
+    const totalAmount = itemsTotal + shippingCost - discountAmount;
 
     // Создание заказа (курсы сохраняем для точного расчёта комиссии в админке)
     const order = await createOrder({
@@ -258,7 +258,7 @@ export async function POST(request: NextRequest) {
         quantity: item.quantity,
       })),
       totalAmount,
-      shippingCost: shippingAfterDiscount,
+      shippingCost, // полная стоимость доставки (скидка только с комиссии)
       eurRate: rates.eurRate,
       rubRate: rates.rubRate,
     });

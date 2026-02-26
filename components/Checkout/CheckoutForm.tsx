@@ -272,8 +272,8 @@ export default function CheckoutForm({ user, rates = null, productOriginalPrices
       : appliedPromoCode.discount
     : 0;
   const promoDiscount = Math.min(rawPromoDiscount, totalCommission);
-  const shippingAfterDiscount = Math.max(0, shippingCost - promoDiscount);
-  const finalTotal = totalPrice + shippingAfterDiscount;
+  // Скидка только с комиссии; доставку не уменьшаем
+  const finalTotal = totalPrice + shippingCost - promoDiscount;
 
   const submitForm = useCallback(() => {
     if (formRef.current) {

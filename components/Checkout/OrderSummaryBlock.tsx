@@ -40,8 +40,8 @@ export default function OrderSummaryBlock({
   loading,
   onSubmit,
 }: OrderSummaryBlockProps) {
-  const shippingAfterDiscount = Math.max(0, shippingCost - promoDiscount);
-  const finalTotal = totalPrice + shippingAfterDiscount;
+  // Скидка только с комиссии; доставку не уменьшаем, итог = товары + доставка − скидка
+  const finalTotal = totalPrice + shippingCost - promoDiscount;
 
   const discountLabel = appliedPromoCode
     ? appliedPromoCode.discountType === "percent"
@@ -66,12 +66,6 @@ export default function OrderSummaryBlock({
           <div className="flex justify-between text-green-600">
             <span>{discountLabel}</span>
             <span>-{promoDiscount.toFixed(0)} ₽</span>
-          </div>
-        )}
-        {appliedPromoCode && promoDiscount > 0 && (
-          <div className="flex justify-between">
-            <span>Доставка после скидки</span>
-            <span>{shippingAfterDiscount.toFixed(0)} ₽</span>
           </div>
         )}
         <div className="flex justify-between text-xl font-bold border-t border-gray-200 pt-2">
