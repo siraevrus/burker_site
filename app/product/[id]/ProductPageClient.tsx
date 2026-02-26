@@ -37,12 +37,19 @@ export default function ProductPageClient({
   const addToCart = useStore((state) => state.addToCart);
   const getTotalQuantityByCategory = useStore((state) => state.getTotalQuantityByCategory);
   const [customsHintProductId, setCustomsHintProductId] = useState<string | null>(null);
+  const [showAddedToCartToast, setShowAddedToCartToast] = useState(false);
 
   useEffect(() => {
     if (!customsHintProductId) return;
     const t = setTimeout(() => setCustomsHintProductId(null), 4000);
     return () => clearTimeout(t);
   }, [customsHintProductId]);
+
+  useEffect(() => {
+    if (!showAddedToCartToast) return;
+    const t = setTimeout(() => setShowAddedToCartToast(false), 2000);
+    return () => clearTimeout(t);
+  }, [showAddedToCartToast]);
 
   // Используем реальные изображения из product.images
   const getProductImages = () => {
@@ -91,6 +98,7 @@ export default function ProductPageClient({
       quantity: 1,
       selectedColor: product.colors?.length ? (selectedColor || product.colors[0]) : "",
     });
+    setShowAddedToCartToast(true);
   };
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -106,6 +114,30 @@ export default function ProductPageClient({
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Плашка "Товар добавлен в корзину" */}
+      <AnimatePresence>
+        {showAddedToCartToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-4 py-3 bg-black text-white shadow-lg"
+          >
+            <span className="font-medium">Товар добавлен в корзину</span>
+            <button
+              type="button"
+              onClick={() => setShowAddedToCartToast(false)}
+              className="ml-4 p-1 rounded hover:bg-white/20 transition-colors"
+              aria-label="Закрыть"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="grid grid-cols-1 lg:grid-cols-[1.86fr_1fr] gap-8 lg:gap-12">
         {/* Левая часть - Галерея изображений */}
         <div>
@@ -414,6 +446,7 @@ export default function ProductPageClient({
                             quantity: 1,
                             selectedColor: related.colors?.length ? related.colors[0] : "",
                           });
+                          setShowAddedToCartToast(true);
                         }}
                         className="p-2 hover:bg-gray-100 rounded-md transition-colors"
                         aria-label="Добавить в корзину"
