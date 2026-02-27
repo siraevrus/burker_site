@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Product } from "@/lib/types";
 import { useStore, getCustomsCategory } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
+import ProductImage from "@/components/ProductImage";
 import { generateProductSlug } from "@/lib/utils";
 
 const CUSTOMS_HINT =
@@ -102,13 +102,10 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Product Image */}
       <div className="relative w-full aspect-square overflow-hidden">
         <Link href={`/product/${generateProductSlug(product.name)}`}>
-          <Image
+          <ProductImage
             src={product.images && product.images.length > 0 ? product.images[0] : "/Isabell_gold_burgundy_1.webp"}
             alt={product.name}
-            fill
-            className="object-cover group-hover:scale-110 transition-transform duration-500"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            unoptimized={(product.images?.[0] ?? "").startsWith("/products/")}
+            className="group-hover:scale-110 transition-transform duration-500"
           />
         </Link>
         {/* Cart icon button - bottom right */}

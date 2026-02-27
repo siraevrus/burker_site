@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import ProductImage from "@/components/ProductImage";
 import { useStore } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product } from "@/lib/types";
@@ -208,13 +208,10 @@ export default function Header() {
                             >
                               <div className="relative mb-2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{ height: "360px", width: "100%" }}>
                                 {firstProduct && firstProduct.images?.length > 0 ? (
-                                  <Image
+                                  <ProductImage
                                     src={firstProduct.images[0]}
                                     alt={firstProduct.name}
-                                    fill
                                     className="object-cover group-hover:scale-110 transition-transform duration-300"
-                                    sizes="(max-width: 768px) 100vw, 360px"
-                                    unoptimized={firstProduct.images[0].startsWith("/products/")}
                                   />
                                 ) : (
                                   <span className="text-2xl font-semibold text-gray-700 group-hover:text-black transition-colors">
@@ -312,13 +309,10 @@ export default function Header() {
                             >
                               <div className="relative mb-2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{ height: "360px", width: "100%" }}>
                                 {firstProduct && firstProduct.images?.length > 0 ? (
-                                  <Image
+                                  <ProductImage
                                     src={firstProduct.images[0]}
                                     alt={firstProduct.name}
-                                    fill
                                     className="object-cover group-hover:scale-110 transition-transform duration-300"
-                                    sizes="(max-width: 768px) 100vw, 360px"
-                                    unoptimized={firstProduct.images[0].startsWith("/products/")}
                                   />
                                 ) : (
                                   <span className="text-2xl font-semibold text-gray-700 group-hover:text-black transition-colors">

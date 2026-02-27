@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import ProductImage from "@/components/ProductImage";
 import Link from "next/link";
 import { Product } from "@/lib/types";
 import { useStore, getCustomsCategory } from "@/lib/store";
@@ -154,12 +154,10 @@ export default function ProductPageClient({
                 }`}
                 style={{ cursor: "zoom-in" }}
               >
-                <Image
+                <ProductImage
                   src={img.src}
                   alt={img.alt}
-                  fill
                   className="object-cover"
-                  unoptimized={img.src.startsWith("/products/")}
                 />
               </button>
             ))}
@@ -184,12 +182,10 @@ export default function ProductPageClient({
                 className="relative w-full h-full max-w-7xl max-h-[90vh]"
                 onClick={(e) => e.stopPropagation()}
               >
-                <Image
+                <ProductImage
                   src={productImages[fullscreenImage].src}
                   alt={productImages[fullscreenImage].alt}
-                  fill
                   className="object-contain"
-                  unoptimized={productImages[fullscreenImage].src.startsWith("/products/")}
                 />
                 <button
                   onClick={() => setFullscreenImage(null)}
@@ -308,12 +304,10 @@ export default function ProductPageClient({
                   href={`/product/${generateProductSlug(product.name)}`}
                   className="relative w-16 h-16 rounded-full border-2 border-black overflow-hidden"
                 >
-                  <Image
+                  <ProductImage
                     src={product.images && product.images.length > 0 ? product.images[0] : "/Isabell_gold_burgundy_1.webp"}
                     alt={product.name}
-                    fill
                     className="object-cover"
-                    unoptimized={(product.images?.[0] ?? "").startsWith("/products/")}
                   />
                 </Link>
                 {colorVariants.map((variant) => (
@@ -322,12 +316,10 @@ export default function ProductPageClient({
                     href={`/product/${generateProductSlug(variant.name)}`}
                     className="relative w-16 h-16 rounded-full border-2 border-gray-300 overflow-hidden hover:border-black transition-colors"
                   >
-                    <Image
+                    <ProductImage
                       src={variant.images && variant.images.length > 0 ? variant.images[0] : "/Isabell_gold_burgundy_1.webp"}
                       alt={variant.name}
-                      fill
                       className="object-cover"
-                      unoptimized={(variant.images?.[0] ?? "").startsWith("/products/")}
                     />
                   </Link>
                 ))}
@@ -414,12 +406,10 @@ export default function ProductPageClient({
                     className="flex items-center gap-4 p-3 border border-gray-200 rounded-lg"
                   >
                     <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
-                      <Image
+                      <ProductImage
                         src={related.images && related.images.length > 0 ? related.images[0] : "/Isabell_gold_burgundy_1.webp"}
                         alt={related.name}
-                        fill
                         className="object-cover"
-                        unoptimized={(related.images?.[0] ?? "").startsWith("/products/")}
                       />
                     </div>
                     <div className="flex-1">

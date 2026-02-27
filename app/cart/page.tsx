@@ -6,7 +6,7 @@ import { calculateShipping, type ShippingRateEntry } from "@/lib/shipping";
 import { CartItem } from "@/lib/types";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image";
+import ProductImage from "@/components/ProductImage";
 import { generateProductSlug } from "@/lib/utils";
 
 const CUSTOMS_HINT =
@@ -154,13 +154,10 @@ export default function CartPage() {
                   href={`/product/${generateProductSlug(item.name)}`}
                   className="w-[150px] h-[150px] bg-white border border-[#e5e6eb] rounded-md flex-shrink-0 relative overflow-hidden hover:opacity-90 transition-opacity cursor-pointer"
                 >
-                  <Image
+                  <ProductImage
                     src={item.images && item.images.length > 0 ? item.images[0] : "/Isabell_gold_burgundy_1.webp"}
                     alt={item.name}
-                    fill
                     className="object-cover"
-                    sizes="150px"
-                    unoptimized={(item.images?.[0] ?? "").startsWith("/products/")}
                   />
                 </Link>
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { CartItem } from "@/lib/types";
 import Link from "next/link";
-import Image from "next/image";
+import ProductImage from "@/components/ProductImage";
 import CheckoutForm from "@/components/Checkout/CheckoutForm";
 import OrderSummaryBlock from "@/components/Checkout/OrderSummaryBlock";
 
@@ -174,13 +174,10 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                 return (
                   <div key={`${item.id}-${item.selectedColor}`} className="flex gap-3">
                     <div className="w-48 h-48 sm:w-32 sm:h-32 bg-white border border-[#e5e6eb] rounded-md flex-shrink-0 relative overflow-hidden">
-                      <Image
+                      <ProductImage
                         src={item.images && item.images.length > 0 ? item.images[0] : "/Isabell_gold_burgundy_1.webp"}
                         alt={item.name}
-                        fill
                         className="object-cover"
-                        sizes="192px"
-                        unoptimized={(item.images?.[0] ?? "").startsWith("/products/")}
                       />
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:justify-between sm:items-start">
