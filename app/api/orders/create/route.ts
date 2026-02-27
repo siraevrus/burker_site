@@ -275,32 +275,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Сохраняем фамилию, отчество и телефон в профиль пользователя для подстановки при следующем заказе
-    if (currentUser?.userId && (lastName || middleName || phone)) {
-      const data: { lastName?: string; middleName?: string; phone?: string } = {};
+    // Сохраняем фамилию и телефон в профиль пользователя для подстановки при следующем заказе.
+    // Отчество (middleName) — после появления колонки в продовой БД добавить в data и в select на странице чекаута.
+    if (currentUser?.userId && (lastName || phone)) {
+      const data: { lastName?: string; phone?: string } = {};
       if (lastName) data.lastName = lastName;
-      if (middleName) data.middleName = middleName;
       if (phone && typeof phone === "string") {
         const digits = phone.replace(/\D/g, "").replace(/^8/, "7").slice(0, 11);
         data.phone = digits.startsWith("7") ? digits : "7" + digits;
       }
       if (Object.keys(data).length > 0) {
-        try {
-          await prisma.user.update({
-            where: { id: currentUser.userId },
-            data,
-          });
-        } catch (updateErr: unknown) {
-          // Если в БД нет колонки middleName (старая миграция), обновляем только lastName и phone
-          const withoutMiddle = { ...data };
-          delete (withoutMiddle as Record<string, unknown>).middleName;
-          if (Object.keys(withoutMiddle).length > 0) {
-            await prisma.user.update({
-              where: { id: currentUser.userId },
-              data: withoutMiddle,
-            });
-          }
-        }
+        await prisma.user.update({
+          where: { id: currentUser.userId },
+          data,
+        });
       }
     }
 
