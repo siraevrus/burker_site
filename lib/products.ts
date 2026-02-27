@@ -51,12 +51,13 @@ function mapProductFromDbWithRates(dbProduct: any, rates: ExchangeRates): Produc
   return product;
 }
 
-// Получить все товары (для сайта, без отключенных)
+// Получить все товары (для сайта, без отключенных и без распроданных)
 export async function getAllProducts(): Promise<Product[]> {
   const [dbProducts, rates] = await Promise.all([
     prisma.product.findMany({
       where: {
         disabled: { not: true },
+        soldOut: false,
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -92,12 +93,13 @@ export async function getAllProductsForAdmin(): Promise<Product[]> {
   }
 }
 
-// Получить товар по slug (только из названия)
+// Получить товар по slug (только из названия; распроданные не отдаём)
 export async function getProductById(slug: string): Promise<Product | null> {
   const [dbProducts, rates] = await Promise.all([
     prisma.product.findMany({
       where: {
         disabled: { not: true },
+        soldOut: false,
       },
     }),
     getExchangeRates(),
@@ -134,6 +136,7 @@ export async function getProductsByCollection(
       where: {
         collection,
         disabled: { not: true },
+        soldOut: false,
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -157,6 +160,7 @@ export async function getBestsellers(limit: number = 8): Promise<Product[]> {
       where: {
         bestseller: true,
         disabled: { not: true },
+        soldOut: false,
       },
       orderBy: { createdAt: "desc" },
       take: limit,
@@ -175,6 +179,7 @@ export async function getProductsOnSale(): Promise<Product[]> {
           gt: 0,
         },
         disabled: { not: true },
+        soldOut: false,
       },
       orderBy: { discount: "desc" },
     }),
@@ -190,6 +195,7 @@ export async function getProductsBySubcategory(subcategory: string): Promise<Pro
       where: {
         subcategory: subcategory,
         disabled: { not: true },
+        soldOut: false,
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -207,6 +213,7 @@ export async function getWatchesProducts(): Promise<Product[]> {
           not: "Украшения",
         },
         disabled: { not: true },
+        soldOut: false,
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -225,6 +232,7 @@ export async function getWatchesBySubcategory(subcategory: string): Promise<Prod
         },
         subcategory: subcategory,
         disabled: { not: true },
+        soldOut: false,
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -240,6 +248,7 @@ export async function getJewelryProducts(): Promise<Product[]> {
       where: {
         collection: "Украшения",
         disabled: { not: true },
+        soldOut: false,
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -256,6 +265,7 @@ export async function getJewelryBySubcategory(subcategory: string): Promise<Prod
         collection: "Украшения",
         subcategory: subcategory,
         disabled: { not: true },
+        soldOut: false,
       },
       orderBy: { createdAt: "desc" },
     }),

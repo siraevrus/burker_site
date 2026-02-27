@@ -49,7 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const products = await prisma.product.findMany({
-    where: { disabled: { not: true } },
+    where: { disabled: { not: true }, soldOut: false },
     select: { name: true, updatedAt: true },
   });
 
