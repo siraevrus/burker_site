@@ -51,7 +51,7 @@ export async function importProducts(jsonData: any[]): Promise<ImportResult> {
       });
 
       if (existingProduct) {
-        // Обновление существующего товара
+        // Обновление существующего товара (фото не трогаем — остаются локальные пути после скрипта загрузки)
         const updateData: any = {
           name: productData.name,
           collection: productData.collection,
@@ -61,14 +61,12 @@ export async function importProducts(jsonData: any[]): Promise<ImportResult> {
           originalPrice: productData.originalPrice,
           discount: productData.discount,
           colors: productData.colors,
-          images: productData.images,
           inStock: productData.inStock,
           soldOut: productData.soldOut,
           variant: productData.variant,
           description: productData.description,
           specifications: productData.specifications,
           updatedAt: productData.updatedAt,
-          // Сохраняем текущее значение disabled из базы данных
           disabled: existingProduct.disabled ?? false,
         };
 
