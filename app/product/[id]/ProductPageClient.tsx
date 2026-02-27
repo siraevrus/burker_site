@@ -159,6 +159,7 @@ export default function ProductPageClient({
                   alt={img.alt}
                   fill
                   className="object-cover"
+                  unoptimized={img.src.startsWith("/products/")}
                 />
               </button>
             ))}
@@ -188,6 +189,7 @@ export default function ProductPageClient({
                   alt={productImages[fullscreenImage].alt}
                   fill
                   className="object-contain"
+                  unoptimized={productImages[fullscreenImage].src.startsWith("/products/")}
                 />
                 <button
                   onClick={() => setFullscreenImage(null)}
@@ -311,6 +313,7 @@ export default function ProductPageClient({
                     alt={product.name}
                     fill
                     className="object-cover"
+                    unoptimized={(product.images?.[0] ?? "").startsWith("/products/")}
                   />
                 </Link>
                 {colorVariants.map((variant) => (
@@ -324,6 +327,7 @@ export default function ProductPageClient({
                       alt={variant.name}
                       fill
                       className="object-cover"
+                      unoptimized={(variant.images?.[0] ?? "").startsWith("/products/")}
                     />
                   </Link>
                 ))}
@@ -415,6 +419,7 @@ export default function ProductPageClient({
                         alt={related.name}
                         fill
                         className="object-cover"
+                        unoptimized={(related.images?.[0] ?? "").startsWith("/products/")}
                       />
                     </div>
                     <div className="flex-1">

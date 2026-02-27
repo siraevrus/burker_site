@@ -180,6 +180,7 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                         fill
                         className="object-cover"
                         sizes="192px"
+                        unoptimized={(item.images?.[0] ?? "").startsWith("/products/")}
                       />
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:justify-between sm:items-start">

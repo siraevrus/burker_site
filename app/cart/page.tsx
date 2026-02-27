@@ -160,6 +160,7 @@ export default function CartPage() {
                     fill
                     className="object-cover"
                     sizes="150px"
+                    unoptimized={(item.images?.[0] ?? "").startsWith("/products/")}
                   />
                 </Link>
 

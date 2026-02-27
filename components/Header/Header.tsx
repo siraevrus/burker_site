@@ -214,6 +214,7 @@ export default function Header() {
                                     fill
                                     className="object-cover group-hover:scale-110 transition-transform duration-300"
                                     sizes="(max-width: 768px) 100vw, 360px"
+                                    unoptimized={firstProduct.images[0].startsWith("/products/")}
                                   />
                                 ) : (
                                   <span className="text-2xl font-semibold text-gray-700 group-hover:text-black transition-colors">
@@ -317,6 +318,7 @@ export default function Header() {
                                     fill
                                     className="object-cover group-hover:scale-110 transition-transform duration-300"
                                     sizes="(max-width: 768px) 100vw, 360px"
+                                    unoptimized={firstProduct.images[0].startsWith("/products/")}
                                   />
                                 ) : (
                                   <span className="text-2xl font-semibold text-gray-700 group-hover:text-black transition-colors">

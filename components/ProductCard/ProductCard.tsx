@@ -108,6 +108,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-500"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            unoptimized={(product.images?.[0] ?? "").startsWith("/products/")}
           />
         </Link>
         {/* Cart icon button - bottom right */}
