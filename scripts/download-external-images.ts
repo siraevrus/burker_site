@@ -4,6 +4,7 @@
  *
  * Запуск: npx tsx scripts/download-external-images.ts
  * Dry-run: npx tsx scripts/download-external-images.ts --dry-run
+ * Показать пример URL в БД: npx tsx scripts/download-external-images.ts --show-sample
  */
 import "dotenv/config";
 import { config } from "dotenv";
@@ -22,6 +23,7 @@ const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 const DOWNLOAD_TIMEOUT_MS = 30_000;
 const DELAY_BETWEEN_REQUESTS_MS = 1000; // 1 с между запросами, чтобы не заблокировали
 const DRY_RUN = process.argv.includes("--dry-run");
+const SHOW_SAMPLE = process.argv.includes("--show-sample");
 
 const PUBLIC_PRODUCTS_DIR = join(process.cwd(), "public", "products");
 
@@ -127,6 +129,20 @@ async function main() {
 
   const urlList = Array.from(allExternalUrls);
   console.log(`Найдено уникальных внешних URL: ${urlList.length}`);
+
+  if (SHOW_SAMPLE) {
+    console.log(`\nВсего товаров в БД: ${products.length}`);
+    const sample = products.slice(0, 5);
+    for (const p of sample) {
+      const images: string[] = JSON.parse(p.images || "[]");
+      const first = images[0];
+      const kind = !first ? "нет" : isExternalUrl(first) ? "внешний (burkerwatches.com)" : "локальный";
+      console.log(`  ${p.name}: images[0] = ${(first || "(пусто)").slice(0, 70)}... [${kind}]`);
+    }
+    if (products.length === 0) console.log("  (нет товаров)");
+    console.log("");
+    return;
+  }
 
   if (urlList.length === 0) {
     console.log("Нечего скачивать. Выход.");
