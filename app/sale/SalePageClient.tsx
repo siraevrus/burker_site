@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import ProductCard from "@/components/ProductCard/ProductCard";
 import { Product } from "@/lib/types";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,12 +11,48 @@ interface SalePageClientProps {
   saleProducts: Product[];
 }
 
+type CategoryFilter = "all" | "watches" | "jewelry";
+
 export default function SalePageClient({ saleProducts }: SalePageClientProps) {
   const [sortOption, setSortOption] = useState<SortOption>("price-low");
   const [isSortOpen, setIsSortOpen] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
+  const [subcategoryFilter, setSubcategoryFilter] = useState<string | null>(null);
+
+  // Подкатегории по данным товаров со скидкой
+  const { watchSubcategories, jewelrySubcategories } = useMemo(() => {
+    const watches = new Set<string>();
+    const jewelry = new Set<string>();
+    saleProducts.forEach((p) => {
+      if (p.collection !== "Украшения") {
+        watches.add(p.collection);
+      } else {
+        if (p.subcategory) jewelry.add(p.subcategory);
+      }
+    });
+    return {
+      watchSubcategories: Array.from(watches).sort(),
+      jewelrySubcategories: Array.from(jewelry).sort(),
+    };
+  }, [saleProducts]);
+
+  // Фильтрация по категории и подкатегории
+  const filteredProducts = useMemo(() => {
+    let list = saleProducts;
+    if (categoryFilter === "watches") {
+      list = list.filter((p) => p.collection !== "Украшения");
+      if (subcategoryFilter)
+        list = list.filter((p) => p.collection === subcategoryFilter);
+    } else if (categoryFilter === "jewelry") {
+      list = list.filter((p) => p.collection === "Украшения");
+      if (subcategoryFilter)
+        list = list.filter((p) => p.subcategory === subcategoryFilter);
+    }
+    return list;
+  }, [saleProducts, categoryFilter, subcategoryFilter]);
 
   // Сортировка товаров
-  const sortedProducts = [...saleProducts].sort((a, b) => {
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortOption) {
       case "popular":
         // Сортировка по размеру скидки (больше скидка = популярнее)
@@ -50,6 +86,99 @@ export default function SalePageClient({ saleProducts }: SalePageClientProps) {
         <p className="text-2xl font-semibold" style={{ color: "#A13D42" }}>
           СКИДКИ ДО 80%
         </p>
+      </div>
+
+      {/* Фильтр по категориям */}
+      <div className="mb-6">
+        <p className="text-sm font-medium text-gray-700 mb-2" style={{ fontFamily: '"Open Sans", sans-serif' }}>
+          КАТЕГОРИЯ
+        </p>
+        <div className="flex flex-wrap gap-2 mb-3">
+          <button
+            onClick={() => {
+              setCategoryFilter("all");
+              setSubcategoryFilter(null);
+            }}
+            className={`px-4 py-2 rounded-md border text-sm transition-colors ${
+              categoryFilter === "all"
+                ? "border-black bg-black text-white"
+                : "border-gray-300 hover:bg-gray-50"
+            }`}
+            style={{ fontFamily: '"Open Sans", sans-serif' }}
+          >
+            Все
+          </button>
+          <button
+            onClick={() => {
+              setCategoryFilter("watches");
+              setSubcategoryFilter(null);
+            }}
+            className={`px-4 py-2 rounded-md border text-sm transition-colors ${
+              categoryFilter === "watches"
+                ? "border-black bg-black text-white"
+                : "border-gray-300 hover:bg-gray-50"
+            }`}
+            style={{ fontFamily: '"Open Sans", sans-serif' }}
+          >
+            Часы
+          </button>
+          <button
+            onClick={() => {
+              setCategoryFilter("jewelry");
+              setSubcategoryFilter(null);
+            }}
+            className={`px-4 py-2 rounded-md border text-sm transition-colors ${
+              categoryFilter === "jewelry"
+                ? "border-black bg-black text-white"
+                : "border-gray-300 hover:bg-gray-50"
+            }`}
+            style={{ fontFamily: '"Open Sans", sans-serif' }}
+          >
+            Украшения
+          </button>
+        </div>
+        {(categoryFilter === "watches" && watchSubcategories.length > 0) || (categoryFilter === "jewelry" && jewelrySubcategories.length > 0) ? (
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs text-gray-500 self-center mr-1" style={{ fontFamily: '"Open Sans", sans-serif' }}>
+              Подкатегория:
+            </span>
+            {categoryFilter === "watches" &&
+              watchSubcategories.map((sub) => (
+                <button
+                  key={sub}
+                  onClick={() => setSubcategoryFilter(subcategoryFilter === sub ? null : sub)}
+                  className={`px-3 py-1.5 rounded-md border text-sm transition-colors ${
+                    subcategoryFilter === sub ? "border-black bg-gray-100 font-medium" : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                  style={{ fontFamily: '"Open Sans", sans-serif' }}
+                >
+                  {sub}
+                </button>
+              ))}
+            {categoryFilter === "jewelry" &&
+              jewelrySubcategories.map((sub) => (
+                <button
+                  key={sub}
+                  onClick={() => setSubcategoryFilter(subcategoryFilter === sub ? null : sub)}
+                  className={`px-3 py-1.5 rounded-md border text-sm transition-colors ${
+                    subcategoryFilter === sub ? "border-black bg-gray-100 font-medium" : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                  style={{ fontFamily: '"Open Sans", sans-serif' }}
+                >
+                  {sub}
+                </button>
+              ))}
+            {((categoryFilter === "watches" && watchSubcategories.length > 1) || (categoryFilter === "jewelry" && jewelrySubcategories.length > 1)) && (
+              <button
+                onClick={() => setSubcategoryFilter(null)}
+                className="px-3 py-1.5 rounded-md border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
+                style={{ fontFamily: '"Open Sans", sans-serif' }}
+              >
+                Все подкатегории
+              </button>
+            )}
+          </div>
+        ) : null}
       </div>
 
       {/* Фильтр сортировки */}

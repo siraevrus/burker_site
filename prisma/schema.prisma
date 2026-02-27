@@ -39,6 +39,7 @@ model Product {
 model PromoBanner {
   id          String   @id @default(cuid())
   image       String
+  imageMobile String?  // Изображение для мобильной версии (опционально)
   productLink String?
   title       String?
   subtitle    String?

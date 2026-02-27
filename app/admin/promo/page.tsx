@@ -232,14 +232,16 @@ function BannerForm({
     banner || {
       id: "",
       image: "",
+      imageMobile: "",
       productLink: "",
       title: "",
       subtitle: "",
     }
   );
   const [imagePreview, setImagePreview] = useState<string>("");
-
+  const [imageMobilePreview, setImageMobilePreview] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingMobile, setIsUploadingMobile] = useState(false);
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -280,6 +282,41 @@ function BannerForm({
         setImagePreview("");
       } finally {
         setIsUploading(false);
+      }
+    }
+  };
+
+  const handleImageMobileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Файл слишком большой. Максимальный размер: 5MB");
+        return;
+      }
+      const previewUrl = URL.createObjectURL(file);
+      setImageMobilePreview(previewUrl);
+      setIsUploadingMobile(true);
+      try {
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", file);
+        const response = await fetch("/api/upload-promo", {
+          method: "POST",
+          credentials: "include",
+          body: uploadFormData,
+        });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const serverError = typeof errorData?.error === "string" ? errorData.error : "Ошибка загрузки файла";
+          throw new Error(serverError);
+        }
+        const data = await response.json();
+        setFormData({ ...formData, imageMobile: data.filename });
+      } catch (error) {
+        console.error("Error uploading mobile image:", error);
+        alert(error instanceof Error ? error.message : "Ошибка загрузки файла. Попробуйте еще раз.");
+        setImageMobilePreview("");
+      } finally {
+        setIsUploadingMobile(false);
       }
     }
   };
@@ -347,6 +384,44 @@ function BannerForm({
             </div>
           )}
         </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Изображение для мобильной версии (опционально, рекомендуемая высота: 500px)
+          </label>
+          <p className="text-xs text-gray-500 mb-2">
+            Если не загружено, на мобильных будет показываться основное изображение.
+          </p>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageMobileChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            disabled={isUploadingMobile}
+          />
+          {isUploadingMobile && (
+            <p className="text-sm text-gray-500 mt-2">Загрузка изображения...</p>
+          )}
+          {(imageMobilePreview || formData.imageMobile) && (
+            <div className="mt-4 relative w-full max-w-xs" style={{ height: "200px" }}>
+              {imageMobilePreview || (formData.imageMobile && (formData.imageMobile.startsWith("data:image") || formData.imageMobile.startsWith("/promo/"))) ? (
+                <img
+                  src={imageMobilePreview || formData.imageMobile || ""}
+                  alt="Mobile preview"
+                  className="w-full h-full object-contain border border-gray-300 rounded-md"
+                />
+              ) : formData.imageMobile ? (
+                <Image
+                  src={formData.imageMobile}
+                  alt="Mobile"
+                  fill
+                  className="object-contain border border-gray-300 rounded-md"
+                />
+              ) : null}
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -51,6 +51,8 @@ export default function PromoBannerGallery() {
   }
 
   const currentBanner = banners[currentIndex];
+  const desktopImage = currentBanner.image;
+  const mobileImage = currentBanner.imageMobile || currentBanner.image;
 
   const goToSlide = (index: number) => {
     setCurrentIndex(index);
@@ -88,28 +90,54 @@ export default function PromoBannerGallery() {
           {currentBanner.productLink ? (
             <Link href={currentBanner.productLink}>
               <div className="relative w-full h-full bg-gradient-to-r from-pink-100 to-red-100 flex items-center justify-center">
-                {currentBanner.image.startsWith("data:image") ? (
-                  <img
-                    src={currentBanner.image}
-                    alt={currentBanner.title || "Promo banner"}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                ) : currentBanner.image.startsWith('/promo/') ? (
-                  // Для локальных файлов используем обычный img, чтобы избежать проблем с оптимизацией
-                  <img
-                    src={currentBanner.image}
-                    alt={currentBanner.title || "Promo banner"}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                ) : (
-                  <Image
-                    src={currentBanner.image}
-                    alt={currentBanner.title || "Promo banner"}
-                    fill
-                    className="object-cover"
-                    priority={currentIndex === 0}
-                  />
-                )}
+                {/* Десктоп: основное изображение */}
+                <div className="hidden md:block absolute inset-0 w-full h-full">
+                  {desktopImage.startsWith("data:image") ? (
+                    <img
+                      src={desktopImage}
+                      alt={currentBanner.title || "Promo banner"}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : desktopImage.startsWith("/promo/") ? (
+                    <img
+                      src={desktopImage}
+                      alt={currentBanner.title || "Promo banner"}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src={desktopImage}
+                      alt={currentBanner.title || "Promo banner"}
+                      fill
+                      className="object-cover"
+                      priority={currentIndex === 0}
+                    />
+                  )}
+                </div>
+                {/* Мобильная версия: imageMobile или основное изображение */}
+                <div className="md:hidden absolute inset-0 w-full h-full">
+                  {mobileImage.startsWith("data:image") ? (
+                    <img
+                      src={mobileImage}
+                      alt={currentBanner.title || "Promo banner"}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : mobileImage.startsWith("/promo/") ? (
+                    <img
+                      src={mobileImage}
+                      alt={currentBanner.title || "Promo banner"}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src={mobileImage}
+                      alt={currentBanner.title || "Promo banner"}
+                      fill
+                      className="object-cover"
+                      priority={currentIndex === 0}
+                    />
+                  )}
+                </div>
                 {(currentBanner.title || currentBanner.subtitle) && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-black bg-opacity-20">
                     {currentBanner.title && (
@@ -126,28 +154,54 @@ export default function PromoBannerGallery() {
             </Link>
           ) : (
             <div className="relative w-full h-full bg-gradient-to-r from-pink-100 to-red-100 flex items-center justify-center">
-              {currentBanner.image.startsWith("data:image") ? (
-                <img
-                  src={currentBanner.image}
-                  alt={currentBanner.title || "Promo banner"}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              ) : currentBanner.image.startsWith('/promo/') ? (
-                // Для локальных файлов используем обычный img, чтобы избежать проблем с оптимизацией
-                <img
-                  src={currentBanner.image}
-                  alt={currentBanner.title || "Promo banner"}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              ) : (
-                <Image
-                  src={currentBanner.image}
-                  alt={currentBanner.title || "Promo banner"}
-                  fill
-                  className="object-cover"
-                  priority={currentIndex === 0}
-                />
-              )}
+              {/* Десктоп */}
+              <div className="hidden md:block absolute inset-0 w-full h-full">
+                {desktopImage.startsWith("data:image") ? (
+                  <img
+                    src={desktopImage}
+                    alt={currentBanner.title || "Promo banner"}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : desktopImage.startsWith("/promo/") ? (
+                  <img
+                    src={desktopImage}
+                    alt={currentBanner.title || "Promo banner"}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <Image
+                    src={desktopImage}
+                    alt={currentBanner.title || "Promo banner"}
+                    fill
+                    className="object-cover"
+                    priority={currentIndex === 0}
+                  />
+                )}
+              </div>
+              {/* Мобильная версия */}
+              <div className="md:hidden absolute inset-0 w-full h-full">
+                {mobileImage.startsWith("data:image") ? (
+                  <img
+                    src={mobileImage}
+                    alt={currentBanner.title || "Promo banner"}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : mobileImage.startsWith("/promo/") ? (
+                  <img
+                    src={mobileImage}
+                    alt={currentBanner.title || "Promo banner"}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <Image
+                    src={mobileImage}
+                    alt={currentBanner.title || "Promo banner"}
+                    fill
+                    className="object-cover"
+                    priority={currentIndex === 0}
+                  />
+                )}
+              </div>
               {(currentBanner.title || currentBanner.subtitle) && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-black bg-opacity-20">
                   {currentBanner.title && (

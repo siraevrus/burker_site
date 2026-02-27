@@ -14,6 +14,7 @@ export async function GET() {
     const banners: PromoBanner[] = dbBanners.map((banner) => ({
       id: banner.id,
       image: banner.image,
+      imageMobile: banner.imageMobile ?? undefined,
       productLink: banner.productLink ?? undefined,
       title: banner.title || undefined,
       subtitle: banner.subtitle || undefined,
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
       data: banners.map((banner, index) => ({
         id: banner.id,
         image: banner.image,
+        imageMobile: banner.imageMobile ?? null,
         productLink: banner.productLink,
         title: banner.title,
         subtitle: banner.subtitle,

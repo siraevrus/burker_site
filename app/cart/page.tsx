@@ -283,14 +283,16 @@ export default function CartPage() {
                   </button>
                 </p>
                 {dutyPopupOpen && (
-                  <div className="absolute bottom-full left-0 mb-1 z-10 min-w-[220px] max-w-[280px] p-3 bg-white border border-gray-200 rounded-lg shadow-lg text-sm text-gray-700">
-                    <p className="mb-2">Дополнительная информация по пошлине</p>
+                  <div className="absolute bottom-full left-0 mb-1 z-10 min-w-[220px] max-w-[320px] p-3 bg-white border border-gray-200 rounded-lg shadow-lg text-sm text-gray-700 space-y-2">
+                    <p className="font-semibold">Необходимо оплатить пошлину</p>
+                    <p>Tовары дороже 200 евро облагаются таможенной пошлиной.</p>
+                    <p>Перед тем, как ваш товар попадет на таможню, таможенный брокер рассчитает пошлину и пришлет СМС ссылку для оплаты.</p>
                     <Link
                       href="/tax"
-                      className="text-blue-600 hover:underline"
+                      className="inline-block text-blue-600 hover:underline pt-1"
                       onClick={() => setDutyPopupOpen(false)}
                     >
-                      Дополнительная информация по пошлине
+                      Подробнее о таможенных пошлинах
                     </Link>
                   </div>
                 )}
