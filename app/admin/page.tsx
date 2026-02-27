@@ -299,17 +299,25 @@ export default function AdminPage() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="w-16 h-16 relative bg-gray-100 rounded-md overflow-hidden">
                     {product.images && product.images.length > 0 && product.images[0] ? (
-                      <Image
-                        src={product.images[0].startsWith('http') || product.images[0].startsWith('/') 
-                          ? product.images[0] 
-                          : `/${product.images[0]}`}
-                        alt={product.name}
-                        fill
-                        className="object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder.png';
-                        }}
-                      />
+                      product.images[0].startsWith("http") ? (
+                        <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs text-center px-1">
+                          Внешнее фото
+                        </div>
+                      ) : (
+                        <Image
+                          src={
+                            product.images[0].startsWith("/")
+                              ? product.images[0]
+                              : `/${product.images[0]}`
+                          }
+                          alt={product.name}
+                          fill
+                          className="object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = "/placeholder.png";
+                          }}
+                        />
+                      )
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
                         Нет фото

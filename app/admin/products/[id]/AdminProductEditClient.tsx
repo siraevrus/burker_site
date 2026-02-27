@@ -285,20 +285,29 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
                       <div className="flex items-start gap-2">
                         <span className="text-xs font-medium text-gray-500 min-w-[20px]">{index + 1}.</span>
                         <div className="flex-1">
-                          <a 
-                            href={img} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:underline break-all block"
-                          >
-                            {img}
-                          </a>
-                          {img.startsWith("/products/") && (
-                            <img 
-                              src={img} 
-                              alt={`Preview ${index + 1}`}
-                              className="mt-2 max-w-full h-20 object-cover rounded border border-gray-200"
-                            />
+                          {img.startsWith("http") ? (
+                            <>
+                              <span className="text-xs text-gray-500">Внешнее фото</span>
+                              <div className="mt-2 w-full h-20 bg-gray-100 rounded border border-gray-200 flex items-center justify-center text-gray-400 text-xs">
+                                Превью с сервера недоступно
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <a
+                                href={img}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:underline break-all block"
+                              >
+                                {img}
+                              </a>
+                              <img
+                                src={img.startsWith("/") ? img : `/${img}`}
+                                alt={`Preview ${index + 1}`}
+                                className="mt-2 max-w-full h-20 object-cover rounded border border-gray-200"
+                              />
+                            </>
                           )}
                         </div>
                         <button
