@@ -17,6 +17,11 @@ import { prisma } from "../lib/db";
 
 config({ path: resolve(__dirname, "../.env") });
 config({ path: resolve(__dirname, "../.env.local") });
+// На проде часто используют .env.production — подгружаем, чтобы скрипт видел ту же БД, что и приложение
+const envProduction = resolve(__dirname, "../.env.production");
+if (existsSync(envProduction)) {
+  config({ path: envProduction });
+}
 
 const ALLOWED_IMAGE_ORIGIN = "https://www.burkerwatches.com";
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
@@ -131,7 +136,13 @@ async function main() {
   console.log(`Найдено уникальных внешних URL: ${urlList.length}`);
 
   if (SHOW_SAMPLE) {
-    console.log(`\nВсего товаров в БД: ${products.length}`);
+    const dbUrl = process.env.DATABASE_URL;
+    console.log(`\nDATABASE_URL: ${dbUrl ? "задан" : "не задан (скрипт мог подключиться к другой БД)"}`);
+    if (dbUrl?.startsWith("file:")) {
+      const path = dbUrl.replace(/^file:/, "").replace(/\?.*$/, "");
+      console.log(`  SQLite: ${path}`);
+    }
+    console.log(`Всего товаров в БД: ${products.length}`);
     const sample = products.slice(0, 5);
     for (const p of sample) {
       const images: string[] = JSON.parse(p.images || "[]");
