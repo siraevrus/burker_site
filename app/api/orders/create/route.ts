@@ -285,10 +285,22 @@ export async function POST(request: NextRequest) {
         data.phone = digits.startsWith("7") ? digits : "7" + digits;
       }
       if (Object.keys(data).length > 0) {
-        await prisma.user.update({
-          where: { id: currentUser.userId },
-          data,
-        });
+        try {
+          await prisma.user.update({
+            where: { id: currentUser.userId },
+            data,
+          });
+        } catch (updateErr: unknown) {
+          // Если в БД нет колонки middleName (старая миграция), обновляем только lastName и phone
+          const withoutMiddle = { ...data };
+          delete (withoutMiddle as Record<string, unknown>).middleName;
+          if (Object.keys(withoutMiddle).length > 0) {
+            await prisma.user.update({
+              where: { id: currentUser.userId },
+              data: withoutMiddle,
+            });
+          }
+        }
       }
     }
 

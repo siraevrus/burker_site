@@ -13,7 +13,6 @@ export default async function CheckoutPage() {
         email: true,
         firstName: true,
         lastName: true,
-        middleName: true,
         phone: true,
       },
     });
