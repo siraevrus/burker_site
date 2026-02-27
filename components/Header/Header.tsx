@@ -365,9 +365,6 @@ export default function Header() {
                 <Link href="/orders" className="text-sm hover:text-gray-600">
                   Заказы
                 </Link>
-                <Link href="/profile" className="text-sm hover:text-gray-600">
-                  Профиль
-                </Link>
                 <div className="relative group">
                   <button className="flex items-center gap-2 hover:text-gray-600">
                     <svg
