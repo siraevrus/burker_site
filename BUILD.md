@@ -74,7 +74,11 @@ NODE_ENV=production npm run build
 
 ## 404 на _next/static (CSS, JS, шрифты), site.webmanifest
 
-**Причина:** браузер получает HTML, в котором прописаны пути к файлам сборки (например `/_next/static/css/6d117a06de5a99ef.css`). Эти файлы должны лежать в `.next/standalone/.next/static/`. Если их там нет или HTML от другой сборки — получаются 404.
+**Причина:** браузер получает HTML, в котором прописаны пути к файлам сборки (например `/_next/static/css/6d117a06de5a99ef.css`). Эти файлы должны лежать в `.next/standalone/.next/static/`. Next.js **по умолчанию не копирует** `public` и `.next/static` в standalone — их нужно копировать после сборки.
+
+В этом проекте скрипты `build`, `build:clean` и `build:full` уже делают копирование:
+`cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/`
+Поэтому на проде обязательно используйте `npm run build` (или `build:clean`), а не только `next build`.
 
 **Что сделать по шагам:**
 

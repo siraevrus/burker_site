@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "CHOKIDAR_USEPOLLING=1 next dev --webpack",
-    "build": "prisma generate && next build --webpack",
-    "build:clean": "rm -rf .next && prisma generate && next build --webpack",
-    "build:full": "rm -rf .next node_modules/.cache && prisma generate && next build --webpack",
+    "build": "prisma generate && next build --webpack && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/",
+    "build:clean": "rm -rf .next && prisma generate && next build --webpack && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/",
+    "build:full": "rm -rf .next node_modules/.cache && prisma generate && next build --webpack && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/",
     "start": "next start",
     "lint": "eslint",
     "db:push": "prisma db push",
