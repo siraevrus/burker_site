@@ -71,3 +71,48 @@ NODE_ENV=production npm run build
 | 404 на `_next/static/chunks/` после деплоя | Сборка и статика от разных билдов. Сделать `rm -rf .next`, затем заново `npm run build` и перезапустить приложение из той же директории. |
 | `Module not found` / странные ошибки импорта | Выполнить вариант 4 (переустановка через `npm ci` и полная пересборка). |
 | Сломанная вёрстка при работающем сайте | Проверить, что нет 404 на CSS в Network. Если есть — полная пересборка и рестарт одного и того же билда. |
+
+## 404 на _next/static (CSS, JS, шрифты), site.webmanifest
+
+**Причина:** браузер получает HTML, в котором прописаны пути к файлам сборки (например `/_next/static/css/6d117a06de5a99ef.css`). Эти файлы должны лежать в `.next/standalone/.next/static/`. Если их там нет или HTML от другой сборки — получаются 404.
+
+**Что сделать по шагам:**
+
+1. **Одна сборка и один рестарт** (на сервере из корня проекта):
+   ```bash
+   cd /var/www/burker-watches.ru
+   git pull
+   rm -rf .next
+   npx prisma generate
+   NODE_ENV=production npm run build
+   pm2 restart burker-watches
+   ```
+2. **Проверить, что статика на месте:**
+   ```bash
+   ls -la /var/www/burker-watches.ru/.next/standalone/.next/static/css/ | head -5
+   ```
+   Должны быть файлы вида `*.css`. Если папка пустая — сборка прошла некорректно.
+3. **Жёсткое обновление в браузере:** Ctrl+Shift+R (или Cmd+Shift+R) или режим инкогнито, чтобы не подхватывать старый HTML и старые ссылки на чанки.
+
+### Раздача _next/static и манифеста через nginx (рекомендуется)
+
+Чтобы CSS, JS и шрифты отдавались напрямую с диска и не зависели от Node, добавьте в конфиг nginx **перед** `location /`:
+
+```nginx
+# Статика Next.js (CSS, JS, шрифты) — одна сборка, путь не меняется
+location /_next/static/ {
+    alias /var/www/burker-watches.ru/.next/standalone/.next/static/;
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+}
+
+# Манифест и иконки из public
+location = /site.webmanifest {
+    alias /var/www/burker-watches.ru/.next/standalone/public/site.webmanifest;
+    add_header Cache-Control "public, max-age=86400";
+}
+```
+
+Если `site.webmanifest` лежит в корне проекта в `public/site.webmanifest`, при сборке он копируется в `.next/standalone/public/`. После каждой сборки обновляются и `.next/static`, и `public` внутри standalone.
+
+После правок nginx: `sudo nginx -t && sudo systemctl reload nginx`.
