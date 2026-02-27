@@ -73,6 +73,7 @@ model User {
   emailVerified Boolean  @default(false)
   firstName     String?
   lastName      String?
+  middleName    String?  // Отчество (для подстановки в чекаут)
   phone         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

@@ -13,6 +13,7 @@ interface CheckoutPageClientProps {
     email: string;
     firstName?: string | null;
     lastName?: string | null;
+    middleName?: string | null;
     phone?: string | null;
   } | null;
 }
@@ -153,6 +154,7 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                 email: user.email,
                 firstName: user.firstName ?? undefined,
                 lastName: user.lastName ?? undefined,
+                middleName: user.middleName ?? undefined,
                 phone: user.phone ?? undefined,
               } : undefined}
               rates={rates}

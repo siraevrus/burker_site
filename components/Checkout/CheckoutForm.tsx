@@ -30,6 +30,7 @@ interface CheckoutFormProps {
     email: string;
     firstName?: string;
     lastName?: string;
+    middleName?: string;
     phone?: string;
   };
   /** Курсы для расчёта комиссии; промокод применяется только к вознаграждению комиссионера */
@@ -116,7 +117,7 @@ export default function CheckoutForm({ user, rates = null, productOriginalPrices
     email: user?.email || "",
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
-    middleName: "",
+    middleName: user?.middleName || "",
     phone: user?.phone ? formatPhoneNumber(user.phone) : "",
     cdekAddress: "",
     city: "",
