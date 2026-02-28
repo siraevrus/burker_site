@@ -310,7 +310,7 @@ export default function ProductPageClient({
                     className="object-cover"
                   />
                 </Link>
-                {colorVariants.map((variant) => (
+                {colorVariants.slice(0, 3).map((variant) => (
                   <Link
                     key={variant.id}
                     href={`/product/${generateProductSlug(variant.name)}`}
