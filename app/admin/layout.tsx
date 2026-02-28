@@ -220,6 +220,7 @@ export default function AdminLayout({
                   { label: "Курсы валют", href: "/admin/exchange-rates" },
                   { label: "SEO", href: "/admin/seo" },
                   { label: "Стоимость доставки", href: "/admin/shipping" },
+                  { label: "Футер", href: "/admin/footer" },
                   { label: "ФОС", href: "/admin/feedback" },
                 ]}
                 pathname={pathname}

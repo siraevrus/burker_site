@@ -4,9 +4,16 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Page } from "@/lib/types";
 
+const DEFAULT_TITLES = {
+  customerServiceTitle: "Обслуживание клиентов",
+  policiesTitle: "Политики",
+  socialTitle: "Социальные сети",
+};
+
 export default function Footer() {
   const [customerServicePages, setCustomerServicePages] = useState<Page[]>([]);
   const [policiesPages, setPoliciesPages] = useState<Page[]>([]);
+  const [titles, setTitles] = useState(DEFAULT_TITLES);
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
   const [newsletterError, setNewsletterError] = useState("");
@@ -14,6 +21,10 @@ export default function Footer() {
 
   useEffect(() => {
     loadPages();
+    fetch("/api/footer")
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => data && setTitles(data))
+      .catch(() => {});
   }, []);
 
   const loadPages = async () => {
@@ -77,7 +88,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Customer Service */}
           <div>
-            <h3 className="font-bold mb-4">Обслуживание клиентов</h3>
+            <h3 className="font-bold mb-4">{titles.customerServiceTitle}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/contact" className="hover:text-gray-600">
@@ -97,7 +108,7 @@ export default function Footer() {
 
           {/* Policies */}
           <div>
-            <h3 className="font-bold mb-4">Политики</h3>
+            <h3 className="font-bold mb-4">{titles.policiesTitle}</h3>
             {policiesPages.length > 0 ? (
               <ul className="space-y-2 text-sm">
                 {policiesPages.map((page) => (
@@ -115,7 +126,7 @@ export default function Footer() {
 
           {/* Social Media */}
           <div>
-            <h3 className="font-bold mb-4">Социальные сети</h3>
+            <h3 className="font-bold mb-4">{titles.socialTitle}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <a

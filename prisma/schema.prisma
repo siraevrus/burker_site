@@ -263,3 +263,12 @@ model ShippingRate {
   @@unique([weightKg])
   @@index([weightKg])
 }
+
+// Заголовки блоков в футере (редактируются в админке)
+model FooterSettings {
+  id                    String   @id @default("single")
+  customerServiceTitle  String   @default("Обслуживание клиентов")
+  policiesTitle         String   @default("Политики")
+  socialTitle           String   @default("Социальные сети")
+  updatedAt             DateTime @updatedAt
+}
