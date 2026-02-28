@@ -88,102 +88,59 @@ export default function SalePageClient({ saleProducts }: SalePageClientProps) {
         </p>
       </div>
 
-      {/* Фильтр по категориям */}
+      {/* Фильтр по категориям и сортировка — в одной строке */}
       <div className="mb-6">
-        <p className="text-sm font-medium text-gray-700 mb-2" style={{ fontFamily: '"Open Sans", sans-serif' }}>
-          КАТЕГОРИЯ
-        </p>
-        <div className="flex flex-wrap gap-2 mb-3">
-          <button
-            onClick={() => {
-              setCategoryFilter("all");
-              setSubcategoryFilter(null);
-            }}
-            className={`px-4 py-2 rounded-md border text-sm transition-colors ${
-              categoryFilter === "all"
-                ? "border-black bg-black text-white"
-                : "border-gray-300 hover:bg-gray-50"
-            }`}
-            style={{ fontFamily: '"Open Sans", sans-serif' }}
-          >
-            Все
-          </button>
-          <button
-            onClick={() => {
-              setCategoryFilter("watches");
-              setSubcategoryFilter(null);
-            }}
-            className={`px-4 py-2 rounded-md border text-sm transition-colors ${
-              categoryFilter === "watches"
-                ? "border-black bg-black text-white"
-                : "border-gray-300 hover:bg-gray-50"
-            }`}
-            style={{ fontFamily: '"Open Sans", sans-serif' }}
-          >
-            Часы
-          </button>
-          <button
-            onClick={() => {
-              setCategoryFilter("jewelry");
-              setSubcategoryFilter(null);
-            }}
-            className={`px-4 py-2 rounded-md border text-sm transition-colors ${
-              categoryFilter === "jewelry"
-                ? "border-black bg-black text-white"
-                : "border-gray-300 hover:bg-gray-50"
-            }`}
-            style={{ fontFamily: '"Open Sans", sans-serif' }}
-          >
-            Украшения
-          </button>
-        </div>
-        {(categoryFilter === "watches" && watchSubcategories.length > 0) || (categoryFilter === "jewelry" && jewelrySubcategories.length > 0) ? (
-          <div className="flex flex-wrap gap-2">
-            <span className="text-xs text-gray-500 self-center mr-1" style={{ fontFamily: '"Open Sans", sans-serif' }}>
-              Подкатегория:
-            </span>
-            {categoryFilter === "watches" &&
-              watchSubcategories.map((sub) => (
-                <button
-                  key={sub}
-                  onClick={() => setSubcategoryFilter(subcategoryFilter === sub ? null : sub)}
-                  className={`px-3 py-1.5 rounded-md border text-sm transition-colors ${
-                    subcategoryFilter === sub ? "border-black bg-gray-100 font-medium" : "border-gray-200 hover:bg-gray-50"
-                  }`}
-                  style={{ fontFamily: '"Open Sans", sans-serif' }}
-                >
-                  {sub}
-                </button>
-              ))}
-            {categoryFilter === "jewelry" &&
-              jewelrySubcategories.map((sub) => (
-                <button
-                  key={sub}
-                  onClick={() => setSubcategoryFilter(subcategoryFilter === sub ? null : sub)}
-                  className={`px-3 py-1.5 rounded-md border text-sm transition-colors ${
-                    subcategoryFilter === sub ? "border-black bg-gray-100 font-medium" : "border-gray-200 hover:bg-gray-50"
-                  }`}
-                  style={{ fontFamily: '"Open Sans", sans-serif' }}
-                >
-                  {sub}
-                </button>
-              ))}
-            {((categoryFilter === "watches" && watchSubcategories.length > 1) || (categoryFilter === "jewelry" && jewelrySubcategories.length > 1)) && (
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm font-medium text-gray-700" style={{ fontFamily: '"Open Sans", sans-serif' }}>
+              КАТЕГОРИЯ
+            </p>
+            <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => setSubcategoryFilter(null)}
-                className="px-3 py-1.5 rounded-md border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
+                onClick={() => {
+                  setCategoryFilter("all");
+                  setSubcategoryFilter(null);
+                }}
+                className={`px-4 py-2 rounded-md border text-sm transition-colors ${
+                  categoryFilter === "all"
+                    ? "border-black bg-black text-white"
+                    : "border-gray-300 hover:bg-gray-50"
+                }`}
                 style={{ fontFamily: '"Open Sans", sans-serif' }}
               >
-                Все подкатегории
+                Все
               </button>
-            )}
+              <button
+                onClick={() => {
+                  setCategoryFilter("watches");
+                  setSubcategoryFilter(null);
+                }}
+                className={`px-4 py-2 rounded-md border text-sm transition-colors ${
+                  categoryFilter === "watches"
+                    ? "border-black bg-black text-white"
+                    : "border-gray-300 hover:bg-gray-50"
+                }`}
+                style={{ fontFamily: '"Open Sans", sans-serif' }}
+              >
+                Часы
+              </button>
+              <button
+                onClick={() => {
+                  setCategoryFilter("jewelry");
+                  setSubcategoryFilter(null);
+                }}
+                className={`px-4 py-2 rounded-md border text-sm transition-colors ${
+                  categoryFilter === "jewelry"
+                    ? "border-black bg-black text-white"
+                    : "border-gray-300 hover:bg-gray-50"
+                }`}
+                style={{ fontFamily: '"Open Sans", sans-serif' }}
+              >
+                Украшения
+              </button>
+            </div>
           </div>
-        ) : null}
-      </div>
-
-      {/* Фильтр сортировки */}
-      <div className="mb-8 flex justify-end">
-        <div className="relative">
+          <div className="relative">
           <button
             onClick={() => setIsSortOpen(!isSortOpen)}
             className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
@@ -245,7 +202,51 @@ export default function SalePageClient({ saleProducts }: SalePageClientProps) {
               </motion.div>
             )}
           </AnimatePresence>
+          </div>
         </div>
+
+        {(categoryFilter === "watches" && watchSubcategories.length > 0) || (categoryFilter === "jewelry" && jewelrySubcategories.length > 0) ? (
+          <div className="flex flex-wrap gap-2 mt-3">
+            <span className="text-xs text-gray-500 self-center mr-1" style={{ fontFamily: '"Open Sans", sans-serif' }}>
+              Подкатегория:
+            </span>
+            {categoryFilter === "watches" &&
+              watchSubcategories.map((sub) => (
+                <button
+                  key={sub}
+                  onClick={() => setSubcategoryFilter(subcategoryFilter === sub ? null : sub)}
+                  className={`px-3 py-1.5 rounded-md border text-sm transition-colors ${
+                    subcategoryFilter === sub ? "border-black bg-gray-100 font-medium" : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                  style={{ fontFamily: '"Open Sans", sans-serif' }}
+                >
+                  {sub}
+                </button>
+              ))}
+            {categoryFilter === "jewelry" &&
+              jewelrySubcategories.map((sub) => (
+                <button
+                  key={sub}
+                  onClick={() => setSubcategoryFilter(subcategoryFilter === sub ? null : sub)}
+                  className={`px-3 py-1.5 rounded-md border text-sm transition-colors ${
+                    subcategoryFilter === sub ? "border-black bg-gray-100 font-medium" : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                  style={{ fontFamily: '"Open Sans", sans-serif' }}
+                >
+                  {sub}
+                </button>
+              ))}
+            {((categoryFilter === "watches" && watchSubcategories.length > 1) || (categoryFilter === "jewelry" && jewelrySubcategories.length > 1)) && (
+              <button
+                onClick={() => setSubcategoryFilter(null)}
+                className="px-3 py-1.5 rounded-md border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
+                style={{ fontFamily: '"Open Sans", sans-serif' }}
+              >
+                Все подкатегории
+              </button>
+            )}
+          </div>
+        ) : null}
       </div>
 
       {/* Сетка товаров */}
