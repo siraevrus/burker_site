@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import ProductCard from "@/components/ProductCard/ProductCard";
-import Filters from "@/components/Filters/Filters";
 import { useStore } from "@/lib/store";
 import { Product } from "@/lib/types";
 
@@ -44,14 +43,9 @@ export default function WatchesPageClient({ products }: WatchesPageClientProps) 
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold mb-8">Все часы</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Sidebar with filters */}
-        <div className="lg:col-span-1">
-          <Filters />
-        </div>
-
+      <div>
         {/* Products grid */}
-        <div className="lg:col-span-3">
+        <div>
           {/* Sort controls */}
           <div className="flex justify-between items-center mb-6">
             <p className="text-gray-600">
