@@ -125,7 +125,7 @@ export default function Header() {
           <nav className="hidden md:flex items-center gap-6">
             {hasSaleProducts && (
               <Link href="/sale" className="hover:text-gray-600 inline-flex items-center py-1 min-h-[2.25rem]">
-                SALE
+                СКИДКИ
               </Link>
             )}
             <div
@@ -464,7 +464,7 @@ export default function Header() {
                 className="block py-2 hover:text-gray-600"
                 onClick={() => setIsMenuOpen(false)}
               >
-                SALE
+                СКИДКИ
               </Link>
             )}
             <div className="py-2">
