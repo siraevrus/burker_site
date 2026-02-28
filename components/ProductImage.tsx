@@ -15,7 +15,8 @@ export default function ProductImage({
   className?: string;
   fill?: boolean;
 }) {
-  const resolvedSrc = src.startsWith("/") ? src : `/${src}`;
+  const resolvedSrc =
+    src.startsWith("http://") || src.startsWith("https://") ? src : src.startsWith("/") ? src : `/${src}`;
   return (
     <img
       src={resolvedSrc}
