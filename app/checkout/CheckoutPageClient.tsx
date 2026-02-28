@@ -24,30 +24,22 @@ interface ExchangeRates {
 }
 
 function getItemCommission(
-  item: CartItem, 
-  rates: ExchangeRates | null, 
-  productOriginalPrices: Record<string, number>
+  item: CartItem,
+  rates: ExchangeRates | null,
+  productSellingPriceEur: Record<string, number>
 ): number | null {
   if (!rates) return null;
-  
-  // Используем originalPriceEur из item или из кэша
-  const originalPriceEur = item.originalPriceEur ?? productOriginalPrices[item.id];
-  
-  if (!originalPriceEur || originalPriceEur <= 0) return null;
-  
-  // Используем ту же формулу, что и на /order-confirmation
-  const originalPriceInUsd = originalPriceEur / rates.eurRate;
-  const originalPriceInRub = originalPriceInUsd * rates.rubRate;
-  const commission = (item.price - originalPriceInRub) * item.quantity;
-  // Гарантируем неотрицательный результат
+  const priceEur = item.priceEur ?? productSellingPriceEur[item.id];
+  if (priceEur == null || priceEur <= 0) return null;
+  const costInRub = (priceEur / rates.eurRate) * rates.rubRate;
+  const commission = (item.price - costInRub) * item.quantity;
   return Math.max(0, commission);
 }
 
 export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
   const cart = useStore((state) => state.cart);
   const [rates, setRates] = useState<ExchangeRates | null>(null);
-  // Кэш originalPriceEur для товаров в корзине
-  const [productOriginalPrices, setProductOriginalPrices] = useState<Record<string, number>>({});
+  const [productSellingPriceEur, setProductSellingPriceEur] = useState<Record<string, number>>({});
 
   useEffect(() => {
     Promise.all([
@@ -58,15 +50,14 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
         if (ratesData.eurRate && ratesData.rubRate) {
           setRates({ eurRate: ratesData.eurRate, rubRate: ratesData.rubRate });
         }
-        // Загружаем originalPriceEur для товаров в корзине
         if (productsData.products && Array.isArray(productsData.products)) {
           const pricesMap: Record<string, number> = {};
           productsData.products.forEach((product: any) => {
-            if (product.originalPriceEur != null && product.originalPriceEur > 0) {
-              pricesMap[product.id] = product.originalPriceEur;
+            if (product.priceEur != null && product.priceEur > 0) {
+              pricesMap[product.id] = product.priceEur;
             }
           });
-          setProductOriginalPrices(pricesMap);
+          setProductSellingPriceEur(pricesMap);
         }
       })
       .catch(() => {});
@@ -158,7 +149,7 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                 phone: user.phone ?? undefined,
               } : undefined}
               rates={rates}
-              productOriginalPrices={productOriginalPrices}
+              productSellingPriceEur={productSellingPriceEur}
               onFormDataChange={setFormData}
             />
           </div>
@@ -170,7 +161,7 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
             <h2 className="text-xl font-bold mb-4">Ваш заказ</h2>
             <div className="space-y-3 mb-4">
               {cart.map((item) => {
-                const itemCommission = getItemCommission(item, rates, productOriginalPrices);
+                const itemCommission = getItemCommission(item, rates, productSellingPriceEur);
                 return (
                   <div key={`${item.id}-${item.selectedColor}`} className="flex gap-3">
                     <div className="w-48 h-48 sm:w-32 sm:h-32 bg-white border border-[#e5e6eb] rounded-md flex-shrink-0 relative overflow-hidden">

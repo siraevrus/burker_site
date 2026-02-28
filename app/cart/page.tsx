@@ -18,22 +18,16 @@ interface ExchangeRates {
 }
 
 function getItemCommission(
-  item: CartItem, 
-  rates: ExchangeRates | null, 
-  productOriginalPrices: Record<string, number>
+  item: CartItem,
+  rates: ExchangeRates | null,
+  productSellingPriceEur: Record<string, number>
 ): number | null {
   if (!rates) return null;
-  
-  // Используем originalPriceEur из item или из кэша
-  const originalPriceEur = item.originalPriceEur ?? productOriginalPrices[item.id];
-  
-  if (!originalPriceEur || originalPriceEur <= 0) return null;
-  
-  // Используем ту же формулу, что и на /order-confirmation
-  const originalPriceInUsd = originalPriceEur / rates.eurRate;
-  const originalPriceInRub = originalPriceInUsd * rates.rubRate;
-  const commission = (item.price - originalPriceInRub) * item.quantity;
-  // Гарантируем неотрицательный результат
+  // Цена продажи в EUR (с учётом скидки) — база для расчёта комиссии (наценки)
+  const priceEur = item.priceEur ?? productSellingPriceEur[item.id];
+  if (priceEur == null || priceEur <= 0) return null;
+  const costInRub = (priceEur / rates.eurRate) * rates.rubRate;
+  const commission = (item.price - costInRub) * item.quantity;
   return Math.max(0, commission);
 }
 
@@ -46,8 +40,8 @@ export default function CartPage() {
   const [customsHintKey, setCustomsHintKey] = useState<string | null>(null);
   const [shippingRates, setShippingRates] = useState<ShippingRateEntry[]>([]);
   const [rates, setRates] = useState<ExchangeRates | null>(null);
-  // Кэш originalPriceEur для товаров в корзине
-  const [productOriginalPrices, setProductOriginalPrices] = useState<Record<string, number>>({});
+  // Цена продажи в EUR по productId (для расчёта комиссии)
+  const [productSellingPriceEur, setProductSellingPriceEur] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!customsHintKey) return;
@@ -68,15 +62,15 @@ export default function CartPage() {
         if (ratesData.eurRate && ratesData.rubRate) {
           setRates({ eurRate: ratesData.eurRate, rubRate: ratesData.rubRate });
         }
-        // Загружаем originalPriceEur для товаров в корзине
+        // Цена продажи в EUR для расчёта комиссии (наценки)
         if (productsData.products && Array.isArray(productsData.products)) {
           const pricesMap: Record<string, number> = {};
           productsData.products.forEach((product: any) => {
-            if (product.originalPriceEur != null && product.originalPriceEur > 0) {
-              pricesMap[product.id] = product.originalPriceEur;
+            if (product.priceEur != null && product.priceEur > 0) {
+              pricesMap[product.id] = product.priceEur;
             }
           });
-          setProductOriginalPrices(pricesMap);
+          setProductSellingPriceEur(pricesMap);
         }
       })
       .catch(() => {});
@@ -88,9 +82,9 @@ export default function CartPage() {
     shippingRates.length > 0 ? shippingRates : undefined
   );
 
-  // Сумма оригинальных цен в EUR по корзине (цена на сайте Burker)
+  // Сумма цен продажи в EUR по корзине (для пошлины)
   const totalEur = cart.reduce((sum, item) => {
-    const eur = item.originalPriceEur ?? productOriginalPrices[item.id];
+    const eur = item.priceEur ?? productSellingPriceEur[item.id] ?? item.originalPriceEur;
     return sum + (eur && eur > 0 ? eur * item.quantity : 0);
   }, 0);
 
@@ -233,12 +227,12 @@ export default function CartPage() {
                   <p className="font-semibold text-lg mb-1">
                     Итого: {(item.price * item.quantity).toFixed(0)} ₽
                   </p>
-                  {getItemCommission(item, rates, productOriginalPrices) !== null && (
-                    <p className="text-xs text-gray-400 flex flex-wrap items-baseline gap-x-1">
-                      <span>В том числе вознаграждение комиссионера:</span>
-                      <span className="whitespace-nowrap flex-shrink-0">{getItemCommission(item, rates, productOriginalPrices)?.toFixed(0)} ₽</span>
-                    </p>
-                  )}
+{getItemCommission(item, rates, productSellingPriceEur) !== null && (
+                      <p className="text-xs text-gray-400 flex flex-wrap items-baseline gap-x-1">
+                        <span>В том числе вознаграждение комиссионера:</span>
+                        <span className="whitespace-nowrap flex-shrink-0">{getItemCommission(item, rates, productSellingPriceEur)?.toFixed(0)} ₽</span>
+                      </p>
+                    )}
                 </div>
               </motion.div>
             ))}

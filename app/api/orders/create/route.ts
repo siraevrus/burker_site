@@ -118,10 +118,11 @@ export async function POST(request: NextRequest) {
     const productIds = items.map((item: any) => item.productId);
     const productsFromDb = await prisma.product.findMany({
       where: { id: { in: productIds } },
-      select: { id: true, originalPrice: true },
+      select: { id: true, price: true, originalPrice: true },
     });
-    const productPricesEur = new Map(
-      productsFromDb.map((p) => [p.id, p.originalPrice])
+    // Цена продажи в EUR (с учётом скидки) — база для расчёта комиссии (наценки)
+    const productSellingPriceEur = new Map(
+      productsFromDb.map((p) => [p.id, p.price])
     );
 
     // Расчет стоимости доставки на основе веса и категории товаров
@@ -151,13 +152,13 @@ export async function POST(request: NextRequest) {
     const { totalCost: shippingCost } = calculateShipping(cartItems, shippingRates);
 
     const rates = await getExchangeRates();
-    // Сумма вознаграждения комиссионера (промокод применяется только к ней)
+    // Сумма вознаграждения комиссионера (наценка; промокод применяется только к ней)
     let totalCommission = 0;
     for (const item of items) {
-      const originalPriceEur = productPricesEur.get(item.productId);
-      if (originalPriceEur != null && originalPriceEur > 0 && rates) {
-        const originalPriceInRub = (originalPriceEur / rates.eurRate) * rates.rubRate;
-        const itemCommission = Math.max(0, (item.productPrice - originalPriceInRub) * item.quantity);
+      const sellingPriceEur = productSellingPriceEur.get(item.productId);
+      if (sellingPriceEur != null && sellingPriceEur > 0 && rates) {
+        const costInRub = (sellingPriceEur / rates.eurRate) * rates.rubRate;
+        const itemCommission = Math.max(0, (item.productPrice - costInRub) * item.quantity);
         totalCommission += itemCommission;
       }
     }
@@ -254,7 +255,7 @@ export async function POST(request: NextRequest) {
         productId: item.productId,
         productName: item.productName,
         productPrice: item.productPrice,
-        originalPriceEur: productPricesEur.get(item.productId) || null,
+        originalPriceEur: productSellingPriceEur.get(item.productId) ?? null,
         selectedColor: item.selectedColor,
         quantity: item.quantity,
       })),

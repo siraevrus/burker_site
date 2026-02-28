@@ -39,8 +39,9 @@ function mapProductFromDbRaw(dbProduct: any): Product {
 function mapProductFromDbWithRates(dbProduct: any, rates: ExchangeRates): Product {
   const product = mapProductFromDbRaw(dbProduct);
 
-  // Сохраняем сырую цену в EUR до конвертации (для расчёта комиссии на cart/checkout)
+  // Исходная цена в EUR (до скидки) и цена продажи в EUR (для расчёта комиссии)
   product.originalPriceEur = dbProduct.originalPrice;
+  product.priceEur = dbProduct.price;
 
   // Конвертируем цены из EUR в RUB с учётом наценки по категории
   // Часы (все коллекции кроме "Украшения"): +1000 руб
