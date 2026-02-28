@@ -8,6 +8,11 @@ const DEFAULTS = {
   socialTitle: "Социальные сети",
 };
 
+function isTableMissingError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  return /FooterSettings|does not exist|no such table/i.test(msg);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const unauthorized = await requireAdmin(request);
@@ -23,6 +28,13 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error("Get footer settings error:", error);
+    if (isTableMissingError(error)) {
+      return NextResponse.json({
+        customerServiceTitle: DEFAULTS.customerServiceTitle,
+        policiesTitle: DEFAULTS.policiesTitle,
+        socialTitle: DEFAULTS.socialTitle,
+      });
+    }
     return NextResponse.json(
       { error: "Ошибка при получении настроек футера" },
       { status: 500 }
@@ -65,6 +77,15 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     console.error("Save footer settings error:", error);
+    if (isTableMissingError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            "Таблица настроек футера не создана. На сервере выполните: npx prisma migrate deploy",
+        },
+        { status: 503 }
+      );
+    }
     return NextResponse.json(
       { error: "Ошибка при сохранении настроек футера" },
       { status: 500 }
