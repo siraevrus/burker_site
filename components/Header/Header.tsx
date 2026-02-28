@@ -124,16 +124,16 @@ export default function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
             {hasSaleProducts && (
-              <Link href="/sale" className="hover:text-gray-600">
+              <Link href="/sale" className="hover:text-gray-600 inline-flex items-center py-1 min-h-[2.25rem]">
                 SALE
               </Link>
             )}
             <div
-              className="relative"
+              className="relative inline-flex items-center"
               onMouseEnter={() => setIsWatchesOpen(true)}
               onMouseLeave={() => setIsWatchesOpen(false)}
             >
-              <button className="hover:text-gray-600">ЧАСЫ</button>
+              <button className="hover:text-gray-600 py-1 min-h-[2.25rem]">ЧАСЫ</button>
               <AnimatePresence>
                 {isWatchesOpen && (
                   <motion.div
@@ -233,11 +233,11 @@ export default function Header() {
               </AnimatePresence>
             </div>
             <div
-              className="relative"
+              className="relative inline-flex items-center"
               onMouseEnter={() => setIsJewelryOpen(true)}
               onMouseLeave={() => setIsJewelryOpen(false)}
             >
-              <button className="hover:text-gray-600">УКРАШЕНИЯ</button>
+              <button className="hover:text-gray-600 py-1 min-h-[2.25rem]">УКРАШЕНИЯ</button>
               <AnimatePresence>
                 {isJewelryOpen && (
                   <motion.div
