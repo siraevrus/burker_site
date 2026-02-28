@@ -229,7 +229,7 @@ export default function CartPage() {
                   </p>
 {getItemCommission(item, rates, productSellingPriceEur) !== null && (
                       <p className="text-xs text-gray-400 flex flex-wrap items-baseline gap-x-1">
-                        <span>В том числе вознаграждение комиссионера:</span>
+                        <span>В т.ч. вознаграждение сервиса:</span>
                         <span className="whitespace-nowrap flex-shrink-0">{getItemCommission(item, rates, productSellingPriceEur)?.toFixed(0)} ₽</span>
                       </p>
                     )}

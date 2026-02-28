@@ -198,7 +198,7 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                             <p>Кол-во: {item.quantity}</p>
                             {itemCommission !== null && (
                               <p className="text-gray-500 flex flex-wrap items-baseline gap-x-1">
-                                <span>В том числе вознаграждение комиссионера:</span>
+                                <span>В т.ч. вознаграждение сервиса:</span>
                                 <span className="whitespace-nowrap flex-shrink-0">{itemCommission.toFixed(0)} ₽</span>
                               </p>
                             )}
