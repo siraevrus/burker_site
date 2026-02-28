@@ -51,24 +51,23 @@ export default function SalePageClient({ saleProducts }: SalePageClientProps) {
     return list;
   }, [saleProducts, categoryFilter, subcategoryFilter]);
 
-  // Сортировка товаров
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortOption) {
-      case "popular":
-        // Сортировка по размеру скидки (больше скидка = популярнее)
-        return b.discount - a.discount;
-      case "price-low":
-        return a.price - b.price;
-      case "price-high":
-        return b.price - a.price;
-      case "new":
-        // Для новых товаров можно использовать id или дату добавления
-        // Пока используем обратный порядок id
-        return b.id.localeCompare(a.id);
-      default:
-        return 0;
-    }
-  });
+  // Сортировка товаров (мемоизация, чтобы список стабильно обновлялся при смене фильтра)
+  const sortedProducts = useMemo(() => {
+    return [...filteredProducts].sort((a, b) => {
+      switch (sortOption) {
+        case "popular":
+          return b.discount - a.discount;
+        case "price-low":
+          return a.price - b.price;
+        case "price-high":
+          return b.price - a.price;
+        case "new":
+          return b.id.localeCompare(a.id);
+        default:
+          return 0;
+      }
+    });
+  }, [filteredProducts, sortOption]);
 
   const sortLabels: Record<SortOption, string> = {
     popular: "САМЫЙ ПРОДАВАЕМЫЙ",
@@ -140,7 +139,7 @@ export default function SalePageClient({ saleProducts }: SalePageClientProps) {
               </button>
             </div>
           </div>
-          <div className="relative">
+          <div className="relative z-30">
           <button
             onClick={() => setIsSortOpen(!isSortOpen)}
             className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
@@ -176,7 +175,7 @@ export default function SalePageClient({ saleProducts }: SalePageClientProps) {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="absolute right-0 mt-2 w-64 bg-white border border-gray-300 rounded-md shadow-lg z-10"
+                className="absolute right-0 mt-2 w-64 bg-white border border-gray-300 rounded-md shadow-lg z-30"
               >
                 {Object.entries(sortLabels).map(([key, label]) => (
                   <button
@@ -249,13 +248,16 @@ export default function SalePageClient({ saleProducts }: SalePageClientProps) {
         ) : null}
       </div>
 
-      {/* Сетка товаров */}
+      {/* Сетка товаров — key по фильтру, чтобы при смене категории список гарантированно обновлялся */}
       {sortedProducts.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-gray-600 text-lg">Товары со скидкой не найдены.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div
+          key={`${categoryFilter}-${subcategoryFilter ?? ""}`}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
+        >
           {sortedProducts.map((product, index) => (
             <motion.div
               key={product.id}
