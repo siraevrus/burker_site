@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import ProductCard from "@/components/ProductCard/ProductCard";
 import PromoBannerGallery from "@/components/PromoBanner/PromoBanner";
 import { Product } from "@/lib/types";
@@ -9,6 +9,11 @@ import { motion } from "framer-motion";
 interface HomeClientProps {
   products: Product[];
   bestsellers: Product[];
+}
+
+interface FaqData {
+  title: string;
+  content: string;
 }
 
 const SCROLL_STEP = 280; // ширина карточки (w-64 = 256px) + gap
@@ -22,6 +27,14 @@ function getRandomBrand() {
 export default function HomeClient({ products, bestsellers }: HomeClientProps) {
   const [activeBrand, setActiveBrand] = useState(() => getRandomBrand());
   const bestsellersRef = useRef<HTMLDivElement>(null);
+  const [faq, setFaq] = useState<FaqData | null>(null);
+
+  useEffect(() => {
+    fetch("/api/faq")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: FaqData | null) => data && setFaq(data))
+      .catch(() => {});
+  }, []);
 
   const scrollBestsellers = (direction: "left" | "right") => {
     if (!bestsellersRef.current) return;
@@ -156,6 +169,45 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
           </div>
         </div>
       </section>
+
+      {/* Вопрос-Ответ */}
+      {(faq?.title || faq?.content) && (
+        <section className="py-16" style={{ backgroundColor: "#FCFAF8" }}>
+          <div className="container mx-auto px-4">
+            {faq.title && (
+              <h2
+                className="mb-4 text-center uppercase"
+                style={{
+                  fontFamily: 'Geist, "Geist Fallback", -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                  fontSize: "20px",
+                  fontWeight: 400,
+                  lineHeight: "28px",
+                  color: "rgb(23, 23, 23)",
+                }}
+              >
+                {faq.title}
+              </h2>
+            )}
+            {faq.title && (
+              <div className="flex justify-center mb-6">
+                <div style={{ width: 35, height: 3, backgroundColor: "#CAC8C6" }} />
+              </div>
+            )}
+            {faq.content && (
+              <div
+                className="max-w-3xl mx-auto text-gray-700 text-center whitespace-pre-wrap"
+                style={{
+                  fontFamily: 'Geist, "Geist Fallback", -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                  fontSize: "16px",
+                  lineHeight: "1.6",
+                }}
+              >
+                {faq.content}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

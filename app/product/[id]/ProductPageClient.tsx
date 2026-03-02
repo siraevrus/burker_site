@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import ProductImage from "@/components/ProductImage";
 import Link from "next/link";
 import { Product } from "@/lib/types";
@@ -79,10 +79,14 @@ export default function ProductPageClient({
     .filter((p) => product.relatedProducts?.includes(p.id))
     .slice(0, 2);
 
-  // Рекомендуемые товары (Вам также может понравиться)
-  const recommendedProducts = allProducts
-    .filter((p) => p.id !== product.id && p.collection !== "Украшения")
-    .slice(0, 4);
+  // Рекомендуемые товары (Вам также может понравиться) — случайные из той же категории (collection)
+  const recommendedProducts = useMemo(() => {
+    const sameCategory = allProducts.filter(
+      (p) => p.id !== product.id && p.collection === product.collection
+    );
+    const shuffled = [...sameCategory].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 4);
+  }, [allProducts, product.id, product.collection]);
 
   const handleAddToCart = () => {
     if (product.soldOut) {

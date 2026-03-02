@@ -272,3 +272,11 @@ model FooterSettings {
   socialTitle           String   @default("Социальные сети")
   updatedAt             DateTime @updatedAt
 }
+
+// Блок «Вопрос-Ответ» на главной странице (редактируется в админке)
+model HomeFaq {
+  id        String   @id @default("single")
+  title     String   @default("Вопрос-Ответ")
+  content   String   @default("") // HTML или текст
+  updatedAt DateTime @updatedAt
+}

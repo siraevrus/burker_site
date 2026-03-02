@@ -221,6 +221,7 @@ export default function AdminLayout({
                   { label: "SEO", href: "/admin/seo" },
                   { label: "Стоимость доставки", href: "/admin/shipping" },
                   { label: "Футер", href: "/admin/footer" },
+                  { label: "Вопрос-Ответ", href: "/admin/faq" },
                   { label: "ФОС", href: "/admin/feedback" },
                 ]}
                 pathname={pathname}
