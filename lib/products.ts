@@ -94,13 +94,12 @@ export async function getAllProductsForAdmin(): Promise<Product[]> {
   }
 }
 
-// Получить товар по slug (только из названия; распроданные не отдаём)
+// Получить товар по slug для страницы товара (в т.ч. распроданные; отключённые не отдаём)
 export async function getProductById(slug: string): Promise<Product | null> {
   const [dbProducts, rates] = await Promise.all([
     prisma.product.findMany({
       where: {
         disabled: { not: true },
-        soldOut: false,
       },
     }),
     getExchangeRates(),
