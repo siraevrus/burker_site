@@ -1,141 +1,245 @@
 /**
- * T-Bank СБП B2B: создание одноразовой ссылки на оплату.
- * Документация: https://developer.tbank.ru/docs/products/sbp-b2b
- * API: POST /api/v1/b2b/qr/onetime
+ * T-Bank EACQ: оплата СБП через Init + GetQr.
+ * Документация: https://developer.tbank.ru/eacq/intro/developer/token
+ * Init: https://developer.tbank.ru/eacq/api/init
+ * GetQr: https://developer.tbank.ru/eacq/api/get-qr
  */
 
-const TBANK_BASE_URL =
-  process.env.TBANK_BASE_URL || "https://invoicing-int.tinkoff.ru";
+import crypto from "crypto";
+
+const TBANK_EACQ_BASE_URL =
+  process.env.TBANK_EACQ_BASE_URL || "https://securepay.tinkoff.ru";
 const TBANK_TERMINAL = process.env.TBANK_TERMINAL;
 const TBANK_PASSWORD = process.env.TBANK_PASSWORD;
-const TBANK_TOKEN = process.env.TBANK_TOKEN; // Bearer (например TBankSandboxToken для песочницы)
-const TBANK_ACCOUNT_NUMBER = process.env.TBANK_ACCOUNT_NUMBER;
-
-export type TbankVat = "0" | "10" | "20";
+const TBANK_TOKEN = process.env.TBANK_TOKEN; // опционально: Bearer для заголовка
 
 export interface CreateOneTimeLinkParams {
-  accountNumber: string; // 20 или 22 цифры
-  sum: number; // сумма в рублях
-  purpose: string; // до 210 символов
-  ttl: number; // срок жизни ссылки, дни
-  vat: TbankVat;
-  redirectUrl: string; // до 1024 символов
+  orderId: string; // идентификатор заказа в системе мерчанта (до 36 символов)
+  amountKopecks: number; // сумма в копейках (мин. 1000 = 10 руб)
+  description: string; // описание заказа (до 140 символов), отображается в банке
+  successUrl: string;
+  failUrl: string;
+  notificationUrl: string;
+  redirectDueDate?: string; // срок жизни ссылки: YYYY-MM-DDTHH:MI:SS+00:00
 }
 
 export interface CreateOneTimeLinkResult {
-  qrId: string;
-  link: string;
+  qrId: string; // PaymentId из Init (для вебхука)
+  link: string; // ссылка из GetQr (DataType=PAYLOAD)
 }
 
 export interface TbankApiError {
   message?: string;
   code?: string;
-}
-
-function getAuthHeader(): string {
-  if (TBANK_TOKEN) {
-    return `Bearer ${TBANK_TOKEN}`;
-  }
-  if (TBANK_TERMINAL && TBANK_PASSWORD) {
-    const encoded = Buffer.from(
-      `${TBANK_TERMINAL}:${TBANK_PASSWORD}`,
-      "utf-8"
-    ).toString("base64");
-    return `Basic ${encoded}`;
-  }
-  throw new Error("T-Bank: задайте TBANK_TOKEN или TBANK_TERMINAL+TBANK_PASSWORD");
+  ErrorCode?: string;
 }
 
 /**
- * Создаёт одноразовую ссылку на оплату через СБП.
- * В случае ошибки API выбрасывает ошибку с сообщением.
+ * Формирует подпись запроса (Token) по документации EACQ.
+ * Параметры корневого уровня (вложенные объекты/массивы не участвуют) + Password, сортировка по ключу, конкатенация значений, SHA-256.
  */
-export async function createOneTimePaymentLink(
-  params: CreateOneTimeLinkParams
-): Promise<CreateOneTimeLinkResult> {
-  const { accountNumber, sum, purpose, ttl, vat, redirectUrl } = params;
+function buildToken(params: Record<string, unknown>, password: string): string {
+  const withPassword = { ...params, Password: password };
+  const keys = Object.keys(withPassword)
+    .filter((k) => k !== "Token")
+    .filter((k) => {
+      const v = withPassword[k];
+      return v === null || (typeof v !== "object" && typeof v !== "function");
+    })
+    .sort();
+  const concat = keys
+    .map((k) => String(withPassword[k] ?? ""))
+    .join("");
+  return crypto.createHash("sha256").update(concat, "utf8").digest("hex");
+}
 
-  if (!/^(\d{20}|\d{22})$/.test(accountNumber)) {
-    throw new Error(
-      "T-Bank accountNumber должен содержать 20 или 22 цифры"
-    );
+function getAuthHeader(): string | undefined {
+  if (TBANK_TOKEN) {
+    return `Bearer ${TBANK_TOKEN}`;
   }
-  if (purpose.length > 210) {
-    throw new Error("T-Bank purpose не более 210 символов");
-  }
-  if (redirectUrl.length > 1024) {
-    throw new Error("T-Bank redirectUrl не более 1024 символов");
-  }
+  return undefined;
+}
 
-  const url = `${TBANK_BASE_URL}/api/v1/b2b/qr/onetime`;
-  const body = {
-    accountNumber,
-    sum: Number(sum),
-    purpose: purpose.slice(0, 210),
-    ttl: Number(ttl),
-    vat: String(vat) as TbankVat,
-    redirectUrl: redirectUrl.slice(0, 1024),
+/**
+ * Инициирует платёж (Init). Возвращает PaymentId для GetQr и вебхука.
+ */
+async function initPayment(params: CreateOneTimeLinkParams): Promise<number> {
+  const redirectDueDate =
+    params.redirectDueDate ??
+    (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 3);
+      return d.toISOString().replace(/\.\d{3}Z$/, "+00:00");
+    })();
+
+  const body: Record<string, unknown> = {
+    TerminalKey: TBANK_TERMINAL,
+    Amount: params.amountKopecks,
+    OrderId: params.orderId.slice(0, 36),
+    Description: params.description.slice(0, 140),
+    SuccessURL: params.successUrl,
+    FailURL: params.failUrl,
+    NotificationURL: params.notificationUrl,
+    RedirectDueDate: redirectDueDate,
   };
 
+  const token = buildToken(body, TBANK_PASSWORD!);
+  body.Token = token;
+
+  const url = `${TBANK_EACQ_BASE_URL}/v2/Init`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
 
   try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    const auth = getAuthHeader();
+    if (auth) headers.Authorization = auth;
+
     const res = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: getAuthHeader(),
-      },
+      headers,
       body: JSON.stringify(body),
       signal: controller.signal,
     });
 
-    const data = await res.json().catch(() => ({}));
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
 
     if (!res.ok) {
       const errMsg =
-        (data as TbankApiError).message ||
-        (typeof data === "object" && data !== null && "error" in data
-          ? String((data as { error: unknown }).error)
-          : `HTTP ${res.status}`);
-      console.error("T-Bank createOneTimePaymentLink error:", res.status, errMsg);
-      throw new Error(`T-Bank: ${errMsg}`);
+        (data.message as string) ??
+        (data.Message as string) ??
+        (data.ErrorMessage as string) ??
+        `HTTP ${res.status}`;
+      console.error("T-Bank Init error:", res.status, errMsg);
+      throw new Error(`T-Bank Init: ${errMsg}`);
     }
 
-    // Ожидаем в ответе qrId и link (или аналогичные поля по документации)
-    const qrId =
-      (data as { qrId?: string }).qrId ??
-      (data as { id?: string }).id ??
-      (data as { paymentId?: string }).paymentId;
-    const link =
-      (data as { link?: string }).link ??
-      (data as { url?: string }).url ??
-      (data as { paymentUrl?: string }).paymentUrl;
-
-    if (!qrId || !link) {
-      console.error("T-Bank unexpected response shape:", data);
-      throw new Error("T-Bank: неверный формат ответа (нет qrId или link)");
+    const success = data.Success === true || data.Success === "true";
+    if (!success) {
+      const errMsg =
+        (data.message as string) ??
+        (data.Message as string) ??
+        "Unknown error";
+      throw new Error(`T-Bank Init: ${errMsg}`);
     }
 
-    return { qrId: String(qrId), link: String(link) };
+    const paymentId = data.PaymentId ?? data.PaymentID;
+    if (paymentId === undefined || paymentId === null) {
+      console.error("T-Bank Init unexpected response:", data);
+      throw new Error("T-Bank Init: в ответе нет PaymentId");
+    }
+    return Number(paymentId);
   } finally {
     clearTimeout(timeout);
   }
 }
 
 /**
- * Проверяет, настроена ли интеграция T-Bank (достаточно для создания ссылки).
+ * Получает ссылку на оплату СБП по PaymentId (GetQr, DataType=PAYLOAD).
  */
-export function isTbankConfigured(): boolean {
-  if (TBANK_TOKEN) return true;
-  if (TBANK_TERMINAL && TBANK_PASSWORD && TBANK_ACCOUNT_NUMBER) return true;
-  return false;
+async function getQrLink(paymentId: number): Promise<string> {
+  const body: Record<string, unknown> = {
+    TerminalKey: TBANK_TERMINAL,
+    PaymentId: paymentId,
+    DataType: "PAYLOAD",
+  };
+
+  const token = buildToken(body, TBANK_PASSWORD!);
+  body.Token = token;
+
+  const url = `${TBANK_EACQ_BASE_URL}/v2/GetQr`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    const auth = getAuthHeader();
+    if (auth) headers.Authorization = auth;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+
+    if (!res.ok) {
+      const errMsg =
+        (data.message as string) ??
+        (data.Message as string) ??
+        `HTTP ${res.status}`;
+      console.error("T-Bank GetQr error:", res.status, errMsg);
+      throw new Error(`T-Bank GetQr: ${errMsg}`);
+    }
+
+    const success = data.Success === true || data.Success === "true";
+    if (!success) {
+      const errMsg =
+        (data.message as string) ??
+        (data.Message as string) ??
+        "Unknown error";
+      throw new Error(`T-Bank GetQr: ${errMsg}`);
+    }
+
+    const link =
+      (data.Data as string) ??
+      (data.Payload as string) ??
+      (data.Url as string) ??
+      (data.Link as string);
+    if (!link || typeof link !== "string") {
+      console.error("T-Bank GetQr unexpected response:", data);
+      throw new Error("T-Bank GetQr: в ответе нет Data (ссылки)");
+    }
+    return link;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 /**
- * Возвращает номер счёта для оплаты (из env или переданный).
+ * Создаёт одноразовую ссылку на оплату через СБП: Init → GetQr (PAYLOAD).
+ * qrId — PaymentId для сохранения в заказе и приёма вебхука.
  */
-export function getAccountNumber(override?: string): string | null {
-  return override || TBANK_ACCOUNT_NUMBER || null;
+export async function createOneTimePaymentLink(
+  params: CreateOneTimeLinkParams
+): Promise<CreateOneTimeLinkResult> {
+  if (!TBANK_TERMINAL || !TBANK_PASSWORD) {
+    throw new Error("T-Bank: задайте TBANK_TERMINAL и TBANK_PASSWORD");
+  }
+  if (params.amountKopecks < 1000) {
+    throw new Error("T-Bank: минимальная сумма СБП 10 руб (1000 коп.)");
+  }
+  if (params.orderId.length > 36) {
+    throw new Error("T-Bank: OrderId не более 36 символов");
+  }
+
+  const paymentId = await initPayment(params);
+  const link = await getQrLink(paymentId);
+  return { qrId: String(paymentId), link };
+}
+
+/**
+ * Проверяет, настроена ли интеграция T-Bank EACQ.
+ */
+export function isTbankConfigured(): boolean {
+  return Boolean(TBANK_TERMINAL && TBANK_PASSWORD);
+}
+
+/**
+ * Проверяет подпись уведомления EACQ (все параметры кроме Token + Password, сортировка, SHA-256).
+ */
+export function verifyNotificationToken(
+  params: Record<string, unknown>,
+  password: string
+): boolean {
+  const received = params.Token;
+  if (typeof received !== "string") return false;
+  const expected = buildToken(params, password);
+  return received === expected;
 }

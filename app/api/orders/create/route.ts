@@ -10,7 +10,6 @@ import { logError, logEvent } from "@/lib/ops-log";
 import {
   createOneTimePaymentLink,
   isTbankConfigured,
-  getAccountNumber,
 } from "@/lib/tbank";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -293,37 +292,37 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Платёжная ссылка T-Bank СБП
+    // Платёжная ссылка T-Bank СБП (EACQ: Init + GetQr)
     let paymentLink: string | null = null;
     let paymentId: string | null = null;
     let paymentLinkAvailable = false;
     const orderNumber = order.orderNumber || order.id;
-    const purpose = `Оплата заказа ${orderNumber}`.slice(0, 210);
-    let origin =
+    const description = `Оплата заказа ${orderNumber}`.slice(0, 140);
+    let baseUrl =
       process.env.NEXT_PUBLIC_SITE_URL ||
       request.headers.get("origin") ||
       "";
-    if (!origin && request.headers.get("x-forwarded-proto") && request.headers.get("x-forwarded-host")) {
-      origin = `${request.headers.get("x-forwarded-proto")}://${request.headers.get("x-forwarded-host")}`;
+    if (!baseUrl && request.headers.get("x-forwarded-proto") && request.headers.get("x-forwarded-host")) {
+      baseUrl = `${request.headers.get("x-forwarded-proto")}://${request.headers.get("x-forwarded-host")}`;
     }
-    if (!origin && request.headers.get("host")) {
-      origin = `https://${request.headers.get("host")}`;
+    if (!baseUrl && request.headers.get("host")) {
+      baseUrl = `https://${request.headers.get("host")}`;
     }
-    const redirectUrl = origin
-      ? `${origin}/order-confirmation?id=${order.id}&paid=1`
-      : "";
+    const successUrl = baseUrl ? `${baseUrl}/order-confirmation?id=${order.id}&paid=1` : "";
+    const failUrl = baseUrl ? `${baseUrl}/order-confirmation?id=${order.id}` : "";
+    const notificationUrl = baseUrl ? `${baseUrl}/api/webhooks/tbank` : "";
 
-    if (isTbankConfigured() && redirectUrl) {
-      const accountNumber = getAccountNumber();
-      if (accountNumber) {
+    if (isTbankConfigured() && successUrl && failUrl && notificationUrl) {
+      const amountKopecks = Math.round(totalAmount * 100);
+      if (amountKopecks >= 1000) {
         try {
           const result = await createOneTimePaymentLink({
-            accountNumber,
-            sum: totalAmount,
-            purpose,
-            ttl: 3,
-            vat: "0",
-            redirectUrl,
+            orderId: order.id,
+            amountKopecks,
+            description,
+            successUrl,
+            failUrl,
+            notificationUrl,
           });
           await prisma.order.update({
             where: { id: order.id },

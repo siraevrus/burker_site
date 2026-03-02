@@ -1,39 +1,56 @@
-# Оплата заказов (T-Bank СБП B2B)
+# Оплата заказов (T-Bank EACQ СБП)
 
-Интеграция одноразовых ссылок на оплату через СБП. Документация T-Bank: [СБП B2B](https://developer.tbank.ru/docs/products/sbp-b2b), [выпуск токена](https://developer.tbank.ru/docs/intro/manuals/self-service-auth).
+Интеграция оплаты через СБП по API **EACQ** (интернет-эквайринг): Init → GetQr, подпись запроса (Token).
+
+Документация:
+- [Токен (подпись запроса)](https://developer.tbank.ru/eacq/intro/developer/token)
+- [Init — инициация платежа](https://developer.tbank.ru/eacq/api/init)
+- [GetQr — ссылка или QR-код](https://developer.tbank.ru/eacq/api/get-qr)
+- [Уведомления](https://developer.tbank.ru/eacq/intro/developer/notification)
 
 ## Переменные окружения
 
-- `TBANK_TERMINAL` — номер терминала (для теста из ЛК Т-Бизнес).
-- `TBANK_PASSWORD` — пароль терминала.
-- `TBANK_ACCOUNT_NUMBER` — расчётный счёт юрлица/ИП (20 или 22 цифры).
-- `TBANK_BASE_URL` — опционально; по умолчанию `https://invoicing-int.tinkoff.ru` (песочница).
-- `TBANK_TOKEN` — опционально; Bearer-токен вместо пары терминал/пароль (например `TBankSandboxToken` для песочницы).
+- `TBANK_TERMINAL` — идентификатор терминала (из ЛК Т-Бизнес / интернет-эквайринг).
+- `TBANK_PASSWORD` — пароль терминала (участвует в расчёте подписи Token и проверке вебхуков).
+- `TBANK_EACQ_BASE_URL` — опционально; по умолчанию `https://securepay.tinkoff.ru`.
+- `TBANK_TOKEN` — опционально; Bearer API Token для заголовка (см. [self-service-auth](https://developer.tbank.ru/docs/intro/manuals/self-service-auth)).
 
-Для продакшена задайте боевые значения и при необходимости смените `TBANK_BASE_URL` на боевой URL по документации T-Bank.
+Для продакшена задайте боевые `TBANK_TERMINAL` и `TBANK_PASSWORD` из личного кабинета интернет-эквайринга.
 
-## Подключение вебхука
+## Подпись запроса (Token)
 
-1. Эндпоинт для уведомлений: `POST https://<ваш-домен>/api/webhooks/tbank`.
-2. Зарегистрируйте URL в T-Bank: напишите на [openapi@tbank.ru](mailto:openapi@tbank.ru), укажите ИНН компании, URL вебхука и при необходимости данные для авторизации.
-3. Сервер проверяет IP отправителя (белый список: `212.233.80.7`, `91.218.132.2`).
+Для каждого вызова Init и GetQr подпись считается так:
+- берутся только **корневые** параметры запроса (вложенные объекты не участвуют);
+- добавляется пара `Password`;
+- ключи сортируются по алфавиту;
+- конкатенируются **только значения** в одну строку;
+- SHA-256 от строки (UTF-8) → значение поля `Token` в теле запроса.
+
+Уведомления от T-Bank приходят с полем `Token`; проверка — тем же алгоритмом (все параметры кроме Token, без вложенных Data/Receipt, + Password, сортировка, SHA-256).
+
+## Подключение уведомлений
+
+1. Эндпоинт: `POST https://<ваш-домен>/api/webhooks/tbank`.
+2. В методе Init мы передаём `NotificationURL` — можно не регистрировать отдельно, если URL совпадает с указанным при создании заказа.
+3. При необходимости укажите URL уведомлений в настройках терминала в [личном кабинете интернет-эквайринга](https://business.tbank.ru/oplata/main).
+4. Ответ на уведомление: **HTTP 200** с телом **OK** (текст, заглавными буквами).
 
 ## Сценарий
 
-1. Пользователь оформляет заказ → создаётся заказ и одноразовая ссылка T-Bank.
-2. Редирект на страницу оплаты `/order/<id>/pay` (кнопка «Перейти к оплате»).
-3. После оплаты в СБП T-Bank вызывает вебхук → заказ переводится в статус «Оплачен», заполняется `paidAt`.
-4. Пользователь возвращается по `redirectUrl` на страницу подтверждения заказа.
+1. Пользователь оформляет заказ → создаётся заказ в БД, вызываются Init (Amount в копейках, OrderId = id заказа, SuccessURL/FailURL/NotificationURL) и GetQr (DataType=PAYLOAD) → сохраняются PaymentId и ссылка.
+2. Редирект на `/order/<id>/pay`; кнопка ведёт по ссылке в СБП.
+3. После оплаты T-Bank шлёт POST на `NotificationURL` с PaymentId, Status (CONFIRMED/AUTHORIZED и др.) и Token; сервер проверяет Token, обновляет заказ (paymentStatus, paidAt), отправляет письмо «Заказ оплачен».
+4. Пользователь переходит по SuccessURL на страницу подтверждения заказа.
 
 ## Деплой
 
-После выката кода с интеграцией оплаты на сервере нужно обновить схему БД (в таблице `Order` должны появиться колонки `paymentStatus`, `paymentId`, `paymentLink`, `paidAt`):
+Убедитесь, что в таблице `Order` есть колонки `paymentStatus`, `paymentId`, `paymentLink`, `paidAt`:
 
-- Если используете миграции: `npx prisma migrate deploy`
-- Иначе: `npx prisma db push`
-
-Без этого при создании заказа будет ошибка: *The column `paymentStatus` does not exist*.
+- `npx prisma migrate deploy` или `npx prisma db push`
 
 ## Тестирование
 
-Используйте тестовый терминал и пароль из личного кабинета Т-Бизнес (песочница). В production не используйте тестовые учёты.
+- Задайте тестовые `TBANK_TERMINAL` и `TBANK_PASSWORD` из ЛК (тестовый режим).
+- Запуск проверки: `npm run test:tbank` (создаёт ссылку на 10 ₽ с тестовым OrderId).
+
+В production используйте боевые учётные данные.
