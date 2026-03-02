@@ -153,16 +153,30 @@ export default function CheckoutForm({ user, rates = null, productSellingPriceEu
     setPvzLoading(true);
     try {
       const res = await fetch(`/api/cdek/deliverypoints${q}`);
-      const data = await res.json();
+      let data: unknown;
+      try {
+        data = await res.json();
+      } catch {
+        setPvzList([]);
+        setPvzError(
+          res.status >= 500
+            ? "Сервис ПВЗ временно недоступен. Попробуйте позже или оформите доставку курьером."
+            : "Ошибка загрузки. Попробуйте позже."
+        );
+        return;
+      }
       if (!res.ok) {
         setPvzList([]);
-        setPvzError(typeof data.error === "string" ? data.error : "Не удалось загрузить список ПВЗ");
+        const msg = typeof data === "object" && data && "error" in data && typeof (data as { error: unknown }).error === "string"
+          ? (data as { error: string }).error
+          : "Не удалось загрузить список ПВЗ";
+        setPvzError(msg);
         return;
       }
       setPvzList(Array.isArray(data) ? data : []);
     } catch {
       setPvzList([]);
-      setPvzError("Ошибка сети. Попробуйте позже.");
+      setPvzError("Ошибка сети. Проверьте соединение и попробуйте позже.");
     } finally {
       setPvzLoading(false);
     }

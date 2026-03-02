@@ -12,9 +12,7 @@ const API_URL = "https://parcing.burker-watches.ru/api_json.php";
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
-    let secretKey = request.nextUrl.searchParams.get("secret") || "";
-    if (secretKey) secretKey = secretKey.replace(/ /g, "+"); // в query + приходит как пробел
-    const providedSecret = authHeader?.replace(/^Bearer\s+/i, "") || secretKey || "";
+    const providedSecret = authHeader?.replace(/^Bearer\s+/i, "")?.trim() || "";
     const expectedSecret = process.env.CRON_SECRET || process.env.CRON_SECRET_KEY;
 
     if (expectedSecret && providedSecret !== expectedSecret) {

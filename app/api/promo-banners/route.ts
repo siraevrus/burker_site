@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/admin-api";
 import { PromoBanner } from "@/lib/types";
 
 export const runtime = 'nodejs';
@@ -53,7 +54,10 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const unauthorized = await requireAdmin(request);
+  if (unauthorized) return unauthorized;
+
   const body = await request.json();
   const { banners }: { banners: PromoBanner[] } = body;
 

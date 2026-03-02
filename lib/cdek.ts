@@ -37,13 +37,27 @@ export async function getCdekAccessToken(): Promise<string | null> {
     client_secret: clientSecret,
   });
 
-  const res = await fetch(CDEK_OAUTH_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: body.toString(),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+  let res: Response;
+  try {
+    res = await fetch(CDEK_OAUTH_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: body.toString(),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    clearTimeout(timeoutId);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[CDEK] OAuth request failed:", msg);
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!res.ok) {
     const text = await res.text();
@@ -131,14 +145,28 @@ export async function fetchCdekDeliveryPoints(): Promise<CdekDeliveryPointRaw[] 
 
   const url = `${CDEK_BASE_URL}/deliverypoints`;
   console.log("[CDEK] Fetching delivery points from:", url, "token:", token.substring(0, 20) + "...");
-  
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`, // Отправляем полный токен
-      "Content-Type": "application/json",
-    },
-  });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s for large list
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      signal: controller.signal,
+    });
+  } catch (err) {
+    clearTimeout(timeoutId);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[CDEK] Delivery points request failed:", msg);
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!res.ok) {
     const text = await res.text();

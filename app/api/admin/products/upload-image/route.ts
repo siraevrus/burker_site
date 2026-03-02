@@ -6,6 +6,14 @@ import { requireAdmin } from "@/lib/admin-api";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "gif", "webp"]);
+const MIME_TO_EXT: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/png": "png",
+  "image/gif": "gif",
+  "image/webp": "webp",
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,11 +54,18 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Создаем уникальное имя файла
+    // Имя файла генерируем на сервере — без пользовательского ввода (защита от path traversal)
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 8);
-    const filename = `product-${timestamp}-${randomStr}-${file.name}`;
-    
+    const ext = MIME_TO_EXT[file.type] || "jpg";
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
+      return NextResponse.json(
+        { error: "Недопустимый формат изображения" },
+        { status: 400 }
+      );
+    }
+    const filename = `product-${timestamp}-${randomStr}.${ext}`;
+
     // Путь к папке public/products
     const publicDir = join(process.cwd(), "public", "products");
     

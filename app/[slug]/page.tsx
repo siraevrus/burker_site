@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import DOMPurify from "isomorphic-dompurify";
 import { prisma } from "@/lib/db";
 import { CANONICAL_SITE_URL } from "@/lib/site-url";
 
@@ -46,12 +47,21 @@ export default async function DynamicPage({ params }: Props) {
   });
   if (!page) notFound();
 
+  const sanitizedContent = DOMPurify.sanitize(page.content, {
+    ALLOWED_TAGS: [
+      "p", "br", "strong", "em", "u", "s", "a", "ul", "ol", "li",
+      "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "hr",
+      "table", "thead", "tbody", "tr", "th", "td", "span", "div",
+    ],
+    ALLOWED_ATTR: ["href", "target", "rel", "class", "style"],
+  });
+
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
       <h1 className="text-3xl font-bold mb-8">{page.title}</h1>
       <div
         className="prose prose-lg max-w-none text-gray-700 [&_a]:text-[#A13D42] [&_a]:underline"
-        dangerouslySetInnerHTML={{ __html: page.content }}
+        dangerouslySetInnerHTML={{ __html: sanitizedContent }}
       />
     </div>
   );

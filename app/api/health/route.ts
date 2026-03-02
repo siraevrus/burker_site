@@ -11,24 +11,18 @@ export async function GET() {
     return NextResponse.json({
       status: "ok",
       timestamp: new Date().toISOString(),
-      checks: {
-        db: "ok",
-        mailopost: process.env.MAILOPOST_API_TOKEN ? "configured" : "not_configured",
-      },
       durationMs,
     });
   } catch (error: unknown) {
     const durationMs = Date.now() - startedAt;
     const message = error instanceof Error ? error.message : "Health check failed";
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Health check error:", error);
+    }
     return NextResponse.json(
       {
         status: "error",
         timestamp: new Date().toISOString(),
-        checks: {
-          db: "error",
-          mailopost: process.env.MAILOPOST_API_TOKEN ? "configured" : "not_configured",
-        },
-        error: message,
         durationMs,
       },
       { status: 500 }

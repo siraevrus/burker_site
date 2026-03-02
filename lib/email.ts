@@ -3,6 +3,17 @@ import { sendEmailViaMailopost } from "./mailopost";
 // Конфигурация из переменных окружения
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.MAILOPOST_FROM_EMAIL || "";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "http://localhost:3000";
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+/** Экранирование HTML для предотвращения XSS в письмах */
+function esc(s: string): string {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 /** Подпись в письмах: Mira Brands | Burker со ссылкой на сайт */
 const EMAIL_FOOTER = `<p style="color: #999; font-size: 12px;"><a href="${SITE_URL}" style="color: #999; text-decoration: none;">Mira Brands | Burker</a></p>`;
@@ -15,13 +26,9 @@ export async function sendVerificationCode(
   email: string,
   code: string
 ): Promise<boolean> {
-  // Выводим код в консоль для удобства разработки
-  console.log("\n" + "=".repeat(60));
-  console.log("📧 КОД ВЕРИФИКАЦИИ EMAIL");
-  console.log("=".repeat(60));
-  console.log(`Email: ${email}`);
-  console.log(`Код: ${code}`);
-  console.log("=".repeat(60) + "\n");
+  if (!IS_PRODUCTION) {
+    console.log("\n📧 Код верификации:", email, "→", code);
+  }
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -59,21 +66,15 @@ export async function sendOrderConfirmation(
     items: Array<{ name: string; quantity: number; price: number }>;
   }
 ): Promise<boolean> {
-  console.log("\n" + "=".repeat(60));
-  console.log("📦 ПОДТВЕРЖДЕНИЕ ЗАКАЗА");
-  console.log("=".repeat(60));
-  console.log(`Заказ #${orderNumber}`);
-  console.log(`Email: ${email}`);
-  console.log(`Имя: ${orderData.firstName}`);
-  console.log(`Сумма: ${orderData.totalAmount.toFixed(0)} ₽`);
-  console.log(`Товаров: ${orderData.items.length}`);
-  console.log("=".repeat(60) + "\n");
+  if (!IS_PRODUCTION) {
+    console.log("📦 Подтверждение заказа #" + orderNumber);
+  }
 
   const itemsList = orderData.items
     .map(
       (item) =>
         `<tr>
-          <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${esc(item.name)}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toFixed(0)} ₽</td>
         </tr>`
@@ -83,7 +84,7 @@ export async function sendOrderConfirmation(
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #333;">Спасибо за ваш заказ!</h2>
-      <p>Здравствуйте, ${orderData.firstName}!</p>
+      <p>Здравствуйте, ${esc(orderData.firstName)}!</p>
       <p>Ваш заказ <strong>#${orderNumber}</strong> успешно принят и находится в обработке.</p>
       
       <h3 style="color: #333; margin-top: 30px;">Детали заказа:</h3>
@@ -136,17 +137,9 @@ export async function sendAdminOrderNotification(
     itemsCount: number;
   }
 ): Promise<boolean> {
-  console.log("\n" + "=".repeat(60));
-  console.log("🔔 УВЕДОМЛЕНИЕ АДМИНУ О НОВОМ ЗАКАЗЕ");
-  console.log("=".repeat(60));
-  console.log(`Заказ #${orderNumber}`);
-  console.log(`Email: ${orderData.email}`);
-  console.log(`Имя: ${orderData.firstName}`);
-  console.log(`Телефон: ${orderData.phone}`);
-  console.log(`Адрес: ${orderData.address}`);
-  console.log(`Товаров: ${orderData.itemsCount}`);
-  console.log(`Сумма: ${orderData.totalAmount.toFixed(0)} ₽`);
-  console.log("=".repeat(60) + "\n");
+  if (!IS_PRODUCTION) {
+    console.log("🔔 Уведомление админу о заказе #" + orderNumber);
+  }
 
   if (!ADMIN_EMAIL) {
     console.warn("ADMIN_EMAIL не настроен, уведомление админу не отправлено");
@@ -156,11 +149,11 @@ export async function sendAdminOrderNotification(
   const orderLink = `${SITE_URL}/admin/orders/${orderId}`;
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #333;">Новый заказ #${orderNumber}</h2>
-      <p><strong>Email:</strong> ${orderData.email}</p>
-      <p><strong>Имя:</strong> ${orderData.firstName}</p>
-      <p><strong>Телефон:</strong> ${orderData.phone}</p>
-      <p><strong>Адрес:</strong> ${orderData.address}</p>
+      <h2 style="color: #333;">Новый заказ #${esc(orderNumber)}</h2>
+      <p><strong>Email:</strong> ${esc(orderData.email)}</p>
+      <p><strong>Имя:</strong> ${esc(orderData.firstName)}</p>
+      <p><strong>Телефон:</strong> ${esc(orderData.phone)}</p>
+      <p><strong>Адрес:</strong> ${esc(orderData.address)}</p>
       <p><strong>Количество товаров:</strong> ${orderData.itemsCount}</p>
       <p><strong>Сумма заказа:</strong> ${orderData.totalAmount.toFixed(0)} ₽</p>
       <p><strong>Ссылка на заказ:</strong> <a href="${orderLink}">${orderLink}</a></p>
@@ -188,15 +181,9 @@ export async function sendFeedbackNotificationToAdmin(data: {
   comment: string;
 }): Promise<boolean> {
   if (!ADMIN_EMAIL) {
-    console.warn("ADMIN_EMAIL не настроен, уведомление о заявке не отправлено");
+    if (!IS_PRODUCTION) console.warn("ADMIN_EMAIL не настроен");
     return true;
   }
-  const esc = (s: string) =>
-    String(s)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
   const name = esc(data.name);
   const contact = esc(data.contact);
   const comment = esc(data.comment).replace(/\n/g, "<br>");
@@ -229,12 +216,9 @@ export async function sendPasswordResetCode(
   email: string,
   code: string
 ): Promise<boolean> {
-  console.log("\n" + "=".repeat(60));
-  console.log("🔐 КОД ВОССТАНОВЛЕНИЯ ПАРОЛЯ");
-  console.log("=".repeat(60));
-  console.log(`Email: ${email}`);
-  console.log(`Код: ${code}`);
-  console.log("=".repeat(60) + "\n");
+  if (!IS_PRODUCTION) {
+    console.log("🔐 Код восстановления пароля:", email, "→", code);
+  }
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -269,20 +253,16 @@ export async function sendOrderPurchasedEmail(
   firstName: string,
   proofImageUrl: string
 ): Promise<boolean> {
-  console.log("\n" + "=".repeat(60));
-  console.log("🛒 УВЕДОМЛЕНИЕ: ТОВАР ВЫКУПЛЕН");
-  console.log("=".repeat(60));
-  console.log(`Заказ #${orderNumber}`);
-  console.log(`Email: ${email}`);
-  console.log(`Подтверждение: ${proofImageUrl}`);
-  console.log("=".repeat(60) + "\n");
+  if (!IS_PRODUCTION) {
+    console.log("🛒 Товар выкуплен #" + orderNumber);
+  }
 
   const siteUrl = SITE_URL;
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #333;">Ваш товар выкуплен!</h2>
-      <p>Здравствуйте, ${firstName}!</p>
+      <p>Здравствуйте, ${esc(firstName)}!</p>
       <p>Рады сообщить, что товар по вашему заказу <strong>#${orderNumber}</strong> успешно выкуплен у продавца.</p>
       
       <div style="background-color: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px;">
@@ -315,35 +295,31 @@ export async function sendOrderInTransitToWarehouseEmail(
   firstName: string,
   trackNumber: string
 ): Promise<boolean> {
-  console.log("\n" + "=".repeat(60));
-  console.log("📦 УВЕДОМЛЕНИЕ: В ПУТИ НА СКЛАД");
-  console.log("=".repeat(60));
-  console.log(`Заказ #${orderNumber}`);
-  console.log(`Email: ${email}`);
-  console.log(`Трек: ${trackNumber}`);
-  console.log("=".repeat(60) + "\n");
+  if (!IS_PRODUCTION) {
+    console.log("📦 В пути на склад #" + orderNumber);
+  }
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #333;">Товар отправлен на склад</h2>
-      <p>Здравствуйте, ${firstName}!</p>
+      <p>Здравствуйте, ${esc(firstName)}!</p>
       <p>Продавец отправил товар по вашему заказу <strong>#${orderNumber}</strong> на наш склад в Германии.</p>
       
       <div style="background-color: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px;">
         <p style="margin: 0 0 10px 0; font-weight: bold;">Трек-номер для отслеживания:</p>
-        <p style="font-size: 18px; color: #A13D42; margin: 0; font-family: monospace;">${trackNumber}</p>
+        <p style="font-size: 18px; color: #A13D42; margin: 0; font-family: monospace;">${esc(trackNumber)}</p>
       </div>
       
       <p>Вы можете отслеживать посылку по следующим ссылкам:</p>
       <ul style="padding-left: 20px;">
         <li style="margin-bottom: 10px;">
-          <a href="https://www.dhl.de/en/privatkunden/pakete-empfangen/verfolgen.html?piececode=${trackNumber}" style="color: #A13D42;">DHL</a>
+          <a href="https://www.dhl.de/en/privatkunden/pakete-empfangen/verfolgen.html?piececode=${encodeURIComponent(trackNumber)}" style="color: #A13D42;">DHL</a>
         </li>
         <li style="margin-bottom: 10px;">
-          <a href="https://t.17track.net/en#nums=${trackNumber}" style="color: #A13D42;">17track</a>
+          <a href="https://t.17track.net/en#nums=${encodeURIComponent(trackNumber)}" style="color: #A13D42;">17track</a>
         </li>
         <li style="margin-bottom: 10px;">
-          <a href="https://parcelsapp.com/en/tracking/${trackNumber}" style="color: #A13D42;">Parcels App</a>
+          <a href="https://parcelsapp.com/en/tracking/${encodeURIComponent(trackNumber)}" style="color: #A13D42;">Parcels App</a>
         </li>
       </ul>
       
@@ -372,35 +348,31 @@ export async function sendOrderInTransitToRussiaEmail(
   firstName: string,
   trackNumber: string
 ): Promise<boolean> {
-  console.log("\n" + "=".repeat(60));
-  console.log("🚀 УВЕДОМЛЕНИЕ: В ПУТИ В РОССИЮ");
-  console.log("=".repeat(60));
-  console.log(`Заказ #${orderNumber}`);
-  console.log(`Email: ${email}`);
-  console.log(`Трек: ${trackNumber}`);
-  console.log("=".repeat(60) + "\n");
+  if (!IS_PRODUCTION) {
+    console.log("🚀 В пути в Россию #" + orderNumber);
+  }
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #333;">Товар отправлен в Россию!</h2>
-      <p>Здравствуйте, ${firstName}!</p>
-      <p>Отличные новости! Товар по вашему заказу <strong>#${orderNumber}</strong> отправлен со склада и направляется в Россию.</p>
+      <p>Здравствуйте, ${esc(firstName)}!</p>
+      <p>Отличные новости! Товар по вашему заказу <strong>#${esc(orderNumber)}</strong> отправлен со склада и направляется в Россию.</p>
       
       <div style="background-color: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px;">
         <p style="margin: 0 0 10px 0; font-weight: bold;">Трек-номер для отслеживания:</p>
-        <p style="font-size: 18px; color: #A13D42; margin: 0; font-family: monospace;">${trackNumber}</p>
+        <p style="font-size: 18px; color: #A13D42; margin: 0; font-family: monospace;">${esc(trackNumber)}</p>
       </div>
       
       <p>Вы можете отслеживать посылку по следующим ссылкам:</p>
       <ul style="padding-left: 20px;">
         <li style="margin-bottom: 10px;">
-          <a href="https://www.cdek.ru/ru/tracking?order_id=${trackNumber}" style="color: #A13D42;">СДЭК</a>
+          <a href="https://www.cdek.ru/ru/tracking?order_id=${encodeURIComponent(trackNumber)}" style="color: #A13D42;">СДЭК</a>
         </li>
         <li style="margin-bottom: 10px;">
-          <a href="https://t.17track.net/en#nums=${trackNumber}" style="color: #A13D42;">17track</a>
+          <a href="https://t.17track.net/en#nums=${encodeURIComponent(trackNumber)}" style="color: #A13D42;">17track</a>
         </li>
         <li style="margin-bottom: 10px;">
-          <a href="https://parcelsapp.com/en/tracking/${trackNumber}" style="color: #A13D42;">Parcels App</a>
+          <a href="https://parcelsapp.com/en/tracking/${encodeURIComponent(trackNumber)}" style="color: #A13D42;">Parcels App</a>
         </li>
       </ul>
       
@@ -428,17 +400,14 @@ export async function sendOrderDeliveredEmail(
   orderNumber: string,
   firstName: string
 ): Promise<boolean> {
-  console.log("\n" + "=".repeat(60));
-  console.log("✅ УВЕДОМЛЕНИЕ: ЗАКАЗ ДОСТАВЛЕН");
-  console.log("=".repeat(60));
-  console.log(`Заказ #${orderNumber}`);
-  console.log(`Email: ${email}`);
-  console.log("=".repeat(60) + "\n");
+  if (!IS_PRODUCTION) {
+    console.log("✅ Заказ доставлен #" + orderNumber);
+  }
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #333;">Заказ доставлен!</h2>
-      <p>Здравствуйте, ${firstName}!</p>
+      <p>Здравствуйте, ${esc(firstName)}!</p>
       <p>Ваш заказ <strong>#${orderNumber}</strong> успешно доставлен!</p>
       
       <div style="background-color: #e8f5e9; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center;">
@@ -472,18 +441,14 @@ export async function sendOrderPaidEmail(
   firstName: string,
   totalAmount: number
 ): Promise<boolean> {
-  console.log("\n" + "=".repeat(60));
-  console.log("💳 УВЕДОМЛЕНИЕ: ЗАКАЗ ОПЛАЧЕН");
-  console.log("=".repeat(60));
-  console.log(`Заказ #${orderNumber}`);
-  console.log(`Email: ${email}`);
-  console.log(`Сумма: ${totalAmount.toFixed(0)} ₽`);
-  console.log("=".repeat(60) + "\n");
+  if (!IS_PRODUCTION) {
+    console.log("💳 Заказ оплачен #" + orderNumber);
+  }
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #333;">Заказ оплачен</h2>
-      <p>Здравствуйте, ${firstName}!</p>
+      <p>Здравствуйте, ${esc(firstName)}!</p>
       <p>Мы получили оплату по заказу <strong>#${orderNumber}</strong> на сумму <strong>${totalAmount.toFixed(0)} ₽</strong>.</p>
       
       <div style="background-color: #e8f5e9; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center;">

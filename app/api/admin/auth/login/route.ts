@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!verifyAdminCredentials(username, password)) {
+    if (!(await verifyAdminCredentials(username, password))) {
       return NextResponse.json(
         { error: "Неверный логин или пароль" },
         { status: 401 }
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     response.cookies.set(adminAuthConfig.cookieName, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "strict",
       maxAge: adminAuthConfig.maxAgeSeconds,
       path: "/",
     });

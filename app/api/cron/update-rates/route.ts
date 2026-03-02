@@ -4,12 +4,8 @@ import { fetchCbrRates } from "@/lib/cbr-rates";
 import { notifyRatesUpdated } from "@/lib/telegram";
 
 export async function GET(request: NextRequest) {
-  const headerSecret = request.headers.get("X-Cron-Secret");
   const authHeader = request.headers.get("authorization");
-  let querySecret = request.nextUrl.searchParams.get("secret") || "";
-  // В query символ + приходит как пробел — восстанавливаем для сравнения
-  if (querySecret) querySecret = querySecret.replace(/ /g, "+");
-  const providedSecret = headerSecret || authHeader?.replace(/^Bearer\s+/i, "") || querySecret || "";
+  const providedSecret = authHeader?.replace(/^Bearer\s+/i, "")?.trim() || "";
   const expectedSecret = process.env.CRON_SECRET || process.env.CRON_SECRET_KEY;
 
   if (expectedSecret && providedSecret !== expectedSecret) {

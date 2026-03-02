@@ -443,21 +443,36 @@ ls -la /var/lib/burker-watches/dev.db
 npx prisma migrate deploy
 ```
 
-### Проблема: API СДЭК не работает
+### Проблема: API СДЭК не работает (502 / «Ошибка сети»)
 
-1. Проверьте переменные окружения:
+1. **Убедитесь, что CDEK_CLIENT_ID и CDEK_CLIENT_SECRET видны процессу.** PM2 не загружает .env автоматически — добавьте переменные в блок `env` в `ecosystem.config.js`:
+```javascript
+env: {
+  CDEK_CLIENT_ID: "ваш-client-id",
+  CDEK_CLIENT_SECRET: "ваш-client-secret",
+  // ...
+}
+```
+Либо запускайте PM2 так, чтобы .env был загружен: `cd /var/www/burker-watches.ru && export $(cat .env | xargs) && pm2 start ecosystem.config.js`
+
+2. Проверьте переменные окружения:
 ```bash
 cat .env | grep CDEK
 ```
 
-2. Проверьте логи:
+3. Проверьте логи:
 ```bash
 pm2 logs burker-watches | grep CDEK
 ```
 
-3. Используйте скрипт диагностики:
+4. Используйте скрипт диагностики:
 ```bash
 bash test-cdek-api.sh
+```
+
+5. После изменений перезапустите приложение:
+```bash
+pm2 restart burker-watches
 ```
 
 ---

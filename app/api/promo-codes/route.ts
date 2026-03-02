@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/admin-api";
 
-// GET — все промокоды (админ) или проверка кода (клиент)
+// GET — все промокоды (только админ) или проверка кода по ?code= (клиент)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -66,7 +67,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Для админки — все промокоды + количество использований
+    // Для админки — все промокоды (требуется авторизация)
+    const unauthorized = await requireAdmin(request);
+    if (unauthorized) return unauthorized;
+
     const promoCodes = await prisma.promoCode.findMany({
       orderBy: { createdAt: "desc" },
       include: { _count: { select: { usages: true } } },
@@ -88,8 +92,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST — создать промокод
+// POST — создать промокод (только админ)
 export async function POST(request: NextRequest) {
+  const unauthorized = await requireAdmin(request);
+  if (unauthorized) return unauthorized;
+
   try {
     const body = await request.json();
     const {
@@ -139,8 +146,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT — обновить промокод
+// PUT — обновить промокод (только админ)
 export async function PUT(request: NextRequest) {
+  const unauthorized = await requireAdmin(request);
+  if (unauthorized) return unauthorized;
+
   try {
     const body = await request.json();
     const {
@@ -196,8 +206,11 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE — удалить промокод
+// DELETE — удалить промокод (только админ)
 export async function DELETE(request: NextRequest) {
+  const unauthorized = await requireAdmin(request);
+  if (unauthorized) return unauthorized;
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");

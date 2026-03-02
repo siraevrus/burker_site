@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 
@@ -15,8 +16,10 @@ function getAdminJwtSecret(): string {
 function getAdminCredentials(): { username: string; password: string } {
   const username = process.env.ADMIN_USERNAME;
   const password = process.env.ADMIN_PASSWORD;
-  if (process.env.NODE_ENV === "production" && (!username || !password)) {
-    throw new Error("ADMIN_USERNAME and ADMIN_PASSWORD must be set in production");
+  const passwordHash = process.env.ADMIN_PASSWORD_HASH;
+  const hasAuth = (username && (password || passwordHash));
+  if (process.env.NODE_ENV === "production" && !hasAuth) {
+    throw new Error("ADMIN_USERNAME and (ADMIN_PASSWORD or ADMIN_PASSWORD_HASH) must be set in production");
   }
   return {
     username: username || "admin",
@@ -29,8 +32,13 @@ type AdminTokenPayload = {
   username: string;
 };
 
-export function verifyAdminCredentials(username: string, password: string): boolean {
+export async function verifyAdminCredentials(username: string, password: string): Promise<boolean> {
   const { username: adminUsername, password: adminPassword } = getAdminCredentials();
+  const passwordHash = process.env.ADMIN_PASSWORD_HASH;
+  if (passwordHash) {
+    const match = await bcrypt.compare(password, passwordHash);
+    return username === adminUsername && match;
+  }
   return username === adminUsername && password === adminPassword;
 }
 
