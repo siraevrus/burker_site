@@ -1,7 +1,13 @@
-export const metadata = {
-  title: "Условия и положения | Mira Brands | Burker",
-  description: "Условия использования интернет-магазина Mira Brands | Burker",
-};
+import type { Metadata } from "next";
+import { getMetadataForPath } from "@/lib/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { title, description } = await getMetadataForPath("/terms", {
+    title: "Условия и положения | Mira Brands | Burker",
+    description: "Условия использования интернет-магазина Mira Brands | Burker",
+  });
+  return { title, description };
+}
 
 export default function TermsPage() {
   return (

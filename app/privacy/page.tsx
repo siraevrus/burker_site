@@ -1,7 +1,13 @@
-export const metadata = {
-  title: "Политика конфиденциальности | Mira Brands | Burker",
-  description: "Политика конфиденциальности Mira Brands | Burker",
-};
+import type { Metadata } from "next";
+import { getMetadataForPath } from "@/lib/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { title, description } = await getMetadataForPath("/privacy", {
+    title: "Политика конфиденциальности | Mira Brands | Burker",
+    description: "Политика конфиденциальности Mira Brands | Burker",
+  });
+  return { title, description };
+}
 
 export default function PrivacyPage() {
   return (

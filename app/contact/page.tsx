@@ -1,9 +1,14 @@
-export const metadata = {
-  title: "Форма обратной связи | Mira Brands | Burker",
-  description: "Свяжитесь с нами — форма обратной связи Mira Brands | Burker",
-};
-
+import type { Metadata } from "next";
+import { getMetadataForPath } from "@/lib/seo";
 import ContactForm from "./ContactForm";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { title, description } = await getMetadataForPath("/contact", {
+    title: "Форма обратной связи | Mira Brands | Burker",
+    description: "Свяжитесь с нами — форма обратной связи Mira Brands | Burker",
+  });
+  return { title, description };
+}
 
 export default function ContactPage() {
   return (

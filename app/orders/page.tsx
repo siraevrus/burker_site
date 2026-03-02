@@ -1,7 +1,17 @@
+import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth";
 import { getUserOrders } from "@/lib/orders";
 import { redirect } from "next/navigation";
+import { getMetadataForPath } from "@/lib/seo";
 import OrdersPageClient from "./OrdersPageClient";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { title, description } = await getMetadataForPath("/orders", {
+    title: "Мои заказы | Mira Brands | Burker",
+    description: "История заказов в интернет-магазине Mira Brands | Burker",
+  });
+  return { title, description };
+}
 
 export default async function OrdersPage() {
   const currentUser = await getCurrentUser();

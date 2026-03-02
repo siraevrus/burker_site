@@ -1,6 +1,16 @@
+import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getMetadataForPath } from "@/lib/seo";
 import CheckoutPageClient from "./CheckoutPageClient";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { title, description } = await getMetadataForPath("/checkout", {
+    title: "Оформление заказа | Mira Brands | Burker",
+    description: "Оформление заказа в интернет-магазине Mira Brands | Burker",
+  });
+  return { title, description };
+}
 
 export default async function CheckoutPage() {
   const currentUser = await getCurrentUser();
