@@ -67,6 +67,18 @@ export async function getAllProducts(): Promise<Product[]> {
   return dbProducts.map((p) => mapProductFromDbWithRates(p, rates));
 }
 
+// Получить все товары для поиска (включая распроданные; без отключённых)
+export async function getAllProductsForSearch(): Promise<Product[]> {
+  const [dbProducts, rates] = await Promise.all([
+    prisma.product.findMany({
+      where: { disabled: { not: true } },
+      orderBy: { createdAt: "desc" },
+    }),
+    getExchangeRates(),
+  ]);
+  return dbProducts.map((p) => mapProductFromDbWithRates(p, rates));
+}
+
 // Получить все товары для админ-панели (включая отключенные)
 export async function getAllProductsForAdmin(): Promise<Product[]> {
   try {
@@ -145,9 +157,9 @@ export async function getProductsByCollection(
   return dbProducts.map((p) => mapProductFromDbWithRates(p, rates));
 }
 
-// Поиск товаров по названию
+// Поиск товаров по названию (включая распроданные)
 export async function searchProducts(query: string): Promise<Product[]> {
-  const allProducts = await getAllProducts();
+  const allProducts = await getAllProductsForSearch();
   return allProducts.filter((product) =>
     product.name.toLowerCase().includes(query.toLowerCase())
   );
