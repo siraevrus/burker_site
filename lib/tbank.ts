@@ -8,11 +8,38 @@
 
 import crypto from "crypto";
 
-const TBANK_EACQ_BASE_URL =
-  process.env.TBANK_EACQ_BASE_URL || "https://securepay.tinkoff.ru";
 const TBANK_TERMINAL = process.env.TBANK_TERMINAL;
+
+function getBaseUrl(): string {
+  if (process.env.TBANK_EACQ_BASE_URL) {
+    return process.env.TBANK_EACQ_BASE_URL;
+  }
+  // Тест: терминал содержит DEMO → rest-api-test
+  if (TBANK_TERMINAL?.toUpperCase().includes("DEMO")) {
+    return "https://rest-api-test.tinkoff.ru";
+  }
+  return "https://securepay.tinkoff.ru";
+}
 const TBANK_PASSWORD = process.env.TBANK_PASSWORD;
 const TBANK_TOKEN = process.env.TBANK_TOKEN; // опционально: Bearer для заголовка
+
+/** Позиция чека для Receipt (EACQ FFD 1.05) */
+export interface ReceiptItem {
+  name: string;
+  price: number; // в копейках
+  quantity: number;
+  amount: number; // price * quantity, в копейках
+  tax?: "none" | "vat0" | "vat10" | "vat20";
+  paymentMethod?: "full_payment" | "full_prepayment";
+  paymentObject?: "commodity" | "service";
+}
+
+/** Объект Receipt для Init (обязателен при онлайн-кассе, для теста №7 — формирование чека) */
+export interface ReceiptParams {
+  email: string;
+  taxation: "osn" | "usn_income" | "usn_income_outcome" | "patent";
+  items: ReceiptItem[];
+}
 
 export interface CreateOneTimeLinkParams {
   orderId: string; // идентификатор заказа в системе мерчанта (до 36 символов)
@@ -22,6 +49,7 @@ export interface CreateOneTimeLinkParams {
   failUrl: string;
   notificationUrl: string;
   redirectDueDate?: string; // срок жизни ссылки: YYYY-MM-DDTHH:MI:SS+00:00
+  receipt?: ReceiptParams; // для чека (обязательно при онлайн-кассе, для теста №7)
 }
 
 export interface CreateOneTimeLinkResult {
@@ -93,10 +121,30 @@ async function initPayment(params: CreateOneTimeLinkParams): Promise<InitResult>
     RedirectDueDate: redirectDueDate,
   };
 
+  if (params.receipt) {
+    const r = params.receipt;
+    const itemsSum = r.items.reduce((s, i) => s + i.amount, 0);
+    body.Receipt = {
+      FfdVersion: "1.05",
+      Email: r.email.slice(0, 64),
+      Taxation: r.taxation,
+      Items: r.items.map((i) => ({
+        Name: i.name.slice(0, 128),
+        Price: i.price,
+        Quantity: i.quantity,
+        Amount: i.amount,
+        Tax: i.tax ?? "none",
+        PaymentMethod: i.paymentMethod ?? "full_payment",
+        PaymentObject: i.paymentObject ?? "commodity",
+      })),
+      Payments: { Electronic: itemsSum },
+    };
+  }
+
   const token = buildToken(body, TBANK_PASSWORD!);
   body.Token = token;
 
-  const url = `${TBANK_EACQ_BASE_URL}/v2/Init`;
+  const url = `${getBaseUrl()}/v2/Init`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
 

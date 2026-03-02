@@ -316,6 +316,17 @@ export async function POST(request: NextRequest) {
       const amountKopecks = Math.round(totalAmount * 100);
       if (amountKopecks >= 1000) {
         try {
+          const receiptItems = order.items.map((item) => {
+            const priceKopecks = Math.round(item.productPrice * 100);
+            const quantity = item.quantity;
+            const amountKopecks = priceKopecks * quantity;
+            return {
+              name: item.productName.slice(0, 128),
+              price: priceKopecks,
+              quantity,
+              amount: amountKopecks,
+            };
+          });
           const result = await createOneTimePaymentLink({
             orderId: order.id,
             amountKopecks,
@@ -323,6 +334,11 @@ export async function POST(request: NextRequest) {
             successUrl,
             failUrl,
             notificationUrl,
+            receipt: {
+              email: order.email,
+              taxation: "usn_income",
+              items: receiptItems,
+            },
           });
           await prisma.order.update({
             where: { id: order.id },
