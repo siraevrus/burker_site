@@ -1,22 +1,23 @@
 /**
  * Проверка интеграции T-Bank EACQ СБП из терминала.
- * Загружает .env.local и .env, затем создаёт тестовую платёжную сессию (Init + GetQr) на 10 ₽.
+ * Загружает .env, .env.local, .env.production (на проде), затем создаёт тестовую платёжную сессию (Init + GetQr) на 10 ₽.
  *
  * Запуск: npx tsx scripts/test-tbank.ts
- * Или:   node --env-file=.env.local --env-file=.env --import tsx scripts/test-tbank.ts
+ * Или:   node --env-file=.env.production --import tsx scripts/test-tbank.ts
  */
 import dotenv from "dotenv";
 import { resolve } from "path";
 
-dotenv.config({ path: resolve(process.cwd(), ".env.local") });
 dotenv.config({ path: resolve(process.cwd(), ".env") });
+dotenv.config({ path: resolve(process.cwd(), ".env.local") });
+dotenv.config({ path: resolve(process.cwd(), ".env.production") });
 
 async function main() {
   const tbank = await import("../lib/tbank");
 
   if (!tbank.isTbankConfigured()) {
     console.error(
-      "❌ T-Bank не настроен. Задайте TBANK_TERMINAL и TBANK_PASSWORD в .env или .env.local"
+      "❌ T-Bank не настроен. Задайте TBANK_TERMINAL и TBANK_PASSWORD в .env, .env.local или .env.production"
     );
     process.exit(1);
   }
