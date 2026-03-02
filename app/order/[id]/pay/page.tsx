@@ -5,79 +5,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Order } from "@/lib/types";
 
-function NoPaymentLinkBlock({
-  orderId,
-  token,
-  orderNumber,
-}: {
-  orderId: string;
-  token: string | null;
-  orderNumber: string;
-}) {
-  const [loading, setLoading] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-
-  const handleCreateLink = async () => {
-    setCreateError(null);
-    setLoading(true);
-    try {
-      const url = token
-        ? `/api/orders/${orderId}/payment-link?token=${encodeURIComponent(token)}`
-        : `/api/orders/${orderId}/payment-link`;
-      const res = await fetch(url, { method: "POST" });
-      let data: { paymentLink?: string; error?: string } = {};
-      try {
-        data = await res.json();
-      } catch {
-        setCreateError(res.status === 500 ? "Ошибка сервера. Попробуйте позже." : "Ошибка создания ссылки");
-        return;
-      }
-      if (!res.ok) {
-        setCreateError(data.error || `Ошибка ${res.status}`);
-        return;
-      }
-      if (data.paymentLink) {
-        window.location.href = data.paymentLink;
-      } else {
-        window.location.reload();
-      }
-    } catch {
-      setCreateError("Ошибка сети. Проверьте подключение.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-16">
-      <div className="max-w-md mx-auto text-center">
-        <h1 className="text-xl font-semibold mb-2">Ссылка на оплату не сформирована</h1>
-        <p className="text-gray-600 mb-6">
-          Номер заказа: #{orderNumber}. Оплата подключена через Т-Банк (карта, СБП), но ссылка не была создана при оформлении.
-        </p>
-        {createError && (
-          <p className="text-red-600 text-sm mb-4">{createError}</p>
-        )}
-        <div className="flex flex-col gap-3">
-          <button
-            onClick={handleCreateLink}
-            disabled={loading}
-            className="inline-block bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 disabled:opacity-50 font-medium"
-          >
-            {loading ? "Создаём ссылку…" : "Создать ссылку на оплату"}
-          </button>
-          <Link
-            href={token ? `/order-confirmation?id=${orderId}&token=${encodeURIComponent(token)}` : `/order-confirmation?id=${orderId}`}
-            className="inline-block border border-gray-300 px-6 py-3 rounded-md hover:bg-gray-50"
-          >
-            Подтверждение заказа
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function OrderPayPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -165,11 +92,20 @@ export default function OrderPayPage() {
 
   if (!hasPaymentLink) {
     return (
-      <NoPaymentLinkBlock
-        orderId={order.id}
-        token={token}
-        orderNumber={order.orderNumber || order.id}
-      />
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-md mx-auto text-center">
+          <h1 className="text-xl font-semibold mb-2">Оплата через СБП — ссылка не сформирована</h1>
+          <p className="text-gray-600 mb-6">
+            Оплата заказов подключена через СБП (Т-Банк), но ссылка на этот заказ не была создана. Обратитесь в поддержку или попробуйте оформить заказ позже.
+          </p>
+          <Link
+            href={token ? `/order-confirmation?id=${order.id}&token=${encodeURIComponent(token)}` : `/order-confirmation?id=${order.id}`}
+            className="inline-block bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800"
+          >
+            Подтверждение заказа
+          </Link>
+        </div>
+      </div>
     );
   }
 

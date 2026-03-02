@@ -329,38 +329,30 @@ export async function POST(request: NextRequest) {
       const amountKopecks = Math.round(totalAmount * 100);
       if (amountKopecks >= 1000) {
         try {
-          const terminal = process.env.TBANK_TERMINAL || "";
-          const sendReceipt =
-            terminal.toUpperCase().includes("DEMO") ||
-            process.env.TBANK_SEND_RECEIPT === "true";
-
-          const params: Parameters<typeof createOneTimePaymentLink>[0] = {
+          const receiptItems = order.items.map((item) => {
+            const priceKopecks = Math.round(item.productPrice * 100);
+            const quantity = item.quantity;
+            const amountKopecks = priceKopecks * quantity;
+            return {
+              name: item.productName.slice(0, 128),
+              price: priceKopecks,
+              quantity,
+              amount: amountKopecks,
+            };
+          });
+          const result = await createOneTimePaymentLink({
             orderId: order.id,
             amountKopecks,
             description,
             successUrl,
             failUrl,
             notificationUrl,
-          };
-          if (sendReceipt) {
-            const receiptItems = order.items.map((item) => {
-              const priceKopecks = Math.round(item.productPrice * 100);
-              const quantity = item.quantity;
-              const amountKopecks = priceKopecks * quantity;
-              return {
-                name: item.productName.slice(0, 128),
-                price: priceKopecks,
-                quantity,
-                amount: amountKopecks,
-              };
-            });
-            params.receipt = {
+            receipt: {
               email: order.email,
               taxation: "usn_income",
               items: receiptItems,
-            };
-          }
-          const result = await createOneTimePaymentLink(params);
+            },
+          });
           await prisma.order.update({
             where: { id: order.id },
             data: {

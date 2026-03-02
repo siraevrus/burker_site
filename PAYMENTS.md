@@ -43,7 +43,7 @@
 
 ## Сценарий
 
-1. Пользователь оформляет заказ → создаётся заказ в БД, вызывается Init (Amount в копейках, OrderId = id заказа, SuccessURL/FailURL/NotificationURL; Receipt при DEMO или TBANK_SEND_RECEIPT=true) → сохраняются PaymentId и PaymentURL.
+1. Пользователь оформляет заказ → создаётся заказ в БД, вызывается Init (Amount в копейках, OrderId = id заказа, SuccessURL/FailURL/NotificationURL, Receipt с позициями) → сохраняются PaymentId и PaymentURL.
 2. Редирект на страницу оплаты; кнопка ведёт по PaymentURL на платёжную форму банка (карта или СБП по настройкам терминала).
 3. После оплаты T-Bank шлёт POST на `NotificationURL` с PaymentId, Status (CONFIRMED/AUTHORIZED и др.) и Token; сервер проверяет Token, обновляет заказ (paymentStatus, paidAt), отправляет письмо «Заказ оплачен».
 4. Пользователь переходит по SuccessURL на страницу подтверждения заказа.
