@@ -5,9 +5,9 @@ import { cookies } from "next/headers";
 const JWT_EXPIRES_IN = "7d";
 
 function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
+  const secret = process.env.JWT_SECRET || process.env.ADMIN_JWT_SECRET;
   if (process.env.NODE_ENV === "production" && !secret) {
-    throw new Error("JWT_SECRET must be set in production");
+    throw new Error("JWT_SECRET or ADMIN_JWT_SECRET must be set in production");
   }
   return secret || "your-secret-key-change-in-production";
 }
