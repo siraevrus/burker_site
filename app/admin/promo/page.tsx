@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { PromoBanner } from "@/lib/types";
 
 export default function AdminPromoPage() {
@@ -144,20 +143,12 @@ export default function AdminPromoPage() {
                 className="border border-gray-200 rounded-lg p-4 flex items-center gap-4"
               >
                 <div className="relative w-32 h-32 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
-                  {banner.image.startsWith("data:image") || banner.image.startsWith('/promo/') ? (
-                    <img
-                      src={banner.image}
-                      alt={banner.title || "Banner"}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Image
-                      src={banner.image}
-                      alt={banner.title || "Banner"}
-                      fill
-                      className="object-cover"
-                    />
-                  )}
+                  <img
+                    src={banner.image}
+                    alt={banner.title || "Banner"}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+                  />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg mb-1">
@@ -361,26 +352,12 @@ function BannerForm({
           )}
           {formData.image && !imagePreview && (
             <div className="mt-4 relative w-full" style={{ height: "500px" }}>
-              {formData.image.startsWith("data:image") ? (
-                <img
-                  src={formData.image}
-                  alt="Current"
-                  className="w-full h-full object-contain border border-gray-300 rounded-md"
-                />
-              ) : formData.image.startsWith('/promo/') ? (
-                <img
-                  src={formData.image}
-                  alt="Current"
-                  className="w-full h-full object-contain border border-gray-300 rounded-md"
-                />
-              ) : (
-                <Image
-                  src={formData.image}
-                  alt="Current"
-                  fill
-                  className="object-contain border border-gray-300 rounded-md"
-                />
-              )}
+              <img
+                src={formData.image}
+                alt="Current"
+                className="w-full h-full object-contain border border-gray-300 rounded-md"
+                onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+              />
             </div>
           )}
         </div>
@@ -404,20 +381,12 @@ function BannerForm({
           )}
           {(imageMobilePreview || formData.imageMobile) && (
             <div className="mt-4 relative w-full max-w-xs" style={{ height: "200px" }}>
-              {imageMobilePreview || (formData.imageMobile && (formData.imageMobile.startsWith("data:image") || formData.imageMobile.startsWith("/promo/"))) ? (
-                <img
-                  src={imageMobilePreview || formData.imageMobile || ""}
-                  alt="Mobile preview"
-                  className="w-full h-full object-contain border border-gray-300 rounded-md"
-                />
-              ) : formData.imageMobile ? (
-                <Image
-                  src={formData.imageMobile}
-                  alt="Mobile"
-                  fill
-                  className="object-contain border border-gray-300 rounded-md"
-                />
-              ) : null}
+              <img
+                src={imageMobilePreview || formData.imageMobile || ""}
+                alt="Mobile preview"
+                className="w-full h-full object-contain border border-gray-300 rounded-md"
+                onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+              />
             </div>
           )}
         </div>

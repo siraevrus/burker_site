@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { PromoBanner } from "@/lib/types";
@@ -98,19 +97,24 @@ export default function PromoBannerGallery() {
                       alt={currentBanner.title || "Promo banner"}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
-                  ) : desktopImage.startsWith("/promo/") ? (
+                  ) : desktopImage.startsWith("/promo/") || desktopImage.startsWith("/products/") ? (
+                    <img
+                      src={desktopImage}
+                      alt={currentBanner.title || "Promo banner"}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : desktopImage.startsWith("http") ? (
                     <img
                       src={desktopImage}
                       alt={currentBanner.title || "Promo banner"}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                   ) : (
-                    <Image
+                    <img
                       src={desktopImage}
                       alt={currentBanner.title || "Promo banner"}
-                      fill
-                      className="object-cover"
-                      priority={currentIndex === 0}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
                     />
                   )}
                 </div>
@@ -122,19 +126,24 @@ export default function PromoBannerGallery() {
                       alt={currentBanner.title || "Promo banner"}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
-                  ) : mobileImage.startsWith("/promo/") ? (
+                  ) : mobileImage.startsWith("/promo/") || mobileImage.startsWith("/products/") ? (
+                    <img
+                      src={mobileImage}
+                      alt={currentBanner.title || "Promo banner"}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : mobileImage.startsWith("http") ? (
                     <img
                       src={mobileImage}
                       alt={currentBanner.title || "Promo banner"}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                   ) : (
-                    <Image
+                    <img
                       src={mobileImage}
                       alt={currentBanner.title || "Promo banner"}
-                      fill
-                      className="object-cover"
-                      priority={currentIndex === 0}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
                     />
                   )}
                 </div>
@@ -162,19 +171,24 @@ export default function PromoBannerGallery() {
                     alt={currentBanner.title || "Promo banner"}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
-                ) : desktopImage.startsWith("/promo/") ? (
+                ) : desktopImage.startsWith("/promo/") || desktopImage.startsWith("/products/") ? (
+                  <img
+                    src={desktopImage}
+                    alt={currentBanner.title || "Promo banner"}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : desktopImage.startsWith("http") ? (
                   <img
                     src={desktopImage}
                     alt={currentBanner.title || "Promo banner"}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                 ) : (
-                  <Image
+                  <img
                     src={desktopImage}
                     alt={currentBanner.title || "Promo banner"}
-                    fill
-                    className="object-cover"
-                    priority={currentIndex === 0}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
                   />
                 )}
               </div>
@@ -186,19 +200,24 @@ export default function PromoBannerGallery() {
                     alt={currentBanner.title || "Promo banner"}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
-                ) : mobileImage.startsWith("/promo/") ? (
+                ) : mobileImage.startsWith("/promo/") || mobileImage.startsWith("/products/") ? (
+                  <img
+                    src={mobileImage}
+                    alt={currentBanner.title || "Promo banner"}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : mobileImage.startsWith("http") ? (
                   <img
                     src={mobileImage}
                     alt={currentBanner.title || "Promo banner"}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                 ) : (
-                  <Image
+                  <img
                     src={mobileImage}
                     alt={currentBanner.title || "Promo banner"}
-                    fill
-                    className="object-cover"
-                    priority={currentIndex === 0}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
                   />
                 )}
               </div>
