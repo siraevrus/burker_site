@@ -1,6 +1,6 @@
 /**
- * Проверка интеграции T-Bank EACQ СБП из терминала.
- * Загружает .env, .env.local, .env.production (на проде), затем создаёт тестовую платёжную сессию (Init + GetQr) на 10 ₽.
+ * Проверка интеграции T-Bank EACQ из терминала.
+ * Загружает .env, .env.local, .env.production (на проде), создаёт тестовую платёжную сессию (Init → PaymentURL) на 10 ₽.
  *
  * Запуск: npx tsx scripts/test-tbank.ts
  * Или:   node --env-file=.env.production --import tsx scripts/test-tbank.ts
@@ -28,7 +28,7 @@ async function main() {
   const notificationUrl = `${baseUrl}/api/webhooks/tbank`;
   const orderId = "test-" + Date.now();
 
-  console.log("Проверка T-Bank EACQ СБП: Init + GetQr на 10 ₽ (1000 коп.)...");
+  console.log("Проверка T-Bank EACQ: Init → PaymentURL на 10 ₽ (1000 коп.)...");
   console.log("OrderId:", orderId);
   console.log("SuccessURL:", successUrl);
 
@@ -36,7 +36,7 @@ async function main() {
     const result = await tbank.createOneTimePaymentLink({
       orderId,
       amountKopecks: 1000,
-      description: "Проверка интеграции СБП",
+      description: "Проверка интеграции эквайринга",
       successUrl,
       failUrl,
       notificationUrl,

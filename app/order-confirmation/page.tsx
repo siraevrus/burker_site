@@ -177,7 +177,7 @@ function OrderConfirmationContent() {
               href={`/order/${order.id}/pay`}
               className="inline-block bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
             >
-              {order.paymentLink ? "Оплатить заказ (СБП)" : "Страница оплаты"}
+              {order.paymentLink ? "Оплатить заказ" : "Страница оплаты"}
             </Link>
           </div>
         )}

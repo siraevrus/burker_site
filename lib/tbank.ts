@@ -1,8 +1,9 @@
 /**
- * T-Bank EACQ: оплата СБП через Init + GetQr.
+ * T-Bank EACQ: оплата через Init → PaymentURL (редирект на платёжную форму).
+ * Поддерживает карты и СБП — способы задаются в ЛК терминала.
  * Документация: https://developer.tbank.ru/eacq/intro/developer/token
  * Init: https://developer.tbank.ru/eacq/api/init
- * GetQr: https://developer.tbank.ru/eacq/api/get-qr
+ * Платёжная форма: https://developer.tbank.ru/eacq/scenarios/payments/nonPCI
  */
 
 import crypto from "crypto";
@@ -25,7 +26,7 @@ export interface CreateOneTimeLinkParams {
 
 export interface CreateOneTimeLinkResult {
   qrId: string; // PaymentId из Init (для вебхука)
-  link: string; // ссылка из GetQr (DataType=PAYLOAD)
+  link: string; // PaymentURL — ссылка на платёжную форму (карта/СБП)
 }
 
 export interface TbankApiError {
@@ -61,9 +62,18 @@ function getAuthHeader(): string | undefined {
 }
 
 /**
- * Инициирует платёж (Init). Возвращает PaymentId для GetQr и вебхука.
+ * Результат Init: PaymentId для вебхука и PaymentURL для редиректа на платёжную форму.
+ * PaymentURL — универсальная ссылка: карта, СБП и др. в зависимости от настроек терминала.
  */
-async function initPayment(params: CreateOneTimeLinkParams): Promise<number> {
+interface InitResult {
+  paymentId: number;
+  paymentUrl: string;
+}
+
+/**
+ * Инициирует платёж (Init). Возвращает PaymentId и PaymentURL.
+ */
+async function initPayment(params: CreateOneTimeLinkParams): Promise<InitResult> {
   const redirectDueDate =
     params.redirectDueDate ??
     (() => {
@@ -130,81 +140,23 @@ async function initPayment(params: CreateOneTimeLinkParams): Promise<number> {
       console.error("T-Bank Init unexpected response:", data);
       throw new Error("T-Bank Init: в ответе нет PaymentId");
     }
-    return Number(paymentId);
+    const paymentUrl = (data.PaymentURL ?? data.PaymentUrl ?? data.paymentURL) as
+      | string
+      | undefined;
+    if (!paymentUrl || typeof paymentUrl !== "string") {
+      console.error("T-Bank Init unexpected response:", data);
+      throw new Error("T-Bank Init: в ответе нет PaymentURL");
+    }
+    return { paymentId: Number(paymentId), paymentUrl };
   } finally {
     clearTimeout(timeout);
   }
 }
 
 /**
- * Получает ссылку на оплату СБП по PaymentId (GetQr, DataType=PAYLOAD).
- */
-async function getQrLink(paymentId: number): Promise<string> {
-  const body: Record<string, unknown> = {
-    TerminalKey: TBANK_TERMINAL,
-    PaymentId: paymentId,
-    DataType: "PAYLOAD",
-  };
-
-  const token = buildToken(body, TBANK_PASSWORD!);
-  body.Token = token;
-
-  const url = `${TBANK_EACQ_BASE_URL}/v2/GetQr`;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-
-  try {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    const auth = getAuthHeader();
-    if (auth) headers.Authorization = auth;
-
-    const res = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-
-    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-
-    if (!res.ok) {
-      const errMsg =
-        (data.message as string) ??
-        (data.Message as string) ??
-        `HTTP ${res.status}`;
-      console.error("T-Bank GetQr error:", res.status, errMsg);
-      throw new Error(`T-Bank GetQr: ${errMsg}`);
-    }
-
-    const success = data.Success === true || data.Success === "true";
-    if (!success) {
-      const errMsg =
-        (data.message as string) ??
-        (data.Message as string) ??
-        "Unknown error";
-      throw new Error(`T-Bank GetQr: ${errMsg}`);
-    }
-
-    const link =
-      (data.Data as string) ??
-      (data.Payload as string) ??
-      (data.Url as string) ??
-      (data.Link as string);
-    if (!link || typeof link !== "string") {
-      console.error("T-Bank GetQr unexpected response:", data);
-      throw new Error("T-Bank GetQr: в ответе нет Data (ссылки)");
-    }
-    return link;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-/**
- * Создаёт одноразовую ссылку на оплату через СБП: Init → GetQr (PAYLOAD).
- * qrId — PaymentId для сохранения в заказе и приёма вебхука.
+ * Создаёт одноразовую ссылку на оплату: Init → PaymentURL.
+ * PaymentURL ведёт на платёжную форму банка (карта, СБП — по настройкам терминала).
+ * Без СБП: в ЛК включите только карты в «Готовая платёжная форма».
  */
 export async function createOneTimePaymentLink(
   params: CreateOneTimeLinkParams
@@ -213,15 +165,14 @@ export async function createOneTimePaymentLink(
     throw new Error("T-Bank: задайте TBANK_TERMINAL и TBANK_PASSWORD");
   }
   if (params.amountKopecks < 1000) {
-    throw new Error("T-Bank: минимальная сумма СБП 10 руб (1000 коп.)");
+    throw new Error("T-Bank: минимальная сумма 10 руб (1000 коп.)");
   }
   if (params.orderId.length > 36) {
     throw new Error("T-Bank: OrderId не более 36 символов");
   }
 
-  const paymentId = await initPayment(params);
-  const link = await getQrLink(paymentId);
-  return { qrId: String(paymentId), link };
+  const { paymentId, paymentUrl } = await initPayment(params);
+  return { qrId: String(paymentId), link: paymentUrl };
 }
 
 /**
