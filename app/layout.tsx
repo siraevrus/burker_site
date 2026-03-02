@@ -4,7 +4,6 @@ import "./globals.css";
 import ConditionalLayout from "@/components/ConditionalLayout";
 import YandexMetrika from "@/components/YandexMetrika/YandexMetrika";
 import StoreHydration from "@/components/StoreHydration";
-import CanonicalLink from "@/components/CanonicalLink";
 import { CANONICAL_SITE_URL } from "@/lib/site-url";
 
 const geistSans = Geist({
@@ -23,7 +22,16 @@ const openSans = Open_Sans({
   weight: ["400"],
 });
 
-const baseUrl = CANONICAL_SITE_URL;
+const baseUrl = CANONICAL_SITE_URL.replace(/\/+$/, "");
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Mira Brands | Burker",
+  url: baseUrl,
+  logo: `${baseUrl}/og.png`,
+  description: "Элегантные женские часы и украшения от Mira Brands | Burker",
+};
 
 export const metadata: Metadata = {
   title: "Mira Brands | Burker | Официальный магазин",
@@ -71,7 +79,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${openSans.variable} antialiased bg-[#FCFAF8]`}
       >
-        <CanonicalLink />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
         <StoreHydration />
         <YandexMetrika />
         <ConditionalLayout>{children}</ConditionalLayout>

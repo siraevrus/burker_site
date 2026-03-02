@@ -150,9 +150,9 @@ export default function PromoBannerGallery() {
                 {(currentBanner.title || currentBanner.subtitle) && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-black bg-opacity-20">
                     {currentBanner.title && (
-                      <h1 className="text-5xl md:text-6xl font-bold mb-4 text-white">
+                      <h2 className="text-5xl md:text-6xl font-bold mb-4 text-white">
                         {currentBanner.title}
-                      </h1>
+                      </h2>
                     )}
                     {currentBanner.subtitle && (
                       <p className="text-xl text-white">{currentBanner.subtitle}</p>

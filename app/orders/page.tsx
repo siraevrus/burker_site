@@ -6,11 +6,10 @@ import { getMetadataForPath } from "@/lib/seo";
 import OrdersPageClient from "./OrdersPageClient";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { title, description } = await getMetadataForPath("/orders", {
+  return getMetadataForPath("/orders", {
     title: "Мои заказы | Mira Brands | Burker",
     description: "История заказов в интернет-магазине Mira Brands | Burker",
   });
-  return { title, description };
 }
 
 export default async function OrdersPage() {

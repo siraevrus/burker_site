@@ -2,11 +2,10 @@ import type { Metadata } from "next";
 import { getMetadataForPath } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { title, description } = await getMetadataForPath("/privacy", {
+  return getMetadataForPath("/privacy", {
     title: "Политика конфиденциальности | Mira Brands | Burker",
     description: "Политика конфиденциальности Mira Brands | Burker",
   });
-  return { title, description };
 }
 
 export default function PrivacyPage() {

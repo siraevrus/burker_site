@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import ProductCard from "@/components/ProductCard/ProductCard";
+import Breadcrumbs from "@/components/Breadcrumbs/Breadcrumbs";
 import { useStore } from "@/lib/store";
 import { Product } from "@/lib/types";
+import { getCollectionBreadcrumbItems } from "@/lib/utils";
 
 interface WatchesPageClientProps {
   products: Product[];
@@ -41,6 +43,7 @@ export default function WatchesPageClient({ products }: WatchesPageClientProps) 
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <Breadcrumbs items={getCollectionBreadcrumbItems("watches", "Часы")} />
       <h1 className="text-4xl font-bold mb-8">Все часы</h1>
 
       <div>

@@ -5,11 +5,10 @@ import { getMetadataForPath } from "@/lib/seo";
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata() {
-  const { title, description } = await getMetadataForPath("/", {
+  return getMetadataForPath("/", {
     title: "Mira Brands | Burker | Официальный магазин",
     description: "Элегантные женские часы и украшения от Mira Brands | Burker",
   });
-  return { title, description };
 }
 
 export default async function Home() {

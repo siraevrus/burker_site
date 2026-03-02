@@ -3,10 +3,11 @@ import { getProductById, getAllProducts } from "@/lib/products";
 import { notFound } from "next/navigation";
 import ProductPageClient from "./ProductPageClient";
 import { CANONICAL_SITE_URL } from "@/lib/site-url";
+import { generateProductSlug } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-const baseUrl = CANONICAL_SITE_URL;
+const baseUrl = CANONICAL_SITE_URL.replace(/\/+$/, "");
 
 function absoluteImageUrl(path: string): string {
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
@@ -26,7 +27,8 @@ export async function generateMetadata({
   const description =
     product.description?.replace(/<[^>]+>/g, "").slice(0, 160) ||
     `Купить ${product.name} в официальном магазине Mira Brands | Burker`;
-  const canonicalUrl = `${baseUrl}/product/${id}`;
+  const slug = generateProductSlug(product.name);
+  const canonicalUrl = `${baseUrl}/product/${slug}`;
   const imageUrl =
     product.images?.length > 0
       ? absoluteImageUrl(product.images[0])
@@ -35,6 +37,7 @@ export async function generateMetadata({
   return {
     title,
     description,
+    alternates: { canonical: canonicalUrl },
     openGraph: {
       type: "website",
       locale: "ru_RU",
@@ -68,5 +71,40 @@ export default async function ProductPage({
     notFound();
   }
 
-  return <ProductPageClient product={product} allProducts={allProducts} />;
+  const slug = generateProductSlug(product.name);
+  const productUrl = `${baseUrl}/product/${slug}`;
+  const imageUrls =
+    product.images?.length > 0
+      ? product.images.map((img) => absoluteImageUrl(img))
+      : [`${baseUrl}/og.png`];
+
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description:
+      product.description?.replace(/<[^>]+>/g, "").slice(0, 500) ||
+      `Купить ${product.name} в официальном магазине Mira Brands | Burker`,
+    image: imageUrls,
+    url: productUrl,
+    offers: {
+      "@type": "Offer",
+      price: product.price.toFixed(0),
+      priceCurrency: "RUB",
+      availability: product.soldOut
+        ? "https://schema.org/OutOfStock"
+        : "https://schema.org/InStock",
+      url: productUrl,
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+      <ProductPageClient product={product} allProducts={allProducts} />
+    </>
+  );
 }

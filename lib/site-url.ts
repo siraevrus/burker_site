@@ -9,3 +9,9 @@ export const CANONICAL_SITE_URL =
 
 /** Нормализованный хост канонического URL (без протокола и слеша) */
 export const CANONICAL_HOST = "burker-watches.ru";
+
+/** Строит канонический URL для заданного пути (SSR, для metadata.alternates) */
+export function getCanonicalUrl(path: string): string {
+  const base = CANONICAL_SITE_URL.replace(/\/+$/, "");
+  return path === "/" ? base : `${base}${path}`;
+}

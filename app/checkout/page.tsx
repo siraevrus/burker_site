@@ -5,11 +5,10 @@ import { getMetadataForPath } from "@/lib/seo";
 import CheckoutPageClient from "./CheckoutPageClient";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { title, description } = await getMetadataForPath("/checkout", {
+  return getMetadataForPath("/checkout", {
     title: "Оформление заказа | Mira Brands | Burker",
     description: "Оформление заказа в интернет-магазине Mira Brands | Burker",
   });
-  return { title, description };
 }
 
 export default async function CheckoutPage() {

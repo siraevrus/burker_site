@@ -4,11 +4,10 @@ import { getMetadataForPath } from "@/lib/seo";
 import SearchPageClient from "./SearchPageClient";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { title, description } = await getMetadataForPath("/search", {
+  return getMetadataForPath("/search", {
     title: "Поиск | Mira Brands | Burker",
     description: "Поиск товаров в интернет-магазине Mira Brands | Burker",
   });
-  return { title, description };
 }
 
 export default async function SearchPage({

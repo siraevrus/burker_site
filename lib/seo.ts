@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/db";
-
-const DEFAULT_SUFFIX = " | Mira Brands | Burker";
+import { getCanonicalUrl } from "@/lib/site-url";
 
 function normalizePath(path: string): string {
   return path === "/" ? "/" : path.replace(/\/+$/, "") || "/";
@@ -26,16 +25,17 @@ export async function getSeoForPath(path: string): Promise<{
 }
 
 /**
- * Формирует объект Metadata для Next.js: title и description.
+ * Формирует объект Metadata для Next.js: title, description и alternates.canonical.
  * Если в админке нет записи для path, подставляются fallback-значения.
  */
 export async function getMetadataForPath(
   path: string,
   fallback: { title: string; description: string }
-): Promise<{ title: string; description: string }> {
+): Promise<{ title: string; description: string; alternates: { canonical: string } }> {
   const seo = await getSeoForPath(path);
   return {
     title: seo.title?.trim() || fallback.title,
     description: seo.description?.trim() || fallback.description,
+    alternates: { canonical: getCanonicalUrl(path) },
   };
 }

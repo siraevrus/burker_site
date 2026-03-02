@@ -1,7 +1,9 @@
 "use client";
 
 import ProductCard from "@/components/ProductCard/ProductCard";
+import Breadcrumbs from "@/components/Breadcrumbs/Breadcrumbs";
 import { Product } from "@/lib/types";
+import { getCollectionBreadcrumbItems, getCollectionLabel } from "@/lib/utils";
 
 interface CollectionPageClientProps {
   collection: string;
@@ -12,10 +14,11 @@ export default function CollectionPageClient({
   collection,
   products,
 }: CollectionPageClientProps) {
-  const collectionName = collection.charAt(0).toUpperCase() + collection.slice(1);
+  const collectionName = getCollectionLabel(collection);
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <Breadcrumbs items={getCollectionBreadcrumbItems(collection)} />
       <h1 className="text-4xl font-bold mb-8">{collectionName}</h1>
 
       {products.length === 0 ? (

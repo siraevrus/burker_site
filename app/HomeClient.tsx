@@ -46,6 +46,8 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
 
   return (
     <div>
+      {/* Единственный h1 страницы — для SEO */}
+      <h1 className="sr-only">Женские часы и украшения Burker | Официальный магазин Mira Brands</h1>
       {/* Promo Banner Gallery */}
       <PromoBannerGallery />
 

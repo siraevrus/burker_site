@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { 
   getWatchesProducts, 
   getWatchesBySubcategory,
@@ -6,6 +7,7 @@ import {
 } from "@/lib/products";
 import { Product } from "@/lib/types";
 import CollectionPageClient from "./CollectionPageClient";
+import { getCanonicalUrl } from "@/lib/site-url";
 
 // Маппинг URL на subcategory для часов
 const watchesSubcategoryMap: Record<string, string> = {
@@ -29,6 +31,27 @@ const jewelrySubcategoryMap: Record<string, string> = {
   "earrings": "Серьги",
   "rings": "Кольца",
 };
+
+/** Отображаемое название коллекции для title */
+const collectionDisplayNames: Record<string, string> = {
+  ...Object.fromEntries(Object.entries(watchesSubcategoryMap)),
+  ...Object.fromEntries(Object.entries(jewelrySubcategoryMap)),
+};
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ collection: string }>;
+}): Promise<Metadata> {
+  const { collection } = await params;
+  const path = `/collections/${collection}`;
+  const displayName = collectionDisplayNames[collection] || collection;
+  return {
+    title: `${displayName} | Mira Brands | Burker`,
+    description: `Коллекция ${displayName} — часы и украшения Mira Brands | Burker`,
+    alternates: { canonical: getCanonicalUrl(path) },
+  };
+}
 
 export default async function CollectionPage({
   params,
