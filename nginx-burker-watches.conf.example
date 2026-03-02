@@ -1,26 +1,37 @@
-# Фрагмент для /etc/nginx/sites-available/burker-watches.ru (или sites-enabled)
-# После правок: sudo nginx -t && sudo systemctl reload nginx
-# Канонический домен: https://burker-watches.ru (без www). Все www → 301 на non-www.
+# Полный конфиг виртуального хоста Nginx для burker-watches.ru
+# Путь: /etc/nginx/sites-available/burker-watches.ru
+# Подключение: sudo ln -s /etc/nginx/sites-available/burker-watches.ru /etc/nginx/sites-enabled/
+# Проверка: sudo nginx -t && sudo systemctl reload nginx
+#
+# Канонический домен: https://burker-watches.ru (без www)
+# Все запросы на www перенаправляются 301 на non-www.
 
+# HTTP → HTTPS (всегда на основной домен без www)
 server {
     listen 80;
+    listen [::]:80;
     server_name burker-watches.ru www.burker-watches.ru;
     return 301 https://burker-watches.ru$request_uri;
 }
 
-# 301 с www на основной домен без www
+# HTTPS: www → 301 на non-www
 server {
     listen 443 ssl;
+    listen [::]:443 ssl;
     server_name www.burker-watches.ru;
+
     ssl_certificate /etc/letsencrypt/live/burker-watches.ru/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/burker-watches.ru/privkey.pem;
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
     return 301 https://burker-watches.ru$request_uri;
 }
 
+# HTTPS: основной сайт (только burker-watches.ru без www)
 server {
     listen 443 ssl;
+    listen [::]:443 ssl;
     server_name burker-watches.ru;
 
     client_max_body_size 10M;
@@ -32,6 +43,7 @@ server {
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
+    # Статика: загрузки из админки (промоблок)
     location /promo/ {
         alias /var/www/burker-watches.ru/.next/standalone/public/promo/;
         try_files $uri =404;
@@ -39,6 +51,7 @@ server {
         expires 30d;
     }
 
+    # Статика: изображения товаров
     location /products/ {
         alias /var/www/burker-watches.ru/public/products/;
         try_files $uri =404;
@@ -46,6 +59,7 @@ server {
         expires 30d;
     }
 
+    # Next.js (standalone)
     location / {
         proxy_pass http://localhost:3010;
         proxy_http_version 1.1;
@@ -57,12 +71,10 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
 
-        # Меньше 502 при рестартах PM2 и холодном старте Next.js
         proxy_connect_timeout 90s;
         proxy_send_timeout 90s;
         proxy_read_timeout 90s;
 
-        # Повтор запроса при временной недоступности бэкенда
         proxy_next_upstream error timeout http_502 http_503;
         proxy_next_upstream_tries 2;
         proxy_next_upstream_timeout 30s;
