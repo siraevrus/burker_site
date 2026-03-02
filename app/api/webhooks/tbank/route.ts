@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { sendOrderPaidEmail } from "@/lib/email";
+import { sendOrderPaidEmail, sendOrderNotPaidEmail } from "@/lib/email";
 import { verifyNotificationToken } from "@/lib/tbank";
 
 const TBANK_PASSWORD = process.env.TBANK_PASSWORD;
@@ -100,6 +100,18 @@ export async function POST(request: NextRequest) {
       );
     } catch (emailError) {
       console.error("T-Bank webhook: sendOrderPaidEmail failed", emailError);
+    }
+  } else if (isCancelledOrExpired) {
+    try {
+      const orderNumber = order.orderNumber || order.id.slice(0, 8);
+      await sendOrderNotPaidEmail(
+        order.email,
+        orderNumber,
+        order.firstName,
+        Number(order.totalAmount)
+      );
+    } catch (emailError) {
+      console.error("T-Bank webhook: sendOrderNotPaidEmail failed", emailError);
     }
   }
 

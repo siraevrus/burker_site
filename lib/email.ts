@@ -471,3 +471,42 @@ export async function sendOrderPaidEmail(
 
   return result.success;
 }
+
+/**
+ * Уведомление покупателю о том, что заказ не оплачен (платёж отменён, отклонён или истёк)
+ */
+export async function sendOrderNotPaidEmail(
+  email: string,
+  orderNumber: string,
+  firstName: string,
+  totalAmount: number
+): Promise<boolean> {
+  if (!IS_PRODUCTION) {
+    console.log("❌ Заказ не оплачен #" + orderNumber);
+  }
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">Заказ не оплачен</h2>
+      <p>Здравствуйте, ${esc(firstName)}!</p>
+      <p>Платёж по заказу <strong>#${orderNumber}</strong> (сумма ${totalAmount.toFixed(0)} ₽) не был проведён.</p>
+      
+      <div style="background-color: #ffebee; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center;">
+        <p style="margin: 0; font-weight: bold; color: #c62828;">Оплата не получена</p>
+      </div>
+      
+      <p>Вы можете оформить новый заказ на нашем сайте или связаться с нами, если у вас возникли вопросы.</p>
+      
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      ${EMAIL_FOOTER}
+    </div>
+  `;
+
+  const result = await sendEmailViaMailopost(
+    email,
+    `Заказ #${orderNumber} — оплата не проведена`,
+    html
+  );
+
+  return result.success;
+}

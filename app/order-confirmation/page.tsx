@@ -135,37 +135,70 @@ function OrderConfirmationContent() {
     );
   }
 
+  const isPaymentCancelled =
+    order.paymentStatus === "cancelled" ||
+    order.paymentStatus === "expired" ||
+    order.paymentStatus === "failed";
+
   return (
     <div className="container mx-auto px-4 py-16">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg
-              className="w-8 h-8 text-green-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold mb-2">Заказ успешно оформлен!</h1>
-          <p className="text-gray-600">
-            Номер заказа: <strong>#{order.orderNumber || order.id}</strong>
-          </p>
+          {isPaymentCancelled ? (
+            <>
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg
+                  className="w-8 h-8 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </div>
+              <h1 className="text-3xl font-bold mb-2 text-red-800">Заказ отменён</h1>
+              <p className="text-gray-600">
+                Номер заказа: <strong>#{order.orderNumber || order.id}</strong>
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg
+                  className="w-8 h-8 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <h1 className="text-3xl font-bold mb-2">Заказ успешно оформлен!</h1>
+              <p className="text-gray-600">
+                Номер заказа: <strong>#{order.orderNumber || order.id}</strong>
+              </p>
+            </>
+          )}
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <p className="text-sm text-blue-800">
-            Мы отправили подтверждение заказа на ваш email. Мы свяжемся с вами
-            в ближайшее время для подтверждения заказа.
-          </p>
-        </div>
+        {!isPaymentCancelled && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-800">
+              Мы отправили подтверждение заказа на ваш email. Мы свяжемся с вами
+              в ближайшее время для подтверждения заказа.
+            </p>
+          </div>
+        )}
 
         {order.paymentStatus === "pending" && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
