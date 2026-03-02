@@ -40,13 +40,6 @@ async function main() {
       successUrl,
       failUrl,
       notificationUrl,
-      receipt: {
-        email: "test@example.com",
-        taxation: "usn_income",
-        items: [
-          { name: "Тестовый товар", price: 1000, quantity: 1, amount: 1000 },
-        ],
-      },
     });
     console.log("\n✅ T-Bank отвечает, ссылка создана.");
     console.log("PaymentId (qrId):", result.qrId);

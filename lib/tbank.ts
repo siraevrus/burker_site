@@ -11,14 +11,7 @@ import crypto from "crypto";
 const TBANK_TERMINAL = process.env.TBANK_TERMINAL;
 
 function getBaseUrl(): string {
-  if (process.env.TBANK_EACQ_BASE_URL) {
-    return process.env.TBANK_EACQ_BASE_URL;
-  }
-  // Тест: терминал содержит DEMO → rest-api-test
-  if (TBANK_TERMINAL?.toUpperCase().includes("DEMO")) {
-    return "https://rest-api-test.tinkoff.ru";
-  }
-  return "https://securepay.tinkoff.ru";
+  return process.env.TBANK_EACQ_BASE_URL || "https://securepay.tinkoff.ru";
 }
 const TBANK_PASSWORD = process.env.TBANK_PASSWORD;
 const TBANK_TOKEN = process.env.TBANK_TOKEN; // опционально: Bearer для заголовка
