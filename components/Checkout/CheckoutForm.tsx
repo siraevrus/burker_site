@@ -520,6 +520,12 @@ export default function CheckoutForm({ user, rates = null, productSellingPriceEu
                   type="text"
                   value={cityForPvz}
                   onChange={(e) => setCityForPvz(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      loadDeliveryPoints();
+                    }
+                  }}
                   placeholder="Введите город для поиска ПВЗ"
                   className="flex-1 border border-gray-300 rounded-md px-3 py-2"
                 />
@@ -538,7 +544,7 @@ export default function CheckoutForm({ user, rates = null, productSellingPriceEu
               <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-md divide-y divide-gray-100">
                 {pvzList.length === 0 && !pvzLoading && (
                   <p className="px-3 py-4 text-sm text-gray-500 text-center">
-                    Введите город и нажмите «Найти ПВЗ» или оставьте пустым для полного списка
+                    Введите город и нажмите «Найти ПВЗ» или Enter, либо оставьте пустым для полного списка
                   </p>
                 )}
                 {pvzList.map((point) => (
@@ -629,7 +635,13 @@ export default function CheckoutForm({ user, rates = null, productSellingPriceEu
                 id="passportIssueDate"
                 type="date"
                 value={formData.passportIssueDate}
-                onChange={(e) => setFormData({ ...formData, passportIssueDate: e.target.value })}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const today = new Date().toISOString().slice(0, 10);
+                  if (val && val > today) return;
+                  setFormData({ ...formData, passportIssueDate: val });
+                }}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
                 required
               />

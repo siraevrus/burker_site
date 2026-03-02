@@ -77,6 +77,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (typeof passportIssueDate === "string") {
+      const parts = passportIssueDate.split("-").map(Number);
+      const issueDate = parts.length === 3 ? new Date(parts[0], parts[1] - 1, parts[2]) : new Date(passportIssueDate);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      if (!Number.isNaN(issueDate.getTime()) && issueDate > today) {
+        return NextResponse.json(
+          { error: "Дата выдачи паспорта не может быть больше текущей даты" },
+          { status: 400 }
+        );
+      }
+    }
+
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
         { error: "Список товаров пуст" },
