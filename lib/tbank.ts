@@ -39,7 +39,7 @@ export interface TbankApiError {
  * Параметры корневого уровня (вложенные объекты/массивы не участвуют) + Password, сортировка по ключу, конкатенация значений, SHA-256.
  */
 function buildToken(params: Record<string, unknown>, password: string): string {
-  const withPassword = { ...params, Password: password };
+  const withPassword: Record<string, unknown> = { ...params, Password: password };
   const keys = Object.keys(withPassword)
     .filter((k) => k !== "Token")
     .filter((k) => {
