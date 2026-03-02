@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { CANONICAL_SITE_URL } from "@/lib/site-url";
 import {
   createOneTimePaymentLink,
   isTbankConfigured,
@@ -54,20 +55,19 @@ export async function POST(
       );
     }
 
-    const baseUrl =
+    let baseUrl =
       process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.SITE_URL ||
       request.headers.get("origin") ||
-      (request.headers.get("x-forwarded-proto") && request.headers.get("x-forwarded-host")
-        ? `${request.headers.get("x-forwarded-proto")}://${request.headers.get("x-forwarded-host")}`
-        : request.headers.get("host")
-          ? `https://${request.headers.get("host")}`
-          : "");
-
+      null;
+    if (!baseUrl && request.headers.get("x-forwarded-proto") && request.headers.get("x-forwarded-host")) {
+      baseUrl = `${request.headers.get("x-forwarded-proto")}://${request.headers.get("x-forwarded-host")}`;
+    }
+    if (!baseUrl && request.headers.get("host")) {
+      baseUrl = `https://${request.headers.get("host")}`;
+    }
     if (!baseUrl) {
-      return NextResponse.json(
-        { error: "Не удалось определить URL сайта. Задайте NEXT_PUBLIC_SITE_URL." },
-        { status: 500 }
-      );
+      baseUrl = CANONICAL_SITE_URL;
     }
 
     const accessToken = dbOrder.accessToken || providedToken;
@@ -82,8 +82,11 @@ export async function POST(
       terminal.toUpperCase().includes("DEMO") ||
       process.env.TBANK_SEND_RECEIPT === "true";
 
+    // OrderId с суффиксом для повторной попытки — T-Bank требует уникальность
+    const initOrderId = `${id}-r${Date.now()}`.slice(0, 36);
+
     const initParams: Parameters<typeof createOneTimePaymentLink>[0] = {
-      orderId: id,
+      orderId: initOrderId,
       amountKopecks,
       description,
       successUrl,

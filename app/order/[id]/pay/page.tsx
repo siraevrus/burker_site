@@ -25,9 +25,15 @@ function NoPaymentLinkBlock({
         ? `/api/orders/${orderId}/payment-link?token=${encodeURIComponent(token)}`
         : `/api/orders/${orderId}/payment-link`;
       const res = await fetch(url, { method: "POST" });
-      const data = await res.json();
+      let data: { paymentLink?: string; error?: string } = {};
+      try {
+        data = await res.json();
+      } catch {
+        setCreateError(res.status === 500 ? "Ошибка сервера. Попробуйте позже." : "Ошибка создания ссылки");
+        return;
+      }
       if (!res.ok) {
-        setCreateError(data.error || "Ошибка создания ссылки");
+        setCreateError(data.error || `Ошибка ${res.status}`);
         return;
       }
       if (data.paymentLink) {
@@ -36,7 +42,7 @@ function NoPaymentLinkBlock({
         window.location.reload();
       }
     } catch {
-      setCreateError("Ошибка создания ссылки");
+      setCreateError("Ошибка сети. Проверьте подключение.");
     } finally {
       setLoading(false);
     }
