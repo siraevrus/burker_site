@@ -142,6 +142,7 @@ model Order {
   paymentId      String?  // qrId из T-Bank
   paymentLink    String?  // URL для оплаты
   paidAt         DateTime? // момент успешной оплаты по вебхуку
+  accessToken    String?  // секретный токен для доступа к заказу (гостевые заказы, ссылки)
   
   items           OrderItem[]
   

@@ -17,16 +17,22 @@ export async function GET(
       );
     }
 
-    // Проверка доступа: пользователь может видеть только свои заказы
     const currentUser = await getCurrentUser();
-    if (currentUser && order.userId && order.userId !== currentUser.userId) {
+    const providedToken = request.nextUrl.searchParams.get("token") || "";
+
+    // Доступ: авторизованный пользователь — только свои заказы; гость — только с токеном
+    const isOwner = currentUser && order.userId && order.userId === currentUser.userId;
+    const hasValidToken = order.accessToken && providedToken && order.accessToken === providedToken;
+
+    if (!isOwner && !hasValidToken) {
       return NextResponse.json(
         { error: "Доступ запрещен" },
         { status: 403 }
       );
     }
 
-    return NextResponse.json({ order });
+    const { accessToken: _t, ...orderSafe } = order;
+    return NextResponse.json({ order: orderSafe });
   } catch (error: any) {
     console.error("Get order error:", error);
     return NextResponse.json(

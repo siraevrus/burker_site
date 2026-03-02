@@ -109,6 +109,7 @@ export interface Order {
   paymentId?: string | null;
   paymentLink?: string | null;
   paidAt?: Date | null;
+  accessToken?: string; // секретный токен доступа (не отдаётся клиенту)
   items: OrderItem[];
   createdAt: Date;
   updatedAt: Date;

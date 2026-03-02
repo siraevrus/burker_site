@@ -1,29 +1,20 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { getUserOrders, getOrdersByEmail } from "@/lib/orders";
+import { getUserOrders } from "@/lib/orders";
 import { Order } from "@/lib/types";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const currentUser = await getCurrentUser();
-    const { searchParams } = new URL(request.url);
-    const email = searchParams.get("email");
 
-    if (!currentUser && !email) {
+    if (!currentUser) {
       return NextResponse.json(
-        { error: "Требуется авторизация или email" },
+        { error: "Требуется авторизация" },
         { status: 401 }
       );
     }
 
-    let orders: Order[];
-    if (currentUser) {
-      orders = await getUserOrders(currentUser.userId);
-    } else if (email) {
-      orders = await getOrdersByEmail(email);
-    } else {
-      orders = [];
-    }
+    const orders: Order[] = await getUserOrders(currentUser.userId);
 
     return NextResponse.json({ orders });
   } catch (error: any) {

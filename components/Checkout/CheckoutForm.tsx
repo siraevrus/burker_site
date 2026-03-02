@@ -371,10 +371,11 @@ export default function CheckoutForm({ user, rates = null, productSellingPriceEu
       clearCart();
 
       // Редирект: при наличии платёжной ссылки — на страницу оплаты, иначе — подтверждение заказа
+      const tokenParam = data.accessToken ? `&token=${encodeURIComponent(data.accessToken)}` : "";
       if (data.paymentLinkAvailable && data.order?.id) {
-        router.push(`/order/${data.order.id}/pay`);
+        router.push(`/order/${data.order.id}/pay?token=${encodeURIComponent(data.accessToken || "")}`);
       } else {
-        router.push(`/order-confirmation?id=${data.order.id}`);
+        router.push(`/order-confirmation?id=${data.order.id}${tokenParam}`);
       }
     } catch (error) {
       console.error("Checkout error:", error);

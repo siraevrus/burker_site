@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { prisma } from "./db";
 import { Order, OrderItem } from "./types";
 
@@ -60,6 +61,7 @@ function mapOrderFromDb(dbOrder: any): Order {
     paymentId: dbOrder.paymentId ?? undefined,
     paymentLink: dbOrder.paymentLink ?? undefined,
     paidAt: dbOrder.paidAt ?? undefined,
+    accessToken: dbOrder.accessToken ?? undefined,
     items: dbOrder.items?.map((item: any) => ({
       id: item.id,
       orderId: item.orderId,
@@ -149,7 +151,9 @@ export async function createOrder(orderData: {
   shippingCost: number;
   eurRate?: number | null;
   rubRate?: number | null;
-}): Promise<Order> {
+}): Promise<{ order: Order; accessToken: string }> {
+  const accessToken = crypto.randomBytes(32).toString("hex");
+
   const orderDataForCreate: any = {
     email: orderData.email,
     firstName: orderData.firstName,
@@ -181,6 +185,7 @@ export async function createOrder(orderData: {
     paymentId: null,
     paymentLink: null,
     paidAt: null,
+    accessToken,
     items: {
       create: orderData.items.map((item) => ({
         productId: item.productId,
@@ -219,5 +224,6 @@ export async function createOrder(orderData: {
     include: { items: true },
   });
 
-  return mapOrderFromDb(updatedOrder);
+  const mapped = mapOrderFromDb(updatedOrder);
+  return { order: mapped, accessToken };
 }

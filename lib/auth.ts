@@ -2,8 +2,15 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 const JWT_EXPIRES_IN = "7d";
+
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (process.env.NODE_ENV === "production" && !secret) {
+    throw new Error("JWT_SECRET must be set in production");
+  }
+  return secret || "your-secret-key-change-in-production";
+}
 
 /**
  * Хеширование пароля
@@ -26,7 +33,7 @@ export async function verifyPassword(
  * Создание JWT токена
  */
 export function createToken(payload: { userId: string; email: string }): string {
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, getJwtSecret(), {
     expiresIn: JWT_EXPIRES_IN,
   });
 }
@@ -36,7 +43,7 @@ export function createToken(payload: { userId: string; email: string }): string 
  */
 export function verifyToken(token: string): { userId: string; email: string } | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as { userId: string; email: string };
+    return jwt.verify(token, getJwtSecret()) as { userId: string; email: string };
   } catch (error) {
     return null;
   }

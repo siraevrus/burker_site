@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
     const totalAmount = itemsTotal + shippingCost - discountAmount;
 
     // Создание заказа (курсы сохраняем для точного расчёта комиссии в админке)
-    const order = await createOrder({
+    const { order, accessToken } = await createOrder({
       userId: currentUser?.userId,
       email: email.toLowerCase(),
       firstName,
@@ -308,8 +308,8 @@ export async function POST(request: NextRequest) {
     if (!baseUrl && request.headers.get("host")) {
       baseUrl = `https://${request.headers.get("host")}`;
     }
-    const successUrl = baseUrl ? `${baseUrl}/order-confirmation?id=${order.id}&paid=1` : "";
-    const failUrl = baseUrl ? `${baseUrl}/order-confirmation?id=${order.id}` : "";
+    const successUrl = baseUrl ? `${baseUrl}/order-confirmation?id=${order.id}&paid=1&token=${accessToken}` : "";
+    const failUrl = baseUrl ? `${baseUrl}/order-confirmation?id=${order.id}&token=${accessToken}` : "";
     const notificationUrl = baseUrl ? `${baseUrl}/api/webhooks/tbank` : "";
 
     if (isTbankConfigured() && successUrl && failUrl && notificationUrl) {
@@ -401,13 +401,15 @@ export async function POST(request: NextRequest) {
       emailError: emailNotification.error || null,
     });
 
+    const { accessToken: _, ...orderSafe } = order;
     return NextResponse.json({
       success: true,
       order: {
-        ...order,
+        ...orderSafe,
         paymentLink: paymentLink ?? order.paymentLink ?? undefined,
         paymentId: paymentId ?? order.paymentId ?? undefined,
       },
+      accessToken,
       paymentLink: paymentLink ?? undefined,
       paymentLinkAvailable,
       emailNotification,

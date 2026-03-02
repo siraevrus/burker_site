@@ -1,14 +1,15 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Order } from "@/lib/types";
 
 export default function OrderPayPage() {
   const params = useParams();
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const orderId = typeof params.id === "string" ? params.id : null;
+  const token = searchParams.get("token");
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +19,8 @@ export default function OrderPayPage() {
       setLoading(false);
       return;
     }
-    fetch(`/api/orders/${orderId}`)
+    const url = token ? `/api/orders/${orderId}?token=${encodeURIComponent(token)}` : `/api/orders/${orderId}`;
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
         if (data.order) setOrder(data.order);
@@ -29,7 +31,7 @@ export default function OrderPayPage() {
         setError("Ошибка загрузки заказа");
         setLoading(false);
       });
-  }, [orderId]);
+  }, [orderId, token]);
 
   if (loading) {
     return (
@@ -71,7 +73,7 @@ export default function OrderPayPage() {
           <p className="text-gray-600 mb-6">Номер заказа: #{order.orderNumber || order.id}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              href={`/order-confirmation?id=${order.id}`}
+              href={token ? `/order-confirmation?id=${order.id}&token=${encodeURIComponent(token)}` : `/order-confirmation?id=${order.id}`}
               className="inline-block bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800"
             >
               Подтверждение заказа
@@ -97,7 +99,7 @@ export default function OrderPayPage() {
             Оплата заказов подключена через СБП (Т-Банк), но ссылка на этот заказ не была создана. Обратитесь в поддержку или попробуйте оформить заказ позже.
           </p>
           <Link
-            href={`/order-confirmation?id=${order.id}`}
+            href={token ? `/order-confirmation?id=${order.id}&token=${encodeURIComponent(token)}` : `/order-confirmation?id=${order.id}`}
             className="inline-block bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800"
           >
             Подтверждение заказа
@@ -131,7 +133,7 @@ export default function OrderPayPage() {
           </a>
         </div>
         <div className="text-center">
-          <Link href={`/order-confirmation?id=${order.id}`} className="text-gray-500 hover:underline text-sm">
+          <Link href={token ? `/order-confirmation?id=${order.id}&token=${encodeURIComponent(token)}` : `/order-confirmation?id=${order.id}`} className="text-gray-500 hover:underline text-sm">
             Вернуться к подтверждению заказа
           </Link>
         </div>

@@ -21,6 +21,7 @@ const paymentStatusLabels: Record<string, string> = {
 function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("id");
+  const token = searchParams.get("token");
   const paidParam = searchParams.get("paid");
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,18 +37,20 @@ function OrderConfirmationContent() {
 
   const fetchOrder = useCallback(() => {
     if (!orderId) return;
-    fetch(`/api/orders/${orderId}`)
+    const url = token ? `/api/orders/${orderId}?token=${encodeURIComponent(token)}` : `/api/orders/${orderId}`;
+    fetch(url)
       .then((res) => res.json())
       .then((orderData) => {
         if (orderData.order) setOrder(orderData.order);
       })
       .catch(() => {});
-  }, [orderId]);
+  }, [orderId, token]);
 
   useEffect(() => {
     if (orderId) {
+      const orderUrl = token ? `/api/orders/${orderId}?token=${encodeURIComponent(token)}` : `/api/orders/${orderId}`;
       Promise.all([
-        fetch(`/api/orders/${orderId}`).then((res) => res.json()),
+        fetch(orderUrl).then((res) => res.json()),
         fetch("/api/exchange-rates").then((res) => res.json()),
       ])
         .then(([orderData, ratesData]) => {
@@ -66,7 +69,7 @@ function OrderConfirmationContent() {
     } else {
       setLoading(false);
     }
-  }, [orderId]);
+  }, [orderId, token]);
 
   // После редиректа с оплаты (?paid=1) опрашиваем заказ через 2 с (вебхук может прийти с задержкой)
   useEffect(() => {
