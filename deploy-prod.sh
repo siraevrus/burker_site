@@ -107,16 +107,12 @@ else
   log_ok "Схема БД синхронизирована через db push"
 fi
 
-# Сохраняем загрузки (promo, products, order-proofs) ДО сборки — после build .next/standalone перезаписывается и они теряются
+# Сохраняем order-proofs ДО сборки (promo и products — в public/, nginx раздаёт оттуда, cp -r public их подтянет)
 UPLOADS_BACKUP=""
-if [[ -d ".next/standalone/public" ]]; then
+if [[ -d ".next/standalone/public/order-proofs" ]]; then
   UPLOADS_BACKUP=$(mktemp -d)
-  for subdir in promo products order-proofs; do
-    if [[ -d ".next/standalone/public/${subdir}" ]]; then
-      cp -r ".next/standalone/public/${subdir}" "${UPLOADS_BACKUP}/${subdir}"
-      log_info "Сохранена копия standalone/public/${subdir} (до сборки)"
-    fi
-  done
+  cp -r ".next/standalone/public/order-proofs" "${UPLOADS_BACKUP}/order-proofs"
+  log_info "Сохранена копия standalone/public/order-proofs (до сборки)"
 fi
 
 log_info "Сборка приложения..."
@@ -145,17 +141,12 @@ else
   log_warn "Папка public не найдена в проекте, пропускаю копирование"
 fi
 
-# Восстанавливаем загрузки, сохранённые до сборки
-if [[ -n "${UPLOADS_BACKUP}" && -d "${UPLOADS_BACKUP}" ]]; then
-  for subdir in promo products order-proofs; do
-    if [[ -d "${UPLOADS_BACKUP}/${subdir}" ]]; then
-      mkdir -p ".next/standalone/public/${subdir}"
-      cp -r "${UPLOADS_BACKUP}/${subdir}/." ".next/standalone/public/${subdir}/" 2>/dev/null || true
-      rm -rf "${UPLOADS_BACKUP}/${subdir}"
-      log_ok "Восстановлен standalone/public/${subdir}"
-    fi
-  done
+# Восстанавливаем order-proofs, сохранённые до сборки
+if [[ -n "${UPLOADS_BACKUP}" && -d "${UPLOADS_BACKUP}/order-proofs" ]]; then
+  mkdir -p ".next/standalone/public/order-proofs"
+  cp -r "${UPLOADS_BACKUP}/order-proofs/." ".next/standalone/public/order-proofs/" 2>/dev/null || true
   rm -rf "${UPLOADS_BACKUP}"
+  log_ok "Восстановлен standalone/public/order-proofs"
 fi
 
 if [[ ! -d ".next/standalone/.next/static" ]]; then

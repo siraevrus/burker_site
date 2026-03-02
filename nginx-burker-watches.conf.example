@@ -43,9 +43,10 @@ server {
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
-    # Статика: загрузки из админки (промоблок)
+    # Статика: загрузки из админки (промоблок, доказательства оплаты)
+    # public/promo — единственный путь, не зависит от сборки
     location /promo/ {
-        alias /var/www/burker-watches.ru/.next/standalone/public/promo/;
+        alias /var/www/burker-watches.ru/public/promo/;
         try_files $uri =404;
         access_log off;
         expires 30d;

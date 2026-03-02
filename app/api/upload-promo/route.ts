@@ -57,35 +57,13 @@ export async function POST(request: NextRequest) {
       .substring(0, 50); // Ограничиваем длину
     const filename = `promo-${timestamp}-${sanitizedName}.${extension}`;
     
-    // В production (Next standalone) статика часто отдается из .next/standalone/public.
-    // Чтобы загрузка работала и в dev, и в prod, сохраняем файл в оба каталога.
-    const targetDirs = [
-      join(process.cwd(), "public", "promo"),
-      join(process.cwd(), ".next", "standalone", "public", "promo"),
-    ];
-
-    let saved = 0;
-    const errors: string[] = [];
-
-    for (const dir of targetDirs) {
-      try {
-        if (!existsSync(dir)) {
-          mkdirSync(dir, { recursive: true });
-        }
-        const filepath = join(dir, filename);
-        await writeFile(filepath, buffer);
-        saved += 1;
-      } catch (error) {
-        errors.push(`${dir}: ${error instanceof Error ? error.message : "write failed"}`);
-      }
+    // Загрузка только в public/promo (nginx отдаёт статику напрямую из этой папки)
+    const targetDir = join(process.cwd(), "public", "promo");
+    if (!existsSync(targetDir)) {
+      mkdirSync(targetDir, { recursive: true });
     }
-
-    if (saved === 0) {
-      return NextResponse.json(
-        { error: "Failed to save file", details: errors },
-        { status: 500 }
-      );
-    }
+    const filepath = join(targetDir, filename);
+    await writeFile(filepath, buffer);
 
     // Возвращаем путь к файлу
     return NextResponse.json({

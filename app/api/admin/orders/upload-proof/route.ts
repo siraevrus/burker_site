@@ -54,33 +54,13 @@ export async function POST(request: NextRequest) {
     const extension = file.name.split(".").pop() || "jpg";
     const filename = `proof-${orderId}-${timestamp}.${extension}`;
 
-    // Единая директория для всех загружаемых изображений (promo).
-    // В production (standalone) дублируем запись в .next/standalone/public/promo.
-    const targetDirs = [
-      join(process.cwd(), "public", "promo"),
-      join(process.cwd(), ".next", "standalone", "public", "promo"),
-    ];
-
-    let saved = 0;
-    for (const dir of targetDirs) {
-      if (!existsSync(dir)) {
-        mkdirSync(dir, { recursive: true });
-      }
-      const filepath = join(dir, filename);
-      try {
-        await writeFile(filepath, buffer);
-        saved += 1;
-      } catch {
-        // Пытаемся сохранить во все целевые директории; ошибку отдадим, если не сохранили никуда.
-      }
+    // Загрузка только в public/promo (nginx отдаёт статику напрямую из этой папки)
+    const targetDir = join(process.cwd(), "public", "promo");
+    if (!existsSync(targetDir)) {
+      mkdirSync(targetDir, { recursive: true });
     }
-
-    if (saved === 0) {
-      return NextResponse.json(
-        { error: "Ошибка сохранения файла" },
-        { status: 500 }
-      );
-    }
+    const filepath = join(targetDir, filename);
+    await writeFile(filepath, buffer);
 
     return NextResponse.json({
       success: true,
