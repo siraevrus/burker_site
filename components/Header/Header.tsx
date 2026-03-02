@@ -338,7 +338,7 @@ export default function Header() {
           {/* Right side icons */}
           <div className="flex items-center gap-4">
             <button
-              className="hidden md:block"
+              className="inline-flex items-center justify-center p-1"
               aria-label="Поиск"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
             >
