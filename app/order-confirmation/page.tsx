@@ -22,7 +22,6 @@ function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("id");
   const token = searchParams.get("token");
-  const paidParam = searchParams.get("paid");
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [rates, setRates] = useState<ExchangeRates | null>(null);
@@ -71,12 +70,12 @@ function OrderConfirmationContent() {
     }
   }, [orderId, token]);
 
-  // После редиректа с оплаты (?paid=1) опрашиваем заказ через 2 с (вебхук может прийти с задержкой)
+  // После редиректа с банка (paid=1 — успех, без paid — неуспех) опрашиваем заказ через 2 с (вебхук может прийти с задержкой)
   useEffect(() => {
-    if (!orderId || paidParam !== "1") return;
+    if (!orderId) return;
     const t = setTimeout(fetchOrder, 2000);
     return () => clearTimeout(t);
-  }, [orderId, paidParam, fetchOrder]);
+  }, [orderId, fetchOrder]);
 
   // Курсы на момент заказа (приоритет) или текущие из API для старых заказов
   const ratesForCommission =
@@ -170,14 +169,14 @@ function OrderConfirmationContent() {
 
         {order.paymentStatus === "pending" && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-            <p className="text-sm font-medium text-amber-800 mb-1">Оплата через СБП (Система быстрых платежей)</p>
+            <p className="text-sm font-medium text-amber-800 mb-1">Ожидает оплаты</p>
             <p className="text-sm text-amber-800 mb-3">
               {order.paymentLink
-                ? "Заказ ожидает оплаты. Нажмите кнопку ниже, чтобы перейти к оплате в вашем банке."
+                ? "Заказ ожидает оплаты. Нажмите кнопку ниже, чтобы перейти к оплате в платёжной форме банка."
                 : "Ссылка на оплату не была сформирована. Вы можете перейти на страницу оплаты и попробовать снова или связаться с нами."}
             </p>
             <Link
-              href={`/order/${order.id}/pay`}
+              href={token ? `/order/${order.id}/pay?token=${encodeURIComponent(token)}` : `/order/${order.id}/pay`}
               className="inline-block bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
             >
               {order.paymentLink ? "Оплатить заказ" : "Страница оплаты"}
@@ -200,6 +199,44 @@ function OrderConfirmationContent() {
                 </span>
               )}
             </p>
+          </div>
+        )}
+        {(order.paymentStatus === "expired" || order.paymentStatus === "cancelled" || order.paymentStatus === "failed") && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-sm font-medium text-red-800 mb-1">
+              {paymentStatusLabels[order.paymentStatus] ?? order.paymentStatus}
+            </p>
+            <p className="text-sm text-red-700 mb-3">
+              {order.paymentStatus === "expired"
+                ? "Срок действия ссылки на оплату истёк. Оформите новый заказ или свяжитесь с нами для возобновления."
+                : order.paymentStatus === "cancelled"
+                  ? "Платёж отменён или отклонён. Вы можете перейти на страницу оплаты и попробовать снова."
+                  : "Ошибка при проведении платежа. Попробуйте другую карту или способ оплаты, либо свяжитесь с нами."}
+            </p>
+            {order.paymentStatus !== "expired" && order.paymentLink && (
+              <Link
+                href={token ? `/order/${order.id}/pay?token=${encodeURIComponent(token)}` : `/order/${order.id}/pay`}
+                className="inline-block bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
+              >
+                Попробовать оплатить снова
+              </Link>
+            )}
+            {order.paymentStatus === "expired" && (
+              <div className="flex gap-3 flex-wrap">
+                <Link
+                  href="/"
+                  className="inline-block bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
+                >
+                  Оформить новый заказ
+                </Link>
+                <Link
+                  href="/contact"
+                  className="inline-block border border-red-300 text-red-800 px-6 py-2 rounded-md hover:bg-red-50 text-sm font-medium"
+                >
+                  Связаться с нами
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
