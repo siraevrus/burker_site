@@ -9,7 +9,7 @@ const API_URL = "https://parcing.burker-watches.ru/api_json.php";
 /**
  * API endpoint для автоматического импорта товаров с внешнего сервера
  * Может быть вызван вручную или через cron job.
- * Vercel при вызове cron передаёт заголовок Authorization: Bearer <CRON_SECRET>.
+ * Секрет: заголовок Authorization: Bearer или query ?secret=
  */
 export async function GET(request: NextRequest) {
   try {
@@ -20,10 +20,8 @@ export async function GET(request: NextRequest) {
     const secretKey = request.nextUrl.searchParams.get("secret");
     const providedSecret = authHeader?.replace(/^Bearer\s+/i, "") || secretKey || "";
 
-    // Vercel использует переменную CRON_SECRET, внешние cron — можно CRON_SECRET_KEY
-    const vercelCronSecret = process.env.CRON_SECRET;
-    const customCronSecret = process.env.CRON_SECRET_KEY;
-    const expectedCronSecret = vercelCronSecret || customCronSecret;
+    const expectedCronSecret =
+      process.env.CRON_SECRET || process.env.CRON_SECRET_KEY;
 
     const isCronAuthorized = Boolean(
       expectedCronSecret && providedSecret === expectedCronSecret

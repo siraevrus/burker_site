@@ -5,7 +5,13 @@ import { notifyRatesUpdated } from "@/lib/telegram";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
-  const providedSecret = authHeader?.replace(/^Bearer\s+/i, "")?.trim() || "";
+  const xCronSecret = request.headers.get("x-cron-secret");
+  const querySecret = request.nextUrl.searchParams.get("secret");
+  const providedSecret =
+    authHeader?.replace(/^Bearer\s+/i, "")?.trim() ||
+    xCronSecret?.trim() ||
+    querySecret?.trim() ||
+    "";
   const expectedSecret = process.env.CRON_SECRET || process.env.CRON_SECRET_KEY;
 
   if (expectedSecret && providedSecret !== expectedSecret) {

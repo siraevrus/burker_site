@@ -7,12 +7,18 @@ const API_URL = "https://parcing.burker-watches.ru/api_json.php";
 
 /**
  * API endpoint для cron job (внешние сервисы)
- * Поддерживаются CRON_SECRET (Vercel) и CRON_SECRET_KEY
+ * Поддерживаются CRON_SECRET и CRON_SECRET_KEY
  */
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
-    const providedSecret = authHeader?.replace(/^Bearer\s+/i, "")?.trim() || "";
+    const xCronSecret = request.headers.get("x-cron-secret");
+    const querySecret = request.nextUrl.searchParams.get("secret");
+    const providedSecret =
+      authHeader?.replace(/^Bearer\s+/i, "")?.trim() ||
+      xCronSecret?.trim() ||
+      querySecret?.trim() ||
+      "";
     const expectedSecret = process.env.CRON_SECRET || process.env.CRON_SECRET_KEY;
 
     if (expectedSecret && providedSecret !== expectedSecret) {
