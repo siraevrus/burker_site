@@ -88,16 +88,25 @@ export async function notifyNewOrder(data: {
   phone: string;
   totalAmount: number;
   itemsCount: number;
+  items: Array<{ productName: string; quantity: number }>;
 }): Promise<boolean> {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://burker-watches.ru";
+  const orderLink = `${siteUrl.replace(/\/+$/, "")}/admin/orders/${data.orderId}`;
+  const itemsList = data.items
+    .map((item) => `• ${escapeHtml(item.productName)}${item.quantity > 1 ? ` × ${item.quantity}` : ""}`)
+    .join("\n");
   const lines = [
     "📦 <b>Новый заказ</b>",
     "",
     `Номер: ${escapeHtml(data.orderNumber)}`,
+    `Товар(ы):\n${itemsList || "—"}`,
     `Email: ${escapeHtml(data.email)}`,
     `Имя: ${escapeHtml(data.firstName)}`,
     `Телефон: ${escapeHtml(data.phone)}`,
     `Сумма: ${data.totalAmount.toFixed(0)} ₽`,
     `Товаров: ${data.itemsCount}`,
+    "",
+    `<a href="${orderLink.replace(/&/g, "&amp;")}">Ссылка на заказ</a>`,
   ];
   const text = lines.join("\n");
   return sendTelegramMessage(text, { parseMode: "HTML" });

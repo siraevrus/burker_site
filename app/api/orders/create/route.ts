@@ -381,6 +381,10 @@ export async function POST(request: NextRequest) {
         phone: order.phone,
         totalAmount: order.totalAmount,
         itemsCount: order.items.length,
+        items: order.items.map((item) => ({
+          productName: item.productName,
+          quantity: item.quantity,
+        })),
       });
     } catch (emailError) {
       console.error("Error sending order emails:", emailError);

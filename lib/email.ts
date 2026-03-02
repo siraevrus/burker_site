@@ -2,6 +2,10 @@ import { sendEmailViaMailopost } from "./mailopost";
 
 // Конфигурация из переменных окружения
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.MAILOPOST_FROM_EMAIL || "";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "http://localhost:3000";
+
+/** Подпись в письмах: Mira Brands | Burker со ссылкой на сайт */
+const EMAIL_FOOTER = `<p style="color: #999; font-size: 12px;"><a href="${SITE_URL}" style="color: #999; text-decoration: none;">Mira Brands | Burker</a></p>`;
 
 /**
  * Отправка кода верификации на email
@@ -30,13 +34,7 @@ export async function sendVerificationCode(
       <p>Код действителен в течение 15 минут.</p>
       <p>Если вы не регистрировались на нашем сайте, просто проигнорируйте это письмо.</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="color: #999; font-size: 12px;">Mira Brands | Burker - Официальный магазин</p>
-    </div>
-  `;
-
-  const result = await sendEmailViaMailopost(
-    email,
-    "Код подтверждения email",
+      ${EMAIL_FOOTER}
     html
   );
 
@@ -104,13 +102,7 @@ export async function sendOrderConfirmation(
       
       <p>Мы свяжемся с вами в ближайшее время для подтверждения заказа.</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="color: #999; font-size: 12px;">Mira Brands | Burker - Официальный магазин</p>
-    </div>
-  `;
-
-  const result = await sendEmailViaMailopost(
-    email,
-    `Заказ #${orderNumber} принят`,
+      ${EMAIL_FOOTER}
     html
   );
 
@@ -149,6 +141,7 @@ export async function sendAdminOrderNotification(
     return true;
   }
 
+  const orderLink = `${SITE_URL}/admin/orders/${orderId}`;
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #333;">Новый заказ #${orderNumber}</h2>
@@ -158,7 +151,10 @@ export async function sendAdminOrderNotification(
       <p><strong>Адрес:</strong> ${orderData.address}</p>
       <p><strong>Количество товаров:</strong> ${orderData.itemsCount}</p>
       <p><strong>Сумма заказа:</strong> ${orderData.totalAmount.toFixed(0)} ₽</p>
-      <p><a href="${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/admin/orders/${orderId}" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #A13D42; color: white; text-decoration: none; border-radius: 5px;">Просмотреть заказ #${orderNumber}</a></p>
+      <p><strong>Ссылка на заказ:</strong> <a href="${orderLink}">${orderLink}</a></p>
+      <p><a href="${orderLink}" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #A13D42; color: white; text-decoration: none; border-radius: 5px;">Просмотреть заказ #${orderNumber}</a></p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      ${EMAIL_FOOTER}
     </div>
   `;
 
@@ -192,7 +188,7 @@ export async function sendFeedbackNotificationToAdmin(data: {
   const name = esc(data.name);
   const contact = esc(data.contact);
   const comment = esc(data.comment).replace(/\n/g, "<br>");
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const baseUrl = SITE_URL;
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #333;">Новое сообщение с формы обратной связи</h2>
@@ -201,6 +197,8 @@ export async function sendFeedbackNotificationToAdmin(data: {
       <p><strong>Сообщение:</strong></p>
       <p style="background: #f5f5f5; padding: 12px; border-radius: 6px;">${comment}</p>
       <p><a href="${baseUrl}/admin/feedback" style="display: inline-block; margin-top: 16px; padding: 10px 20px; background-color: #A13D42; color: white; text-decoration: none; border-radius: 5px;">Открыть заявки в админке</a></p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      ${EMAIL_FOOTER}
     </div>
   `;
   const result = await sendEmailViaMailopost(
@@ -237,7 +235,7 @@ export async function sendPasswordResetCode(
       <p>Код действителен в течение 15 минут.</p>
       <p>Если вы не запрашивали восстановление пароля, просто проигнорируйте это письмо.</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="color: #999; font-size: 12px;">Mira Brands | Burker - Официальный магазин</p>
+      ${EMAIL_FOOTER}
     </div>
   `;
 
@@ -267,7 +265,7 @@ export async function sendOrderPurchasedEmail(
   console.log(`Подтверждение: ${proofImageUrl}`);
   console.log("=".repeat(60) + "\n");
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const siteUrl = SITE_URL;
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -283,7 +281,7 @@ export async function sendOrderPurchasedEmail(
       <p>Следующий этап — отправка товара на наш склад в Германии. Мы уведомим вас, когда товар будет отправлен.</p>
       
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-      <p style="color: #999; font-size: 12px;">Mira Brands | Burker - Официальный магазин</p>
+      ${EMAIL_FOOTER}
     </div>
   `;
 
@@ -340,7 +338,7 @@ export async function sendOrderInTransitToWarehouseEmail(
       <p>Как только товар прибудет на наш склад и будет отправлен в Россию, мы сообщим вам новый трек-номер.</p>
       
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-      <p style="color: #999; font-size: 12px;">Mira Brands | Burker - Официальный магазин</p>
+      ${EMAIL_FOOTER}
     </div>
   `;
 
@@ -397,7 +395,7 @@ export async function sendOrderInTransitToRussiaEmail(
       <p>Как только посылка прибудет в пункт выдачи, мы уведомим вас.</p>
       
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-      <p style="color: #999; font-size: 12px;">Mira Brands | Burker - Официальный магазин</p>
+      ${EMAIL_FOOTER}
     </div>
   `;
 
@@ -440,7 +438,7 @@ export async function sendOrderDeliveredEmail(
       <p>Если у вас возникнут вопросы или проблемы с товаром, не стесняйтесь обращаться к нам.</p>
       
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-      <p style="color: #999; font-size: 12px;">Mira Brands | Burker - Официальный магазин</p>
+      ${EMAIL_FOOTER}
     </div>
   `;
 
@@ -484,7 +482,7 @@ export async function sendOrderPaidEmail(
       <p>Заказ передан в обработку. Мы свяжемся с вами при изменении статуса доставки.</p>
       
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-      <p style="color: #999; font-size: 12px;">Mira Brands | Burker - Официальный магазин</p>
+      ${EMAIL_FOOTER}
     </div>
   `;
 
