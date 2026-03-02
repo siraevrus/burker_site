@@ -107,6 +107,18 @@ else
   log_ok "Схема БД синхронизирована через db push"
 fi
 
+# Сохраняем загрузки (promo, products, order-proofs) ДО сборки — после build .next/standalone перезаписывается и они теряются
+UPLOADS_BACKUP=""
+if [[ -d ".next/standalone/public" ]]; then
+  UPLOADS_BACKUP=$(mktemp -d)
+  for subdir in promo products order-proofs; do
+    if [[ -d ".next/standalone/public/${subdir}" ]]; then
+      cp -r ".next/standalone/public/${subdir}" "${UPLOADS_BACKUP}/${subdir}"
+      log_info "Сохранена копия standalone/public/${subdir} (до сборки)"
+    fi
+  done
+fi
+
 log_info "Сборка приложения..."
 npm run build
 log_ok "Сборка завершена"
@@ -131,6 +143,19 @@ if [[ -d "public" ]]; then
   cp -r public .next/standalone/public
 else
   log_warn "Папка public не найдена в проекте, пропускаю копирование"
+fi
+
+# Восстанавливаем загрузки, сохранённые до сборки
+if [[ -n "${UPLOADS_BACKUP}" && -d "${UPLOADS_BACKUP}" ]]; then
+  for subdir in promo products order-proofs; do
+    if [[ -d "${UPLOADS_BACKUP}/${subdir}" ]]; then
+      mkdir -p ".next/standalone/public/${subdir}"
+      cp -r "${UPLOADS_BACKUP}/${subdir}/." ".next/standalone/public/${subdir}/" 2>/dev/null || true
+      rm -rf "${UPLOADS_BACKUP}/${subdir}"
+      log_ok "Восстановлен standalone/public/${subdir}"
+    fi
+  done
+  rm -rf "${UPLOADS_BACKUP}"
 fi
 
 if [[ ! -d ".next/standalone/.next/static" ]]; then
