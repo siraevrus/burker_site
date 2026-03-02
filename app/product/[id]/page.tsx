@@ -2,13 +2,11 @@ import type { Metadata } from "next";
 import { getProductById, getAllProducts } from "@/lib/products";
 import { notFound } from "next/navigation";
 import ProductPageClient from "./ProductPageClient";
+import { CANONICAL_SITE_URL } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
-const baseUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  process.env.SITE_URL ||
-  "https://www.burker-watches.ru";
+const baseUrl = CANONICAL_SITE_URL;
 
 function absoluteImageUrl(path: string): string {
   if (path.startsWith("http://") || path.startsWith("https://")) return path;

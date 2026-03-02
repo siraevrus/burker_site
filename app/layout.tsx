@@ -4,6 +4,8 @@ import "./globals.css";
 import ConditionalLayout from "@/components/ConditionalLayout";
 import YandexMetrika from "@/components/YandexMetrika/YandexMetrika";
 import StoreHydration from "@/components/StoreHydration";
+import CanonicalLink from "@/components/CanonicalLink";
+import { CANONICAL_SITE_URL } from "@/lib/site-url";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,10 +23,7 @@ const openSans = Open_Sans({
   weight: ["400"],
 });
 
-const baseUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  process.env.SITE_URL ||
-  "https://www.burker-watches.ru";
+const baseUrl = CANONICAL_SITE_URL;
 
 export const metadata: Metadata = {
   title: "Mira Brands | Burker | Официальный магазин",
@@ -76,6 +75,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${openSans.variable} antialiased bg-[#FCFAF8]`}
       >
+        <CanonicalLink />
         <StoreHydration />
         <YandexMetrika />
         <ConditionalLayout>{children}</ConditionalLayout>

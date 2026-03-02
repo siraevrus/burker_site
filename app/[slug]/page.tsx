@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { CANONICAL_SITE_URL } from "@/lib/site-url";
 
-const baseUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  process.env.SITE_URL ||
-  "https://www.burker-watches.ru";
+const baseUrl = CANONICAL_SITE_URL;
 
 interface Props {
   params: Promise<{ slug: string }>;

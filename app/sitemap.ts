@@ -1,11 +1,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
 import { generateProductSlug } from "@/lib/products";
-
-const BASE_URL =
-  process.env.SITE_URL ||
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  "https://www.burker-watches.ru";
+import { CANONICAL_SITE_URL } from "@/lib/site-url";
 
 /** Регенерация sitemap раз в сутки */
 export const revalidate = 86400; // 24 часа
@@ -31,12 +27,12 @@ const collectionSlugs = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const BASE_URL = CANONICAL_SITE_URL;
+
+  // Статические страницы: без /cart, без дублей /collections/watches и /collections/jewelry (они в collectionSlugs)
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: "daily", priority: 1 },
     { url: `${BASE_URL}/sale`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
-    { url: `${BASE_URL}/cart`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
-    { url: `${BASE_URL}/collections/watches`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
-    { url: `${BASE_URL}/collections/jewelry`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
     { url: `${BASE_URL}/privacy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
     { url: `${BASE_URL}/terms`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
   ];

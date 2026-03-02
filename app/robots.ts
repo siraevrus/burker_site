@@ -1,9 +1,5 @@
 import type { MetadataRoute } from "next";
-
-const BASE_URL =
-  process.env.SITE_URL ||
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  "https://www.burker-watches.ru";
+import { CANONICAL_SITE_URL } from "@/lib/site-url";
 
 /** Регенерация robots.txt раз в сутки */
 export const revalidate = 86400; // 24 часа
@@ -17,6 +13,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/admin/"],
       },
     ],
-    sitemap: `${BASE_URL}/sitemap.xml`,
+    sitemap: `${CANONICAL_SITE_URL}/sitemap.xml`,
   };
 }
