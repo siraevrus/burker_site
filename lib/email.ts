@@ -109,6 +109,12 @@ export async function sendOrderConfirmation(
       <p>Мы свяжемся с вами в ближайшее время для подтверждения заказа.</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
       ${EMAIL_FOOTER}
+    </div>
+  `;
+
+  const result = await sendEmailViaMailopost(
+    email,
+    `Заказ #${orderNumber} принят — Mira Brands | Burker`,
     html
   );
 
