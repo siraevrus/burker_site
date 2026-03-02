@@ -17,6 +17,15 @@ export default function ProductImage({
 }) {
   const resolvedSrc =
     src.startsWith("http://") || src.startsWith("https://") ? src : src.startsWith("/") ? src : `/${src}`;
+  
+  const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    // При ошибке загрузки показываем placeholder
+    const target = e.currentTarget;
+    if (target.src !== "/placeholder.png") {
+      target.src = "/placeholder.png";
+    }
+  };
+
   return (
     <img
       src={resolvedSrc}
@@ -24,6 +33,7 @@ export default function ProductImage({
       className={fill ? `absolute inset-0 w-full h-full object-cover ${className}` : className}
       loading="lazy"
       decoding="async"
+      onError={handleError}
     />
   );
 }
