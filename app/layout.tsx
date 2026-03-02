@@ -55,11 +55,7 @@ export const metadata: Metadata = {
     yandex: "b3064b64a4d24ac9",
   },
   icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "48x48" },
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-    ],
+    icon: { url: `${baseUrl}/favicon.ico`, type: "image/x-icon" },
     apple: "/apple-touch-icon.png",
   },
   manifest: "/site.webmanifest",

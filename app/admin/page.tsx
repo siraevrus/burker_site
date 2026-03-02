@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Product } from "@/lib/types";
-import Image from "next/image";
 
 export default function AdminPage() {
   const [productList, setProductList] = useState<Product[]>([]);
@@ -304,15 +303,15 @@ export default function AdminPage() {
                           Внешнее фото
                         </div>
                       ) : (
-                        <Image
+                        <img
                           src={
                             product.images[0].startsWith("/")
                               ? product.images[0]
                               : `/${product.images[0]}`
                           }
                           alt={product.name}
-                          fill
-                          className="object-cover"
+                          className="absolute inset-0 w-full h-full object-cover"
+                          loading="lazy"
                           onError={(e) => {
                             e.currentTarget.src = "/placeholder.png";
                           }}
