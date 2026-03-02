@@ -35,6 +35,12 @@ export async function sendVerificationCode(
       <p>Если вы не регистрировались на нашем сайте, просто проигнорируйте это письмо.</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
       ${EMAIL_FOOTER}
+    </div>
+  `;
+
+  const result = await sendEmailViaMailopost(
+    email,
+    "Подтверждение email адреса",
     html
   );
 
