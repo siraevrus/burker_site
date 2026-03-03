@@ -229,6 +229,113 @@ export function isTbankConfigured(): boolean {
 }
 
 /**
+ * Отменяет платёж (Cancel). Для теста №8: Init с Receipt → Cancel с PaymentId.
+ * Документация: https://developer.tbank.ru/eacq/api/cancel
+ */
+export interface CancelPaymentParams {
+  paymentId: string | number; // PaymentId из Init
+  amountKopecks?: number; // опционально; если не передан, используется Amount из Init
+  receipt?: ReceiptParams; // опционально; для частичной отмены (для полной отмены не передаём)
+}
+
+export interface CancelPaymentResult {
+  success: boolean;
+  status?: string;
+  newAmount?: number;
+}
+
+export async function cancelPayment(
+  params: CancelPaymentParams
+): Promise<CancelPaymentResult> {
+  if (!TBANK_TERMINAL || !TBANK_PASSWORD) {
+    throw new Error("T-Bank: задайте TBANK_TERMINAL и TBANK_PASSWORD");
+  }
+
+  const body: Record<string, unknown> = {
+    TerminalKey: TBANK_TERMINAL,
+    PaymentId: String(params.paymentId),
+  };
+
+  if (params.amountKopecks !== undefined) {
+    body.Amount = params.amountKopecks;
+  }
+
+  if (params.receipt) {
+    const r = params.receipt;
+    const itemsSum = r.items.reduce((s, i) => s + i.amount, 0);
+    body.Receipt = {
+      FfdVersion: "1.05",
+      Email: r.email.slice(0, 64),
+      Taxation: r.taxation,
+      Items: r.items.map((i) => ({
+        Name: i.name.slice(0, 128),
+        Price: i.price,
+        Quantity: i.quantity,
+        Amount: i.amount,
+        Tax: i.tax ?? "none",
+        PaymentMethod: i.paymentMethod ?? "full_payment",
+        PaymentObject: i.paymentObject ?? "commodity",
+      })),
+      Payments: { Electronic: itemsSum },
+    };
+  }
+
+  const token = buildToken(body, TBANK_PASSWORD!);
+  body.Token = token;
+
+  const url = `${getBaseUrl()}/v2/Cancel`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    const auth = getAuthHeader();
+    if (auth) headers.Authorization = auth;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+
+    if (!res.ok) {
+      const errMsg =
+        (data.message as string) ??
+        (data.Message as string) ??
+        (data.ErrorMessage as string) ??
+        `HTTP ${res.status}`;
+      console.error("T-Bank Cancel error:", res.status, errMsg);
+      throw new Error(`T-Bank Cancel: ${errMsg}`);
+    }
+
+    const success = data.Success === true || data.Success === "true";
+    if (!success) {
+      const errMsg =
+        (data.message as string) ??
+        (data.Message as string) ??
+        "Unknown error";
+      throw new Error(`T-Bank Cancel: ${errMsg}`);
+    }
+
+    const status = (data.Status ?? data.status) as string | undefined;
+    const newAmount = data.NewAmount as number | undefined;
+
+    return {
+      success: true,
+      status,
+      newAmount,
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
  * Проверяет подпись уведомления EACQ (все параметры кроме Token + Password, сортировка, SHA-256).
  */
 export function verifyNotificationToken(
