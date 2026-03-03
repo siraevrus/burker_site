@@ -289,11 +289,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Сохраняем фамилию и телефон в профиль пользователя для подстановки при следующем заказе.
-    // Отчество (middleName) — после появления колонки в продовой БД добавить в data и в select на странице чекаута.
-    if (currentUser?.userId && (lastName || phone)) {
-      const data: { lastName?: string; phone?: string } = {};
+    // Сохраняем фамилию, отчество и телефон в профиль пользователя для подстановки при следующем заказе.
+    if (currentUser?.userId && (lastName || middleName || phone)) {
+      const data: { lastName?: string; middleName?: string; phone?: string } = {};
       if (lastName) data.lastName = lastName;
+      if (middleName) data.middleName = middleName;
       if (phone && typeof phone === "string") {
         const digits = phone.replace(/\D/g, "").replace(/^8/, "7").slice(0, 11);
         data.phone = digits.startsWith("7") ? digits : "7" + digits;

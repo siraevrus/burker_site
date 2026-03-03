@@ -183,7 +183,9 @@ function OrderConfirmationContent() {
                   />
                 </svg>
               </div>
-              <h1 className="text-3xl font-bold mb-2">Заказ успешно оформлен!</h1>
+              <h1 className="text-3xl font-bold mb-2">
+                {order.paymentStatus === "pending" ? "Заказ в ожидании оплаты" : "Заказ успешно оформлен!"}
+              </h1>
               <p className="text-gray-600">
                 Номер заказа: <strong>#{order.orderNumber || order.id}</strong>
               </p>
@@ -194,8 +196,9 @@ function OrderConfirmationContent() {
         {!isPaymentCancelled && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <p className="text-sm text-blue-800">
-              Мы отправили подтверждение заказа на ваш email. Мы свяжемся с вами
-              в ближайшее время для подтверждения заказа.
+              {order.paymentStatus === "pending" 
+                ? "После оплаты мы отправим подтверждение заказа на ваш email."
+                : "Мы отправили подтверждение заказа на ваш email. Мы свяжемся с вами в ближайшее время для подтверждения заказа."}
             </p>
           </div>
         )}

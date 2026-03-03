@@ -54,13 +54,17 @@ export async function POST(request: NextRequest) {
     typeof rawStatus === "string" ? rawStatus.toUpperCase() : "";
 
   // EACQ: CONFIRMED / AUTHORIZED — успешная оплата; REJECTED, CANCELLED, DEADLINE_EXPIRED — неуспех
+  // REVERSED — отмена платежа (из AUTHORIZED), REFUNDED/PARTIAL_REFUNDED — возврат (из CONFIRMED)
   const isPaid =
     success &&
     (status === "CONFIRMED" || status === "AUTHORIZED");
   const isCancelledOrExpired = [
     "REJECTED",
     "CANCELLED",
+    "CANCELED",
     "REFUNDED",
+    "PARTIAL_REFUNDED",
+    "REVERSED",
     "DEADLINE_EXPIRED",
     "EXPIRED",
   ].includes(status);

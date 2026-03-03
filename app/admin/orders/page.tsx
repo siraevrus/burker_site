@@ -252,6 +252,41 @@ function AdminOrdersPageContent() {
     }
   };
 
+  const handleCancelPayment = async (order: Order) => {
+    const actionText = order.paymentStatus === "paid" ? "вернуть" : "отменить";
+    const confirmMessage = `Вы уверены, что хотите ${actionText} платеж для заказа #${order.orderNumber || order.id.slice(0, 8)}?\n\nСумма: ${order.totalAmount.toFixed(2)} ₽`;
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/orders/${order.id}/cancel-payment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setOrders(
+          orders.map((o) => (o.id === order.id ? data.order : o))
+        );
+        alert(`Платеж успешно ${actionText === "вернуть" ? "возвращен" : "отменен"}`);
+        // Перезагружаем заказы для обновления статусов
+        loadOrders();
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || `Ошибка при ${actionText === "вернуть" ? "возврате" : "отмене"} платежа`);
+      }
+    } catch (error) {
+      console.error("Error canceling payment:", error);
+      alert(`Ошибка при ${actionText === "вернуть" ? "возврате" : "отмене"} платежа`);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -588,6 +623,15 @@ function AdminOrdersPageContent() {
                             className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md text-sm font-medium"
                           >
                             Скопировать ссылку на оплату
+                          </button>
+                        )}
+                        {(order.paymentStatus === "paid" || order.paymentStatus === "pending") && order.paymentId && (
+                          <button
+                            type="button"
+                            onClick={() => handleCancelPayment(order)}
+                            className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-800 rounded-md text-sm font-medium"
+                          >
+                            {order.paymentStatus === "paid" ? "Вернуть платеж" : "Отменить платеж"}
                           </button>
                         )}
                       </div>
