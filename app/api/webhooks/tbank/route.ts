@@ -81,15 +81,21 @@ export async function POST(request: NextRequest) {
         : "cancelled"
       : order.paymentStatus; // не меняем при неизвестном статусе
 
+  // Отправляем письмо только если статус изменился (избегаем дублирования)
+  const statusChanged = order.paymentStatus !== newPaymentStatus;
+  const wasPaid = order.paymentStatus === "paid";
+  const wasCancelledOrExpired = ["cancelled", "expired"].includes(order.paymentStatus);
+
   await prisma.order.update({
     where: { id: order.id },
     data: {
       paymentStatus: newPaymentStatus,
-      ...(isPaid ? { paidAt: new Date() } : {}),
+      ...(isPaid && !order.paidAt ? { paidAt: new Date() } : {}),
     },
   });
 
-  if (isPaid) {
+  // Письмо "Заказ оплачен" — только если статус изменился на "paid"
+  if (isPaid && statusChanged && !wasPaid) {
     try {
       const orderNumber = order.orderNumber || order.id.slice(0, 8);
       await sendOrderPaidEmail(
@@ -101,7 +107,9 @@ export async function POST(request: NextRequest) {
     } catch (emailError) {
       console.error("T-Bank webhook: sendOrderPaidEmail failed", emailError);
     }
-  } else if (isCancelledOrExpired) {
+  }
+  // Письмо "Заказ не оплачен" — только если статус изменился на cancelled/expired
+  else if (isCancelledOrExpired && statusChanged && !wasCancelledOrExpired && !wasPaid) {
     try {
       const orderNumber = order.orderNumber || order.id.slice(0, 8);
       await sendOrderNotPaidEmail(

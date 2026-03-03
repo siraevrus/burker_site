@@ -436,7 +436,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Отправка email уведомлений
+    // Отправка email уведомлений (только админу; клиенту письмо отправится из вебхука при оплате/отмене)
     const emailNotification = {
       customerEmailSent: false,
       adminEmailSent: false,
@@ -444,15 +444,8 @@ export async function POST(request: NextRequest) {
     };
     try {
       const orderNumber = order.orderNumber || order.id;
-      emailNotification.customerEmailSent = await sendOrderConfirmation(order.email, orderNumber, {
-        firstName: order.firstName,
-        totalAmount: order.totalAmount,
-        items: order.items.map((item) => ({
-          name: item.productName,
-          quantity: item.quantity,
-          price: item.productPrice * item.quantity,
-        })),
-      });
+      // Письмо клиенту отправляется только из вебхука T-Bank при оплате или отмене
+      emailNotification.customerEmailSent = false;
 
       emailNotification.adminEmailSent = await sendAdminOrderNotification(orderNumber, order.id, {
         email: order.email,
