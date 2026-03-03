@@ -11,9 +11,15 @@ interface HomeClientProps {
   bestsellers: Product[];
 }
 
+interface FaqItem {
+  id: string;
+  question: string;
+  answer: string;
+}
+
 interface FaqData {
   title: string;
-  content: string;
+  items: FaqItem[];
 }
 
 const SCROLL_STEP = 280; // ширина карточки (w-64 = 256px) + gap
@@ -28,6 +34,7 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
   const [activeBrand, setActiveBrand] = useState(() => getRandomBrand());
   const bestsellersRef = useRef<HTMLDivElement>(null);
   const [faq, setFaq] = useState<FaqData | null>(null);
+  const [faqOpenId, setFaqOpenId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/faq")
@@ -173,10 +180,10 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
       </section>
 
       {/* Вопрос-Ответ */}
-      {(faq?.title || faq?.content) && (
+      {(faq?.items?.length ?? 0) > 0 && (
         <section className="py-16" style={{ backgroundColor: "#FCFAF8" }}>
           <div className="container mx-auto px-4">
-            {faq.title && (
+            {faq?.title && (
               <h2
                 className="mb-4 text-center uppercase"
                 style={{
@@ -190,21 +197,55 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
                 {faq.title}
               </h2>
             )}
-            {faq.title && (
+            {faq?.title && (
               <div className="flex justify-center mb-6">
                 <div style={{ width: 35, height: 3, backgroundColor: "#CAC8C6" }} />
               </div>
             )}
-            {faq.content && (
-              <div
-                className="max-w-3xl mx-auto text-gray-700 text-center whitespace-pre-wrap"
-                style={{
-                  fontFamily: 'Geist, "Geist Fallback", -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                  fontSize: "16px",
-                  lineHeight: "1.6",
-                }}
-              >
-                {faq.content}
+            {faq?.items && faq.items.length > 0 && (
+              <div className="max-w-2xl mx-auto divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden bg-white">
+                {faq.items.map((item) => {
+                  const isOpen = faqOpenId === item.id;
+                  return (
+                    <div key={item.id}>
+                      <button
+                        type="button"
+                        onClick={() => setFaqOpenId(isOpen ? null : item.id)}
+                        className="w-full flex items-center justify-between px-4 py-4 text-left hover:bg-gray-50 transition-colors"
+                        style={{
+                          fontFamily: 'Geist, "Geist Fallback", -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                          fontSize: "15px",
+                          fontWeight: 500,
+                          color: "rgb(23, 23, 23)",
+                        }}
+                      >
+                        {item.question}
+                        <svg
+                          className={`w-5 h-5 text-gray-500 flex-shrink-0 ml-2 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      <div
+                        className={`overflow-hidden transition-all duration-200 ${isOpen ? "max-h-96" : "max-h-0"}`}
+                      >
+                        <div
+                          className="px-4 pb-4 pt-0 text-gray-600 whitespace-pre-wrap"
+                          style={{
+                            fontFamily: 'Geist, "Geist Fallback", -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                            fontSize: "14px",
+                            lineHeight: "1.6",
+                          }}
+                        >
+                          {item.answer}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

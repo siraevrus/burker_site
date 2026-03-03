@@ -278,6 +278,16 @@ model FooterSettings {
 model HomeFaq {
   id        String   @id @default("single")
   title     String   @default("Вопрос-Ответ")
-  content   String   @default("") // HTML или текст
+  content   String   @default("") // legacy, не используется при items
+  updatedAt DateTime @updatedAt
+}
+
+// Отдельные вопросы-ответы для аккордеона на главной
+model HomeFaqItem {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

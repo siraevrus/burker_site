@@ -4,12 +4,11 @@ import { requireAdmin } from "@/lib/admin-api";
 
 const DEFAULTS = {
   title: "Вопрос-Ответ",
-  content: "",
 };
 
 function isTableMissingError(error: unknown): boolean {
   const msg = error instanceof Error ? error.message : String(error);
-  return /HomeFaq|does not exist|no such table/i.test(msg);
+  return /HomeFaq|HomeFaqItem|does not exist|no such table/i.test(msg);
 }
 
 export async function GET(request: NextRequest) {
@@ -17,19 +16,20 @@ export async function GET(request: NextRequest) {
     const unauthorized = await requireAdmin(request);
     if (unauthorized) return unauthorized;
 
-    const row = await prisma.homeFaq.findUnique({
-      where: { id: "single" },
-    });
+    const [row, items] = await Promise.all([
+      prisma.homeFaq.findUnique({ where: { id: "single" } }),
+      prisma.homeFaqItem.findMany({ orderBy: { order: "asc" } }).catch(() => []),
+    ]);
     return NextResponse.json({
       title: row?.title ?? DEFAULTS.title,
-      content: row?.content ?? DEFAULTS.content,
+      items: items.map((i) => ({ id: i.id, question: i.question, answer: i.answer, order: i.order })),
     });
   } catch (error: unknown) {
-    console.error("Get home FAQ error:", error);
+    console.error("Get admin FAQ error:", error);
     if (isTableMissingError(error)) {
       return NextResponse.json({
         title: DEFAULTS.title,
-        content: DEFAULTS.content,
+        items: [],
       });
     }
     return NextResponse.json(
@@ -45,26 +45,40 @@ export async function PUT(request: NextRequest) {
     if (unauthorized) return unauthorized;
 
     const body = await request.json();
-    const { title, content } = body;
+    const { title, items } = body;
 
     const str = (v: unknown) => (typeof v === "string" ? v : "");
     const titleVal = str(title).trim() || DEFAULTS.title;
-    const contentVal = str(content);
 
-    await prisma.homeFaq.upsert({
-      where: { id: "single" },
-      update: { title: titleVal, content: contentVal },
-      create: { id: "single", title: titleVal, content: contentVal },
+    await prisma.$transaction(async (tx) => {
+      await tx.homeFaq.upsert({
+        where: { id: "single" },
+        update: { title: titleVal },
+        create: { id: "single", title: titleVal },
+      });
+
+      if (Array.isArray(items)) {
+        await tx.homeFaqItem.deleteMany({});
+        let order = 0;
+        for (const it of items) {
+          const question = str(it?.question).trim();
+          const answer = str(it?.answer).trim();
+          if (!question && !answer) continue;
+          await tx.homeFaqItem.create({
+            data: { question: question || "Вопрос", answer, order: order++ },
+          });
+        }
+      }
     });
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
-    console.error("Save home FAQ error:", error);
+    console.error("Save admin FAQ error:", error);
     if (isTableMissingError(error)) {
       return NextResponse.json(
         {
           error:
-            "Таблица HomeFaq не создана. На сервере выполните: npx prisma migrate deploy",
+            "Таблица HomeFaqItem не создана. На сервере выполните: npx prisma migrate deploy",
         },
         { status: 503 }
       );
