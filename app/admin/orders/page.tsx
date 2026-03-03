@@ -72,6 +72,13 @@ function AdminOrdersPageContent() {
   const [paymentFilter, setPaymentFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [statusStats, setStatusStats] = useState<Record<string, number>>({
+    accepted: 0,
+    purchased: 0,
+    in_transit_de: 0,
+    in_transit_ru: 0,
+    delivered: 0,
+  });
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 50,
@@ -146,7 +153,20 @@ function AdminOrdersPageContent() {
 
   useEffect(() => {
     loadOrders();
+    loadStats();
   }, [statusFilter, paymentFilter, searchQuery, pagination.page]);
+
+  const loadStats = async () => {
+    try {
+      const response = await fetch("/api/admin/orders/stats");
+      if (response.ok) {
+        const data = await response.json();
+        setStatusStats(data.stats || {});
+      }
+    } catch (error) {
+      console.error("Error loading stats:", error);
+    }
+  };
 
   useEffect(() => {
     const orderId = searchParams.get("orderId");
@@ -178,6 +198,8 @@ function AdminOrdersPageContent() {
         const data = await response.json();
         setOrders(data.orders || []);
         setPagination(data.pagination || pagination);
+        // Обновляем статистику после загрузки заказов
+        loadStats();
       }
     } catch (error) {
       console.error("Error loading orders:", error);
@@ -239,6 +261,8 @@ function AdminOrdersPageContent() {
         setOrders(
           orders.map((order) => (order.id === orderId ? data.order : order))
         );
+        // Обновляем статистику после изменения статуса
+        loadStats();
         return true;
       } else {
         const errorData = await response.json();
@@ -323,6 +347,7 @@ function AdminOrdersPageContent() {
 
         if (success) {
           closeModal();
+          loadStats();
         }
       } else if (modal.type === "track_de" && trackInput.trim()) {
         const success = await updateOrderStatus(modal.orderId, modal.newStatus, {
@@ -330,6 +355,7 @@ function AdminOrdersPageContent() {
         });
         if (success) {
           closeModal();
+          loadStats();
         }
       } else if (modal.type === "track_ru" && trackInput.trim()) {
         const success = await updateOrderStatus(modal.orderId, modal.newStatus, {
@@ -337,6 +363,7 @@ function AdminOrdersPageContent() {
         });
         if (success) {
           closeModal();
+          loadStats();
         }
       }
     } catch (error) {
@@ -434,6 +461,33 @@ function AdminOrdersPageContent() {
           </select>
           <div className="text-sm text-gray-600">
             Всего: {pagination.total}
+          </div>
+        </div>
+      </div>
+
+      {/* Статистика по статусам */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <h2 className="text-xl font-bold mb-4">Статистика по статусам</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className={`${statusColors.accepted} rounded-lg p-4`}>
+            <div className="text-sm font-medium mb-1">Заказ принят</div>
+            <div className="text-2xl font-bold">{statusStats.accepted || 0}</div>
+          </div>
+          <div className={`${statusColors.purchased} rounded-lg p-4`}>
+            <div className="text-sm font-medium mb-1">Выкуплен</div>
+            <div className="text-2xl font-bold">{statusStats.purchased || 0}</div>
+          </div>
+          <div className={`${statusColors.in_transit_de} rounded-lg p-4`}>
+            <div className="text-sm font-medium mb-1">В пути на склад</div>
+            <div className="text-2xl font-bold">{statusStats.in_transit_de || 0}</div>
+          </div>
+          <div className={`${statusColors.in_transit_ru} rounded-lg p-4`}>
+            <div className="text-sm font-medium mb-1">В пути в РФ</div>
+            <div className="text-2xl font-bold">{statusStats.in_transit_ru || 0}</div>
+          </div>
+          <div className={`${statusColors.delivered} rounded-lg p-4`}>
+            <div className="text-sm font-medium mb-1">Доставлен</div>
+            <div className="text-2xl font-bold">{statusStats.delivered || 0}</div>
           </div>
         </div>
       </div>

@@ -151,6 +151,8 @@ export async function createOrder(orderData: {
   shippingCost: number;
   eurRate?: number | null;
   rubRate?: number | null;
+  ipAddress?: string;
+  deviceInfo?: string;
 }): Promise<{ order: Order; accessToken: string }> {
   const accessToken = crypto.randomBytes(32).toString("hex");
 
@@ -186,6 +188,8 @@ export async function createOrder(orderData: {
     paymentLink: null,
     paidAt: null,
     accessToken,
+    ipAddress: orderData.ipAddress || null,
+    deviceInfo: orderData.deviceInfo || null,
     items: {
       create: orderData.items.map((item) => ({
         productId: item.productId,

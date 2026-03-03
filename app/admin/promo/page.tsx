@@ -147,7 +147,7 @@ export default function AdminPromoPage() {
                     src={banner.image}
                     alt={banner.title || "Banner"}
                     className="w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+                    onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }}
                   />
                 </div>
                 <div className="flex-1">
@@ -356,7 +356,7 @@ function BannerForm({
                 src={formData.image}
                 alt="Current"
                 className="w-full h-full object-contain border border-gray-300 rounded-md"
-                onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+                onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }}
               />
             </div>
           )}
@@ -385,7 +385,7 @@ function BannerForm({
                 src={imageMobilePreview || formData.imageMobile || ""}
                 alt="Mobile preview"
                 className="w-full h-full object-contain border border-gray-300 rounded-md"
-                onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+                onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }}
               />
             </div>
           )}

@@ -4,7 +4,6 @@ import { getCurrentUser } from "@/lib/auth";
 import { createOrder } from "@/lib/orders";
 import { getExchangeRates } from "@/lib/exchange-rates";
 import { sendOrderConfirmation, sendAdminOrderNotification } from "@/lib/email";
-import { notifyNewOrder } from "@/lib/telegram";
 import { calculateShipping } from "@/lib/shipping";
 import { logError, logEvent } from "@/lib/ops-log";
 import {
@@ -12,6 +11,7 @@ import {
   isTbankConfigured,
   type ReceiptParams,
 } from "@/lib/tbank";
+import { getClientIp, getDeviceInfo } from "@/lib/request-info";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -240,6 +240,10 @@ export async function POST(request: NextRequest) {
     // Скидка только с комиссии; доставку не уменьшаем, итог = товары + доставка − скидка
     const totalAmount = itemsTotal + shippingCost - discountAmount;
 
+    // Получаем IP-адрес и информацию об устройстве
+    const ipAddress = getClientIp(request);
+    const deviceInfo = getDeviceInfo(request);
+
     // Создание заказа (курсы сохраняем для точного расчёта комиссии в админке)
     const { order, accessToken } = await createOrder({
       userId: currentUser?.userId,
@@ -276,6 +280,8 @@ export async function POST(request: NextRequest) {
       shippingCost, // полная стоимость доставки (скидка только с комиссии)
       eurRate: rates.eurRate,
       rubRate: rates.rubRate,
+      ipAddress,
+      deviceInfo,
     });
 
     // Запись использования промокода
@@ -495,19 +501,7 @@ export async function POST(request: NextRequest) {
         itemsCount: order.items.length,
       });
 
-      await notifyNewOrder({
-        orderNumber,
-        orderId: order.id,
-        email: order.email,
-        firstName: order.firstName,
-        phone: order.phone,
-        totalAmount: order.totalAmount,
-        itemsCount: order.items.length,
-        items: order.items.map((item) => ({
-          productName: item.productName,
-          quantity: item.quantity,
-        })),
-      });
+      // Telegram уведомление отправляется только после оплаты заказа (из webhook T-Bank)
     } catch (emailError) {
       console.error("Error sending order emails:", emailError);
       emailNotification.error =

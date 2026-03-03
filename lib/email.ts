@@ -542,3 +542,72 @@ export async function sendOrderNotPaidEmail(
 
   return result.success;
 }
+
+/**
+ * Уведомление покупателю об отмене заказа администратором
+ */
+export async function sendOrderCancelledEmail(
+  email: string,
+  orderNumber: string,
+  firstName: string,
+  totalAmount: number,
+  items: Array<{ name: string; quantity: number; price: number }>
+): Promise<boolean> {
+  if (!IS_PRODUCTION) {
+    console.log("🚫 Заказ отменен администратором #" + orderNumber);
+  }
+
+  const itemsList = items
+    .map(
+      (item) =>
+        `<tr>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${esc(item.name)}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toFixed(0)} ₽</td>
+        </tr>`
+    )
+    .join("");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">Ваш заказ был отменен</h2>
+      <p>Здравствуйте, ${esc(firstName)}!</p>
+      <p>Ваш заказ <strong>#${orderNumber}</strong> был отменен.</p>
+      
+      <div style="background-color: #fff3cd; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #ffc107;">
+        <p style="margin: 0; font-weight: bold; color: #856404;">Заказ отменен</p>
+      </div>
+      
+      <h3 style="color: #333; margin-top: 30px;">Детализация заказа:</h3>
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <thead>
+          <tr style="background-color: #f5f5f5;">
+            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Товар</th>
+            <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd;">Количество</th>
+            <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Цена</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsList}
+          <tr>
+            <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold; border-top: 2px solid #ddd;">Итого:</td>
+            <td style="padding: 10px; text-align: right; font-weight: bold; border-top: 2px solid #ddd;">${totalAmount.toFixed(0)} ₽</td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <p style="margin-top: 30px;">По всем вопросам обращайтесь в поддержку.</p>
+      
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      ${EMAIL_FOOTER}
+    </div>
+  `;
+
+  const result = await sendEmailViaMailopost(
+    email,
+    `Заказ #${orderNumber} отменен`,
+    html
+  );
+
+  return result.success;
+}

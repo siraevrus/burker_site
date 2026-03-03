@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendOrderPaidEmail, sendOrderNotPaidEmail } from "@/lib/email";
 import { verifyNotificationToken } from "@/lib/tbank";
+import { notifyNewOrder } from "@/lib/telegram";
 
 const TBANK_PASSWORD = process.env.TBANK_PASSWORD;
 
@@ -114,6 +115,25 @@ export async function POST(request: NextRequest) {
           price: item.productPrice * item.quantity,
         }))
       );
+      
+      // Отправка уведомления в Telegram только после оплаты заказа
+      try {
+        await notifyNewOrder({
+          orderNumber,
+          orderId: order.id,
+          email: order.email,
+          firstName: order.firstName,
+          phone: order.phone,
+          totalAmount: order.totalAmount,
+          itemsCount: order.items.length,
+          items: order.items.map((item) => ({
+            productName: item.productName,
+            quantity: item.quantity,
+          })),
+        });
+      } catch (telegramError) {
+        console.error("T-Bank webhook: notifyNewOrder failed", telegramError);
+      }
     } catch (emailError) {
       console.error("T-Bank webhook: sendOrderPaidEmail failed", emailError);
     }

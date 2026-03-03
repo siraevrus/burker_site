@@ -21,8 +21,8 @@ export default function ProductImage({
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     // При ошибке загрузки показываем placeholder
     const target = e.currentTarget;
-    if (target.src !== "/placeholder.png") {
-      target.src = "/placeholder.png";
+    if (target.src !== "/api/promo-images/placeholder") {
+      target.src = "/api/promo-images/placeholder";
     }
   };
 

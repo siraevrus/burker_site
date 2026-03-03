@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-api";
 import { cancelPayment, isTbankConfigured } from "@/lib/tbank";
 import { logError, logEvent } from "@/lib/ops-log";
+import { sendOrderCancelledEmail } from "@/lib/email";
 
 /**
  * Отмена или возврат платежа через T-Bank API
@@ -172,6 +173,30 @@ export async function POST(
         },
       });
 
+      // Отправка email уведомления клиенту об отмене заказа
+      let emailSent = false;
+      let emailError: string | null = null;
+      try {
+        const orderNumber = updatedOrder.orderNumber || updatedOrder.id.slice(0, 8);
+        emailSent = await sendOrderCancelledEmail(
+          updatedOrder.email,
+          orderNumber,
+          updatedOrder.firstName,
+          updatedOrder.totalAmount,
+          updatedOrder.items.map((item) => ({
+            name: item.productName,
+            quantity: item.quantity,
+            price: item.productPrice * item.quantity,
+          }))
+        );
+        if (!emailSent) {
+          emailError = "Email не отправлен";
+        }
+      } catch (emailErr) {
+        console.error("Error sending cancellation email:", emailErr);
+        emailError = emailErr instanceof Error ? emailErr.message : "Ошибка отправки email";
+      }
+
       logEvent("admin_payment_cancelled", {
         requestId,
         orderId: order.id,
@@ -179,6 +204,8 @@ export async function POST(
         tbankStatus,
         amountKopecks: amountKopecks || Math.round(order.totalAmount * 100),
         isPartial: amountKopecks !== undefined,
+        emailSent,
+        emailError: emailError || null,
       });
 
       return NextResponse.json({
@@ -188,6 +215,8 @@ export async function POST(
         message: amountKopecks !== undefined
           ? "Частичный возврат выполнен успешно"
           : "Платеж отменен/возвращен успешно",
+        emailSent,
+        emailError,
       });
     } catch (tbankError) {
       const errorMsg = tbankError instanceof Error ? tbankError.message : String(tbankError);

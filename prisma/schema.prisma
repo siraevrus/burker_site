@@ -76,6 +76,8 @@ model User {
   lastName      String?
   middleName    String?  // Отчество (для подстановки в чекаут)
   phone         String?
+  ipAddress     String?  // IP-адрес при регистрации
+  deviceInfo    String?  // Информация об устройстве при регистрации
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
@@ -143,6 +145,10 @@ model Order {
   paymentLink    String?  // URL для оплаты
   paidAt         DateTime? // момент успешной оплаты по вебхуку
   accessToken    String?  // секретный токен для доступа к заказу (гостевые заказы, ссылки)
+  
+  // Информация о клиенте при создании заказа
+  ipAddress      String?  // IP-адрес при создании заказа
+  deviceInfo     String?  // Информация об устройстве при создании заказа
   
   items           OrderItem[]
   

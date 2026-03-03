@@ -313,7 +313,7 @@ export default function AdminPage() {
                           className="absolute inset-0 w-full h-full object-cover"
                           loading="lazy"
                           onError={(e) => {
-                            e.currentTarget.src = "/placeholder.png";
+                            e.currentTarget.src = "/api/promo-images/placeholder";
                           }}
                         />
                       )

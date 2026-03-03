@@ -45,30 +45,34 @@ export async function POST(request: NextRequest) {
 
     // Создаем уникальное имя файла
     const timestamp = Date.now();
-    // Очищаем имя файла от спецсимволов и кириллицы, оставляем только расширение
+    const randomStr = Math.random().toString(36).substring(2, 8);
     const originalName = file.name;
-    const extension = originalName.split('.').pop() || 'png';
-    // Убираем расширение из оригинального имени перед санитизацией
-    const nameWithoutExt = originalName.substring(0, originalName.lastIndexOf('.')) || originalName;
-    // Убираем все небезопасные символы из имени (без расширения)
-    const sanitizedName = nameWithoutExt
-      .replace(/[^a-zA-Z0-9.-]/g, '_')
-      .replace(/_{2,}/g, '_')
-      .substring(0, 50); // Ограничиваем длину
-    const filename = `promo-${timestamp}-${sanitizedName}.${extension}`;
+    const extension = originalName.split('.').pop()?.toLowerCase() || 'png';
     
-    // Загрузка только в public/promo (nginx отдаёт статику напрямую из этой папки)
-    const targetDir = join(process.cwd(), "public", "promo");
+    // Валидация расширения
+    const allowedExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
+    if (!allowedExtensions.includes(extension)) {
+      return NextResponse.json(
+        { error: "Неподдерживаемый формат изображения" },
+        { status: 400 }
+      );
+    }
+    
+    // Безопасное имя файла: только timestamp и случайная строка
+    const filename = `promo-${timestamp}-${randomStr}.${extension}`;
+    
+    // Сохраняем в uploads/promo (вне public, чтобы не попадало в сборку)
+    const targetDir = join(process.cwd(), "uploads", "promo");
     if (!existsSync(targetDir)) {
       mkdirSync(targetDir, { recursive: true });
     }
     const filepath = join(targetDir, filename);
     await writeFile(filepath, buffer);
 
-    // Возвращаем путь к файлу
+    // Возвращаем путь через API route
     return NextResponse.json({
       success: true,
-      filename: `/promo/${filename}`,
+      filename: `/api/promo-images/${filename}`,
     });
   } catch (error) {
     console.error("Error uploading file:", error);

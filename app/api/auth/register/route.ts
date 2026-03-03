@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { hashPassword, generateVerificationCode } from "@/lib/auth";
 import { sendVerificationCode } from "@/lib/email";
 import { notifyNewRegistration } from "@/lib/telegram";
+import { getClientIp, getDeviceInfo } from "@/lib/request-info";
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,6 +40,10 @@ export async function POST(request: NextRequest) {
     // Хеширование пароля
     const passwordHash = await hashPassword(password);
 
+    // Получаем IP-адрес и информацию об устройстве
+    const ipAddress = getClientIp(request);
+    const deviceInfo = getDeviceInfo(request);
+
     // Создание пользователя
     const user = await prisma.user.create({
       data: {
@@ -46,6 +51,8 @@ export async function POST(request: NextRequest) {
         passwordHash,
         firstName: firstName || null,
         emailVerified: false,
+        ipAddress,
+        deviceInfo,
       },
     });
 

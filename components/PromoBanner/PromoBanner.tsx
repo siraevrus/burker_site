@@ -97,7 +97,7 @@ export default function PromoBannerGallery() {
                       alt={currentBanner.title || "Promo banner"}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
-                  ) : desktopImage.startsWith("/promo/") || desktopImage.startsWith("/products/") ? (
+                  ) : desktopImage.startsWith("/api/promo-images/") || desktopImage.startsWith("/api/products/") || desktopImage.startsWith("/promo/") || desktopImage.startsWith("/products/") ? (
                     <img
                       src={desktopImage}
                       alt={currentBanner.title || "Promo banner"}
@@ -114,7 +114,7 @@ export default function PromoBannerGallery() {
                       src={desktopImage}
                       alt={currentBanner.title || "Promo banner"}
                       className="absolute inset-0 w-full h-full object-cover"
-                      onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+                      onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }}
                     />
                   )}
                 </div>
@@ -126,7 +126,7 @@ export default function PromoBannerGallery() {
                       alt={currentBanner.title || "Promo banner"}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
-                  ) : mobileImage.startsWith("/promo/") || mobileImage.startsWith("/products/") ? (
+                  ) : mobileImage.startsWith("/api/promo-images/") || mobileImage.startsWith("/api/products/") || mobileImage.startsWith("/promo/") || mobileImage.startsWith("/products/") ? (
                     <img
                       src={mobileImage}
                       alt={currentBanner.title || "Promo banner"}
@@ -143,7 +143,7 @@ export default function PromoBannerGallery() {
                       src={mobileImage}
                       alt={currentBanner.title || "Promo banner"}
                       className="absolute inset-0 w-full h-full object-cover"
-                      onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+                      onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }}
                     />
                   )}
                 </div>
@@ -171,7 +171,7 @@ export default function PromoBannerGallery() {
                     alt={currentBanner.title || "Promo banner"}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
-                ) : desktopImage.startsWith("/promo/") || desktopImage.startsWith("/products/") ? (
+                ) : desktopImage.startsWith("/api/promo-images/") || desktopImage.startsWith("/api/products/") || desktopImage.startsWith("/promo/") || desktopImage.startsWith("/products/") ? (
                   <img
                     src={desktopImage}
                     alt={currentBanner.title || "Promo banner"}
@@ -188,7 +188,7 @@ export default function PromoBannerGallery() {
                     src={desktopImage}
                     alt={currentBanner.title || "Promo banner"}
                     className="absolute inset-0 w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+                    onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }}
                   />
                 )}
               </div>
@@ -200,7 +200,7 @@ export default function PromoBannerGallery() {
                     alt={currentBanner.title || "Promo banner"}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
-                ) : mobileImage.startsWith("/promo/") || mobileImage.startsWith("/products/") ? (
+                ) : mobileImage.startsWith("/api/promo-images/") || mobileImage.startsWith("/api/products/") || mobileImage.startsWith("/promo/") || mobileImage.startsWith("/products/") ? (
                   <img
                     src={mobileImage}
                     alt={currentBanner.title || "Promo banner"}
@@ -217,7 +217,7 @@ export default function PromoBannerGallery() {
                     src={mobileImage}
                     alt={currentBanner.title || "Promo banner"}
                     className="absolute inset-0 w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+                    onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }}
                   />
                 )}
               </div>
