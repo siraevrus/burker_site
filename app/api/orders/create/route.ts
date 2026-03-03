@@ -342,11 +342,15 @@ export async function POST(request: NextRequest) {
       if (amountKopecks < 1000) {
         console.warn("T-Bank: сумма меньше минимума", { amountKopecks, totalAmount });
       } else {
-        // Receipt опционален: передаём только если TBANK_SEND_RECEIPT не отключен
-        const shouldSendReceipt = process.env.TBANK_SEND_RECEIPT !== "0" && process.env.TBANK_SEND_RECEIPT !== "false";
+        // Receipt обязателен для DEMO терминала (тест №7) и при подключённой онлайн-кассе
+        // Для DEMO всегда передаём Receipt; для продакшена можно отключить через TBANK_SEND_RECEIPT=0
+        const TBANK_TERMINAL = process.env.TBANK_TERMINAL;
+        const isDemoTerminal = TBANK_TERMINAL?.toUpperCase().includes("DEMO");
+        const shouldSendReceipt = isDemoTerminal || (process.env.TBANK_SEND_RECEIPT !== "0" && process.env.TBANK_SEND_RECEIPT !== "false");
         let receiptParams: ReceiptParams | undefined;
         
         if (shouldSendReceipt) {
+          // Receipt: сумма Items должна равняться Init.Amount (товары + доставка - скидка)
           const receiptItems = order.items.map((item) => {
             const priceKopecks = Math.round(item.productPrice * 100);
             const quantity = item.quantity;
@@ -358,6 +362,41 @@ export async function POST(request: NextRequest) {
               amount: amountKopecks,
             };
           });
+          
+          let itemsSum = receiptItems.reduce((s, i) => s + i.amount, 0);
+          
+          // Добавляем доставку в чек
+          if (shippingCost > 0) {
+            const shipKopecks = Math.round(shippingCost * 100);
+            receiptItems.push({
+              name: "Доставка",
+              price: shipKopecks,
+              quantity: 1,
+              amount: shipKopecks,
+            });
+            itemsSum += shipKopecks;
+          }
+          
+          // Добавляем скидку как отдельную позицию (отрицательная сумма)
+          if (discountAmount > 0) {
+            const discountKopecks = Math.round(discountAmount * 100);
+            receiptItems.push({
+              name: "Скидка по промокоду",
+              price: -discountKopecks,
+              quantity: 1,
+              amount: -discountKopecks,
+            });
+            itemsSum -= discountKopecks;
+          }
+          
+          // Коррекция округления: сумма Items должна точно равняться Init.Amount
+          const diff = amountKopecks - itemsSum;
+          if (diff !== 0 && receiptItems.length > 0) {
+            const lastItem = receiptItems[receiptItems.length - 1];
+            lastItem.amount += diff;
+            lastItem.price = lastItem.amount;
+          }
+          
           receiptParams = {
             email: order.email,
             taxation: "usn_income" as const,
