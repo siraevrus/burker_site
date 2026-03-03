@@ -325,11 +325,27 @@ export async function POST(request: NextRequest) {
     const failUrl = baseUrl ? `${baseUrl}/order-confirmation?id=${order.id}&token=${accessToken}` : "";
     const notificationUrl = baseUrl ? `${baseUrl}/api/webhooks/tbank` : "";
 
-    if (isTbankConfigured() && successUrl && failUrl && notificationUrl) {
+    if (!isTbankConfigured()) {
+      console.warn("T-Bank не настроен: TBANK_TERMINAL или TBANK_PASSWORD не заданы");
+    } else if (!successUrl || !failUrl || !notificationUrl) {
+      console.warn("T-Bank: не удалось определить baseUrl", {
+        baseUrl,
+        origin: request.headers.get("origin"),
+        host: request.headers.get("host"),
+        forwardedProto: request.headers.get("x-forwarded-proto"),
+        forwardedHost: request.headers.get("x-forwarded-host"),
+        NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+      });
+    } else {
       const amountKopecks = Math.round(totalAmount * 100);
-      if (amountKopecks >= 1000) {
-        try {
-          // Receipt для теста №7 (формирование чека) и при подключённой онлайн-кассе
+      if (amountKopecks < 1000) {
+        console.warn("T-Bank: сумма меньше минимума", { amountKopecks, totalAmount });
+      } else {
+        // Receipt опционален: передаём только если TBANK_SEND_RECEIPT не отключен
+        const shouldSendReceipt = process.env.TBANK_SEND_RECEIPT !== "0" && process.env.TBANK_SEND_RECEIPT !== "false";
+        let receiptParams: { email: string; taxation: string; items: Array<{ name: string; price: number; quantity: number; amount: number }> } | undefined;
+        
+        if (shouldSendReceipt) {
           const receiptItems = order.items.map((item) => {
             const priceKopecks = Math.round(item.productPrice * 100);
             const quantity = item.quantity;
@@ -341,6 +357,14 @@ export async function POST(request: NextRequest) {
               amount: amountKopecks,
             };
           });
+          receiptParams = {
+            email: order.email,
+            taxation: "usn_income",
+            items: receiptItems,
+          };
+        }
+
+        try {
           const result = await createOneTimePaymentLink({
             orderId: order.id,
             amountKopecks,
@@ -348,11 +372,7 @@ export async function POST(request: NextRequest) {
             successUrl,
             failUrl,
             notificationUrl,
-            receipt: {
-              email: order.email,
-              taxation: "usn_income",
-              items: receiptItems,
-            },
+            receipt: receiptParams,
           });
           await prisma.order.update({
             where: { id: order.id },
@@ -365,12 +385,52 @@ export async function POST(request: NextRequest) {
           paymentId = result.qrId;
           paymentLinkAvailable = true;
         } catch (tbankError) {
-          console.error("T-Bank createOneTimePaymentLink failed:", tbankError);
+          const errorMsg = tbankError instanceof Error ? tbankError.message : String(tbankError);
+          console.error("T-Bank createOneTimePaymentLink failed:", {
+            error: errorMsg,
+            orderId: order.id,
+            amountKopecks,
+            hasReceipt: Boolean(receiptParams),
+            baseUrl,
+            successUrl,
+            failUrl,
+            notificationUrl,
+          });
           logEvent("order_payment_link_failed", {
             requestId,
             orderId: order.id,
-            error: tbankError instanceof Error ? tbankError.message : String(tbankError),
+            error: errorMsg,
+            amountKopecks,
+            hasReceipt: Boolean(receiptParams),
           });
+          
+          // Fallback: если ошибка и был Receipt, пробуем без него
+          if (receiptParams && !errorMsg.includes("недостаточно средств") && !errorMsg.includes("уже оплачен")) {
+            try {
+              console.log("T-Bank: повторная попытка без Receipt");
+              const resultWithoutReceipt = await createOneTimePaymentLink({
+                orderId: order.id,
+                amountKopecks,
+                description,
+                successUrl,
+                failUrl,
+                notificationUrl,
+              });
+              await prisma.order.update({
+                where: { id: order.id },
+                data: {
+                  paymentId: resultWithoutReceipt.qrId,
+                  paymentLink: resultWithoutReceipt.link,
+                },
+              });
+              paymentLink = resultWithoutReceipt.link;
+              paymentId = resultWithoutReceipt.qrId;
+              paymentLinkAvailable = true;
+              console.log("T-Bank: ссылка создана без Receipt");
+            } catch (fallbackError) {
+              console.error("T-Bank fallback (без Receipt) тоже failed:", fallbackError);
+            }
+          }
         }
       }
     }
