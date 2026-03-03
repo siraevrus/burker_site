@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
 
   const order = await prisma.order.findFirst({
     where: { paymentId },
+    include: { items: true },
   });
 
   if (!order) {
@@ -102,7 +103,12 @@ export async function POST(request: NextRequest) {
         order.email,
         orderNumber,
         order.firstName,
-        order.totalAmount
+        order.totalAmount,
+        order.items.map((item) => ({
+          name: item.productName,
+          quantity: item.quantity,
+          price: item.productPrice * item.quantity,
+        }))
       );
     } catch (emailError) {
       console.error("T-Bank webhook: sendOrderPaidEmail failed", emailError);

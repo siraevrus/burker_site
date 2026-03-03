@@ -439,11 +439,23 @@ export async function sendOrderPaidEmail(
   email: string,
   orderNumber: string,
   firstName: string,
-  totalAmount: number
+  totalAmount: number,
+  items: Array<{ name: string; quantity: number; price: number }>
 ): Promise<boolean> {
   if (!IS_PRODUCTION) {
     console.log("💳 Заказ оплачен #" + orderNumber);
   }
+
+  const itemsList = items
+    .map(
+      (item) =>
+        `<tr>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${esc(item.name)}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toFixed(0)} ₽</td>
+        </tr>`
+    )
+    .join("");
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -455,6 +467,26 @@ export async function sendOrderPaidEmail(
         <p style="font-size: 48px; margin: 0;">✅</p>
         <p style="margin: 10px 0 0 0; font-weight: bold; color: #2e7d32;">Оплата получена</p>
       </div>
+      
+      <h3 style="color: #333; margin-top: 30px;">Детали заказа:</h3>
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <thead>
+          <tr style="background-color: #f5f5f5;">
+            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Товар</th>
+            <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd;">Количество</th>
+            <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Цена</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsList}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold;">Итого:</td>
+            <td style="padding: 10px; text-align: right; font-weight: bold;">${totalAmount.toFixed(0)} ₽</td>
+          </tr>
+        </tfoot>
+      </table>
       
       <p>Заказ передан в обработку. Мы свяжемся с вами при изменении статуса доставки.</p>
       
