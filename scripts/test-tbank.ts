@@ -50,14 +50,12 @@ async function main() {
         ],
       },
     });
-    console.log("
-✅ T-Bank отвечает, ссылка создана.");
+    console.log("\n✅ T-Bank отвечает, ссылка создана.");
     console.log("PaymentId (qrId):", result.qrId);
     console.log("Ссылка:", result.link);
 
     // Тест №8: Cancel с PaymentId из Init
-    console.log("
-📋 Тест №8: Отмена платежа...");
+    console.log("\n📋 Тест №8: Отмена платежа...");
     await new Promise((resolve) => setTimeout(resolve, 2000)); // Небольшая задержка перед отменой
     
     const cancelResult = await tbank.cancelPayment({
@@ -74,8 +72,7 @@ async function main() {
       console.log("⚠️ Результат отмены:", cancelResult);
     }
   } catch (err) {
-    console.error("
-❌ Ошибка T-Bank:", err instanceof Error ? err.message : err);
+    console.error("\n❌ Ошибка T-Bank:", err instanceof Error ? err.message : err);
     process.exit(1);
   }
 }
