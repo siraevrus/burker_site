@@ -10,6 +10,7 @@ import { logError, logEvent } from "@/lib/ops-log";
 import {
   createOneTimePaymentLink,
   isTbankConfigured,
+  type ReceiptParams,
 } from "@/lib/tbank";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -343,7 +344,7 @@ export async function POST(request: NextRequest) {
       } else {
         // Receipt опционален: передаём только если TBANK_SEND_RECEIPT не отключен
         const shouldSendReceipt = process.env.TBANK_SEND_RECEIPT !== "0" && process.env.TBANK_SEND_RECEIPT !== "false";
-        let receiptParams: { email: string; taxation: string; items: Array<{ name: string; price: number; quantity: number; amount: number }> } | undefined;
+        let receiptParams: ReceiptParams | undefined;
         
         if (shouldSendReceipt) {
           const receiptItems = order.items.map((item) => {
@@ -359,7 +360,7 @@ export async function POST(request: NextRequest) {
           });
           receiptParams = {
             email: order.email,
-            taxation: "usn_income",
+            taxation: "usn_income" as const,
             items: receiptItems,
           };
         }
