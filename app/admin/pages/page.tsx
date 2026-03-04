@@ -367,12 +367,20 @@ function PageForm({
       }
     }
     // Убеждаемся, что category и SEO поля корректно обработаны
-    const pageToSave = {
+    // При создании новой страницы НЕ передаем поле order (оно будет установлено по умолчанию в БД)
+    const pageToSave: any = {
       ...formData,
       category: formData.category || undefined,
       seoTitle: formData.seoTitle || undefined,
       seoDescription: formData.seoDescription || undefined,
     };
+    
+    // При создании новой страницы удаляем order из данных
+    // (Prisma установит значение по умолчанию из схемы)
+    if (isNew) {
+      delete pageToSave.order;
+    }
+    
     onSave(pageToSave);
   };
 

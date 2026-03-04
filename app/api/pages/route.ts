@@ -55,10 +55,8 @@ export async function POST(request: NextRequest) {
       seoDescription: seoDescription != null && seoDescription !== "" ? seoDescription : null,
     };
 
-    // Добавляем order только если оно указано (для совместимости со старым Prisma Client)
-    if (order != null) {
-      data.order = order;
-    }
+    // НЕ добавляем order при создании - Prisma установит значение по умолчанию из схемы
+    // Это предотвращает ошибку, если Prisma Client не обновлен
 
     // Добавляем category только если оно указано
     if (category && category !== "") {
