@@ -50,9 +50,10 @@ export async function POST(
     }
 
     // Проверяем, что платеж можно отменить/вернуть
-    if (order.paymentStatus === "cancelled" || order.paymentStatus === "expired" || order.paymentStatus === "failed") {
+    // Кнопка показывается только для оплаченных заказов (CONFIRMED/AUTHORIZED → paid)
+    if (order.paymentStatus !== "paid") {
       return NextResponse.json(
-        { error: "Платеж уже отменен или истек" },
+        { error: "Отмена/возврат возможны только для оплаченных заказов" },
         { status: 400 }
       );
     }

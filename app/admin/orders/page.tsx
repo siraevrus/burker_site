@@ -277,8 +277,7 @@ function AdminOrdersPageContent() {
   };
 
   const handleCancelPayment = async (order: Order) => {
-    const actionText = order.paymentStatus === "paid" ? "вернуть" : "отменить";
-    const confirmMessage = `Вы уверены, что хотите ${actionText} платеж для заказа #${order.orderNumber || order.id.slice(0, 8)}?\n\nСумма: ${order.totalAmount.toFixed(2)} ₽`;
+    const confirmMessage = `Вы уверены, что хотите вернуть платеж для заказа #${order.orderNumber || order.id.slice(0, 8)}?\n\nСумма: ${order.totalAmount.toFixed(2)} ₽`;
     
     if (!confirm(confirmMessage)) {
       return;
@@ -298,16 +297,16 @@ function AdminOrdersPageContent() {
         setOrders(
           orders.map((o) => (o.id === order.id ? data.order : o))
         );
-        alert(`Платеж успешно ${actionText === "вернуть" ? "возвращен" : "отменен"}`);
+        alert("Платеж успешно возвращен");
         // Перезагружаем заказы для обновления статусов
         loadOrders();
       } else {
         const errorData = await response.json();
-        alert(errorData.error || `Ошибка при ${actionText === "вернуть" ? "возврате" : "отмене"} платежа`);
+        alert(errorData.error || "Ошибка при возврате платежа");
       }
     } catch (error) {
       console.error("Error canceling payment:", error);
-      alert(`Ошибка при ${actionText === "вернуть" ? "возврате" : "отмене"} платежа`);
+      alert("Ошибка при возврате платежа");
     }
   };
 
@@ -679,13 +678,13 @@ function AdminOrdersPageContent() {
                             Скопировать ссылку на оплату
                           </button>
                         )}
-                        {(order.paymentStatus === "paid" || order.paymentStatus === "pending") && order.paymentId && (
+                        {order.paymentStatus === "paid" && order.paymentId && (
                           <button
                             type="button"
                             onClick={() => handleCancelPayment(order)}
                             className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-800 rounded-md text-sm font-medium"
                           >
-                            {order.paymentStatus === "paid" ? "Вернуть платеж" : "Отменить платеж"}
+                            Вернуть платеж
                           </button>
                         )}
                       </div>
