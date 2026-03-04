@@ -281,6 +281,16 @@ model FooterSettings {
   updatedAt             DateTime @updatedAt
 }
 
+// Ссылки на социальные сети в футере
+model SocialLink {
+  id        String   @id @default(cuid())
+  name      String   // Название соц сети (например, "Фейсбук", "Инстаграм")
+  url       String   // URL ссылки
+  order     Int      @default(0) // Порядок отображения
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // Блок «Вопрос-Ответ» на главной странице (редактируется в админке)
 model HomeFaq {
   id        String   @id @default("single")

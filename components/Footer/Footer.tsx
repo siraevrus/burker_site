@@ -10,9 +10,17 @@ const DEFAULT_TITLES = {
   socialTitle: "Социальные сети",
 };
 
+interface SocialLink {
+  id: string;
+  name: string;
+  url: string;
+  order: number;
+}
+
 export default function Footer() {
   const [customerServicePages, setCustomerServicePages] = useState<Page[]>([]);
   const [policiesPages, setPoliciesPages] = useState<Page[]>([]);
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [titles, setTitles] = useState(DEFAULT_TITLES);
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
@@ -21,11 +29,24 @@ export default function Footer() {
 
   useEffect(() => {
     loadPages();
+    loadSocialLinks();
     fetch("/api/footer")
       .then((res) => res.ok ? res.json() : null)
       .then((data) => data && setTitles(data))
       .catch(() => {});
   }, []);
+
+  const loadSocialLinks = async () => {
+    try {
+      const response = await fetch("/api/social-links");
+      if (response.ok) {
+        const data = await response.json();
+        setSocialLinks(data.links || []);
+      }
+    } catch (error) {
+      console.error("Error loading social links:", error);
+    }
+  };
 
   const loadPages = async () => {
     try {
@@ -127,38 +148,24 @@ export default function Footer() {
           {/* Social Media */}
           <div>
             <h3 className="font-bold mb-4">{titles.socialTitle}</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a
-                  href="https://facebook.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-gray-600"
-                >
-                  Фейсбук
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://instagram.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-gray-600"
-                >
-                  Инстаграм
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://youtube.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-gray-600"
-                >
-                  Ютуб
-                </a>
-              </li>
-            </ul>
+            {socialLinks.length > 0 ? (
+              <ul className="space-y-2 text-sm">
+                {socialLinks.map((link) => (
+                  <li key={link.id}>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-gray-600"
+                    >
+                      {link.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500">Нет добавленных ссылок</p>
+            )}
           </div>
 
           {/* Newsletter */}
