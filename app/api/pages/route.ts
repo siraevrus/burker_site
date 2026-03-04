@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, slug, content, category, published, seoTitle, seoDescription, order } = body;
+    const { title, slug, content, category, published, seoTitle, seoDescription } = body;
 
     if (!title || !slug || !content) {
       return NextResponse.json(
@@ -54,9 +54,6 @@ export async function POST(request: NextRequest) {
       seoTitle: seoTitle != null && seoTitle !== "" ? seoTitle : null,
       seoDescription: seoDescription != null && seoDescription !== "" ? seoDescription : null,
     };
-
-    // НЕ добавляем order при создании - Prisma установит значение по умолчанию из схемы
-    // Это предотвращает ошибку, если Prisma Client не обновлен
 
     // Добавляем category только если оно указано
     if (category && category !== "") {
@@ -100,11 +97,6 @@ export async function PUT(request: NextRequest) {
       seoTitle: seoTitle != null && seoTitle !== "" ? seoTitle : null,
       seoDescription: seoDescription != null && seoDescription !== "" ? seoDescription : null,
     };
-
-    // Добавляем order только если оно указано
-    if (order != null) {
-      data.order = order;
-    }
 
     // Добавляем category только если оно указано, иначе устанавливаем null
     if (category && category !== "") {

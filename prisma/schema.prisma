@@ -57,7 +57,6 @@ model Page {
   published       Boolean  @default(false)
   seoTitle        String?  // SEO: заголовок для <title>
   seoDescription  String?  // SEO: описание для <meta name="description">
-  order           Int      @default(0) // Порядок сортировки для футера
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }

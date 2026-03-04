@@ -20,9 +20,6 @@ export default function AdminPages() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingPage, setEditingPage] = useState<Page | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [draggedPageId, setDraggedPageId] = useState<string | null>(null);
-  const [dragOverPageId, setDragOverPageId] = useState<string | null>(null);
-
   useEffect(() => {
     loadPages();
   }, []);
@@ -104,80 +101,6 @@ export default function AdminPages() {
     return category === "customer-service" ? "Обслуживание клиентов" : "Политики";
   };
 
-  const handleDragStart = (e: React.DragEvent, pageId: string) => {
-    setDraggedPageId(pageId);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/html", pageId);
-  };
-
-  const handleDragOver = (e: React.DragEvent, pageId: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (draggedPageId && draggedPageId !== pageId) {
-      setDragOverPageId(pageId);
-    }
-  };
-
-  const handleDragLeave = () => {
-    setDragOverPageId(null);
-  };
-
-  const handleDrop = async (e: React.DragEvent, targetPageId: string) => {
-    e.preventDefault();
-    setDragOverPageId(null);
-
-    if (!draggedPageId || draggedPageId === targetPageId) {
-      setDraggedPageId(null);
-      return;
-    }
-
-    const draggedIndex = pages.findIndex((p) => p.id === draggedPageId);
-    const targetIndex = pages.findIndex((p) => p.id === targetPageId);
-
-    if (draggedIndex === -1 || targetIndex === -1) {
-      setDraggedPageId(null);
-      return;
-    }
-
-    // Создаем новый массив с обновленным порядком
-    const newPages = [...pages];
-    const [draggedPage] = newPages.splice(draggedIndex, 1);
-    newPages.splice(targetIndex, 0, draggedPage);
-
-    // Обновляем локальное состояние
-    setPages(newPages);
-
-    // Сохраняем новый порядок на сервере
-    try {
-      const pageIds = newPages.map((p) => p.id);
-      const response = await fetch("/api/pages/reorder", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ pageIds }),
-      });
-
-      if (!response.ok) {
-        // Если ошибка, возвращаемся к исходному порядку
-        await loadPages();
-        alert("Ошибка при сохранении порядка страниц");
-      }
-    } catch (error) {
-      console.error("Error reordering pages:", error);
-      // Если ошибка, возвращаемся к исходному порядку
-      await loadPages();
-      alert("Ошибка при сохранении порядка страниц");
-    }
-
-    setDraggedPageId(null);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedPageId(null);
-    setDragOverPageId(null);
-  };
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
@@ -205,17 +128,9 @@ export default function AdminPages() {
         <div className="text-center py-8">Загрузка страниц...</div>
       ) : (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
-            <p className="text-sm text-gray-600">
-              💡 Перетащите страницы для изменения порядка их отображения в футере
-            </p>
-          </div>
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-8">
-                  {/* Иконка для перетаскивания */}
-                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Название
                 </th>
@@ -235,32 +150,7 @@ export default function AdminPages() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {pages.map((page) => (
-                <tr
-                  key={page.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, page.id)}
-                  onDragOver={(e) => handleDragOver(e, page.id)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, page.id)}
-                  onDragEnd={handleDragEnd}
-                  className={`hover:bg-gray-50 cursor-move ${
-                    draggedPageId === page.id ? "opacity-50" : ""
-                  } ${
-                    dragOverPageId === page.id ? "border-t-2 border-blue-500" : ""
-                  }`}
-                >
-                  <td className="px-6 py-4">
-                    <div className="text-gray-400 hover:text-gray-600">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path d="M7 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM7 8a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM7 14a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 8a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 14a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" />
-                      </svg>
-                    </div>
-                  </td>
+                <tr key={page.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900">
                       {page.title}
@@ -367,20 +257,12 @@ function PageForm({
       }
     }
     // Убеждаемся, что category и SEO поля корректно обработаны
-    // При создании новой страницы НЕ передаем поле order (оно будет установлено по умолчанию в БД)
-    const pageToSave: any = {
+    const pageToSave = {
       ...formData,
       category: formData.category || undefined,
       seoTitle: formData.seoTitle || undefined,
       seoDescription: formData.seoDescription || undefined,
     };
-    
-    // При создании новой страницы удаляем order из данных
-    // (Prisma установит значение по умолчанию из схемы)
-    if (isNew) {
-      delete pageToSave.order;
-    }
-    
     onSave(pageToSave);
   };
 
