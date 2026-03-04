@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { searchProducts } from "@/lib/products";
+import { searchProducts, getRandomProducts } from "@/lib/products";
 import { getMetadataForPath } from "@/lib/seo";
 import SearchPageClient from "./SearchPageClient";
 
@@ -17,6 +17,9 @@ export default async function SearchPage({
 }) {
   const { q } = await searchParams;
   const searchResults = q ? await searchProducts(q) : [];
+  
+  // Получаем случайные продукты для блока "ВАМ ТАКЖЕ МОЖЕТ ПОНРАВИТЬСЯ" если ничего не найдено
+  const randomProducts = searchResults.length === 0 && q ? await getRandomProducts(4) : [];
 
-  return <SearchPageClient query={q || ""} searchResults={searchResults} />;
+  return <SearchPageClient query={q || ""} searchResults={searchResults} randomProducts={randomProducts} />;
 }

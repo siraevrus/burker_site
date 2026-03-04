@@ -18,7 +18,10 @@ export async function GET(request: NextRequest) {
 
     const pages = await prisma.page.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: [
+        { order: "asc" },
+        { createdAt: "desc" },
+      ],
     });
 
     return NextResponse.json({ pages });
@@ -37,7 +40,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, slug, content, category, published, seoTitle, seoDescription } = body;
+    const { title, slug, content, category, published, seoTitle, seoDescription, order } = body;
 
     if (!title || !slug || !content) {
       return NextResponse.json(
@@ -53,6 +56,7 @@ export async function POST(request: NextRequest) {
       published: published || false,
       seoTitle: seoTitle != null && seoTitle !== "" ? seoTitle : null,
       seoDescription: seoDescription != null && seoDescription !== "" ? seoDescription : null,
+      order: order != null ? order : 0,
     };
 
     // Добавляем category только если оно указано
@@ -80,7 +84,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { id, title, slug, content, category, published, seoTitle, seoDescription } = body;
+    const { id, title, slug, content, category, published, seoTitle, seoDescription, order } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -97,6 +101,11 @@ export async function PUT(request: NextRequest) {
       seoTitle: seoTitle != null && seoTitle !== "" ? seoTitle : null,
       seoDescription: seoDescription != null && seoDescription !== "" ? seoDescription : null,
     };
+
+    // Добавляем order только если оно указано
+    if (order != null) {
+      data.order = order;
+    }
 
     // Добавляем category только если оно указано, иначе устанавливаем null
     if (category && category !== "") {

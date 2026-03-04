@@ -117,7 +117,7 @@ export default function Header() {
       <div className="container mx-auto px-4 py-4 relative">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="text-2xl font-bold">
+          <Link href="/" className="text-2xl font-bold" style={{ marginLeft: "20px" }}>
             Mira Brands | Burker
           </Link>
 
@@ -336,7 +336,8 @@ export default function Header() {
           </nav>
 
           {/* Right side icons */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4" style={{ marginRight: "20px" }}>
+            {/* Поиск */}
             <button
               className="inline-flex items-center justify-center p-1"
               aria-label="Поиск"
@@ -356,56 +357,8 @@ export default function Header() {
                 />
               </svg>
             </button>
-            {user ? (
-              <div className="hidden md:flex items-center gap-4">
-                <Link href="/orders" className="text-sm hover:text-gray-600">
-                  Заказы
-                </Link>
-                <div className="relative group">
-                  <button className="flex items-center gap-2 hover:text-gray-600">
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                    <span className="text-sm">{user.firstName || user.email}</span>
-                  </button>
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                    <div className="py-2">
-                      <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
-                        {user.email}
-                      </div>
-                      <Link
-                        href="/profile"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        Профиль
-                      </Link>
-                      <button
-                        onClick={logout}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
-                      >
-                        Выйти
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="hidden md:flex items-center gap-4">
-                <Link href="/login" className="text-sm hover:text-gray-600">
-                  Войти
-                </Link>
-              </div>
-            )}
+            
+            {/* Корзина */}
             <Link href="/cart" className="relative" aria-label="Корзина">
               <svg
                 className="w-6 h-6"
@@ -433,6 +386,61 @@ export default function Header() {
                 )}
               </AnimatePresence>
             </Link>
+
+            {/* Профиль или Войти */}
+            {user ? (
+              <div className="hidden md:flex items-center gap-4">
+                <div className="relative group">
+                  <button className="flex items-center gap-2 hover:text-gray-600">
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    <span className="text-sm">{user.firstName || user.email}</span>
+                  </button>
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                    <div className="py-2">
+                      <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
+                        {user.email}
+                      </div>
+                      <Link
+                        href="/orders"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        Заказы
+                      </Link>
+                      <Link
+                        href="/profile"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        Профиль
+                      </Link>
+                      <button
+                        onClick={logout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
+                      >
+                        Выйти
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="hidden md:flex items-center gap-4">
+                <Link href="/login" className="text-sm hover:text-gray-600">
+                  Войти
+                </Link>
+              </div>
+            )}
             <button
               className="md:hidden"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -545,12 +553,15 @@ export default function Header() {
             </div>
             {user ? (
               <>
+                <div className="px-0 py-2 text-sm text-gray-700 border-b border-gray-200 mb-2">
+                  {user.email}
+                </div>
                 <Link
                   href="/orders"
                   className="block py-2 hover:text-gray-600"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Мои заказы
+                  Заказы
                 </Link>
                 <Link
                   href="/profile"

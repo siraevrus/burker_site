@@ -154,6 +154,7 @@ export interface Page {
   published: boolean;
   seoTitle?: string | null;    // SEO: заголовок для <title>
   seoDescription?: string | null; // SEO: описание для <meta name="description">
+  order?: number; // Порядок сортировки для футера
   createdAt: Date;
   updatedAt: Date;
 }

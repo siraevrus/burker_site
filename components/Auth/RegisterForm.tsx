@@ -18,9 +18,14 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps = {}
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!agreedToTerms) {
+      setError("Необходимо принять условия оферты и согласие на обработку персональных данных");
+      return;
+    }
     setError("");
     setLoading(true);
 
@@ -131,9 +136,29 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps = {}
         </div>
       </div>
 
+      <div className="flex items-start">
+        <input
+          id="agreeToTerms"
+          type="checkbox"
+          checked={agreedToTerms}
+          onChange={(e) => setAgreedToTerms(e.target.checked)}
+          className="mt-1 h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+        />
+        <label htmlFor="agreeToTerms" className="ml-2 text-sm text-gray-700">
+          Регистрируясь, вы принимаете{" "}
+          <Link href="/oferta" target="_blank" className="text-black hover:underline">
+            Условия оферты
+          </Link>{" "}
+          и даете{" "}
+          <Link href="/coscent" target="_blank" className="text-black hover:underline">
+            Согласие на обработку персональных данных
+          </Link>
+        </label>
+      </div>
+
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || !agreedToTerms}
         className="w-full bg-black text-white py-3 rounded-md hover:bg-gray-800 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? "Регистрация..." : "Зарегистрироваться"}

@@ -253,6 +253,27 @@ export async function getWatchesBySubcategory(subcategory: string): Promise<Prod
   return dbProducts.map((p) => mapProductFromDbWithRates(p, rates));
 }
 
+// Получить случайные товары (для рекомендаций)
+export async function getRandomProducts(limit: number = 4): Promise<Product[]> {
+  const [dbProducts, rates] = await Promise.all([
+    prisma.product.findMany({
+      where: {
+        disabled: { not: true },
+        soldOut: false,
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit * 3, // Берем больше, чтобы потом выбрать случайные
+    }),
+    getExchangeRates(),
+  ]);
+  
+  // Перемешиваем и берем нужное количество
+  const shuffled = dbProducts.sort(() => 0.5 - Math.random());
+  const selected = shuffled.slice(0, limit);
+  
+  return selected.map((p) => mapProductFromDbWithRates(p, rates));
+}
+
 // Получить все украшения (товары, где collection === "Украшения")
 export async function getJewelryProducts(): Promise<Product[]> {
   const [dbProducts, rates] = await Promise.all([
