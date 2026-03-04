@@ -17,7 +17,7 @@ module.exports = {
         ADMIN_EMAIL: "info@kondratov.online",
         NEXT_PUBLIC_SITE_URL: "https://burker-watches.ru",
         MAILOPOST_API_TOKEN: "0e214eeceb83783a7ed4dc025a0175b",
-        MAILOPOST_FROM_EMAIL: "info@kondratov.online",
+        MAILOPOST_FROM_EMAIL: "noreply@burker-watches.ru",
         MAILOPOST_FROM_NAME: "Mira Brands | Burker",
         SMTP_HOST: "smtp.msndr.net",
         SMTP_PORT: 465,

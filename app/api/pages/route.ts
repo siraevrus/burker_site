@@ -18,10 +18,7 @@ export async function GET(request: NextRequest) {
 
     const pages = await prisma.page.findMany({
       where,
-      orderBy: [
-        { order: "asc" },
-        { createdAt: "desc" },
-      ],
+      orderBy: { createdAt: "desc" },
     });
 
     return NextResponse.json({ pages });
@@ -56,8 +53,12 @@ export async function POST(request: NextRequest) {
       published: published || false,
       seoTitle: seoTitle != null && seoTitle !== "" ? seoTitle : null,
       seoDescription: seoDescription != null && seoDescription !== "" ? seoDescription : null,
-      order: order != null ? order : 0,
     };
+
+    // Добавляем order только если оно указано (для совместимости со старым Prisma Client)
+    if (order != null) {
+      data.order = order;
+    }
 
     // Добавляем category только если оно указано
     if (category && category !== "") {
