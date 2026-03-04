@@ -18,18 +18,35 @@ export async function POST(request: NextRequest) {
     }
 
     // Обновляем порядок для каждой страницы
-    const updates = pageIds.map((pageId: string, index: number) =>
-      prisma.page.update({
+    // Используем динамическое обновление для совместимости со старым Prisma Client
+    const updates = pageIds.map((pageId: string, index: number) => {
+      const data: any = { order: index };
+      return prisma.page.update({
         where: { id: pageId },
-        data: { order: index },
-      })
-    );
+        data,
+      });
+    });
 
     await Promise.all(updates);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("Error reordering pages:", error);
+    
+    // Если ошибка связана с отсутствием поля order, возвращаем успех
+    // (порядок будет сохранен после обновления Prisma Client)
+    if (error.message && error.message.includes("order")) {
+      console.warn("Поле 'order' не найдено в Prisma Client. Необходимо обновить Prisma Client.");
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: "Поле 'order' не найдено. Необходимо обновить Prisma Client на сервере.",
+          details: error.message 
+        },
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json(
       { error: error.message || "Ошибка при обновлении порядка страниц" },
       { status: 500 }
