@@ -59,6 +59,21 @@ echo "🏗️  Пересборка приложения..."
 rm -rf .next
 npm run build
 
+echo ""
+echo "📦 Проверка и копирование Prisma Client в standalone..."
+# Убедиться, что Prisma Client скопирован в standalone
+if [ ! -d ".next/standalone/node_modules/.prisma" ]; then
+  echo "   Копирование Prisma Client..."
+  mkdir -p .next/standalone/node_modules/.prisma
+  cp -r node_modules/.prisma .next/standalone/node_modules/
+fi
+
+if [ ! -d ".next/standalone/node_modules/@prisma" ]; then
+  echo "   Копирование @prisma..."
+  mkdir -p .next/standalone/node_modules/@prisma
+  cp -r node_modules/@prisma .next/standalone/node_modules/
+fi
+
 echo "✅ Приложение пересобрано"
 
 echo ""
