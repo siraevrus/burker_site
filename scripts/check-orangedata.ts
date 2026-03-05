@@ -10,14 +10,21 @@ import "./load-env";
 import {
   isOrangeDataConfigured,
   sendFiscalReceipt,
+  getOrangeDataDiagnostics,
 } from "../lib/orange-data";
+import path from "path";
 
 async function main() {
   console.log("=== Orange Data API ===\n");
+  console.log("CWD:", process.cwd());
 
   if (!isOrangeDataConfigured()) {
-    console.log("❌ Orange Data не настроен.");
-    console.log("   Проверьте orange_prod/ и выполните: npx tsx scripts/convert-xml-key-to-pem.ts");
+    console.log("❌ Orange Data не настроен.\n");
+    const diag = getOrangeDataDiagnostics();
+    for (const { path: p, exists } of diag) {
+      console.log(`   ${exists ? "✓" : "✗"} ${path.relative(process.cwd(), p) || p}`);
+    }
+    console.log("\n   Выполните: npx tsx scripts/convert-xml-key-to-pem.ts");
     process.exit(1);
   }
 

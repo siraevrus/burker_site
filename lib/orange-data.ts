@@ -84,6 +84,23 @@ export function isOrangeDataConfigured(): boolean {
 }
 
 /**
+ * Диагностика: какие файлы найдены/отсутствуют.
+ */
+export function getOrangeDataDiagnostics(): { path: string; exists: boolean }[] {
+  const base = path.join(process.cwd(), "orange_prod");
+  const files = [
+    path.join(base, "290124976119_40633.crt"),
+    path.join(base, "290124976119_40633.key"),
+    path.join(base, "rsa_private.pem"),
+    path.join(base, "client_ca.crt"),
+  ];
+  return files.map((p) => ({
+    path: p,
+    exists: fs.existsSync(p),
+  }));
+}
+
+/**
  * Формирует и отправляет фискальный чек в Orange Data через node-orangedata.
  */
 export async function sendFiscalReceipt(
