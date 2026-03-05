@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { sendOrderPaidEmail, sendOrderNotPaidEmail } from "@/lib/email";
 import { verifyNotificationToken } from "@/lib/tbank";
 import { notifyNewOrder } from "@/lib/telegram";
+import { sendFiscalReceipt, isOrangeDataConfigured } from "@/lib/orange-data";
+import { logError } from "@/lib/ops-log";
 
 const TBANK_PASSWORD = process.env.TBANK_PASSWORD;
 
@@ -133,6 +135,58 @@ export async function POST(request: NextRequest) {
         });
       } catch (telegramError) {
         console.error("T-Bank webhook: notifyNewOrder failed", telegramError);
+      }
+
+      // Фискализация Orange Data (54-ФЗ)
+      if (isOrangeDataConfigured()) {
+        try {
+          const receiptItems = order.items.map((item) => ({
+            name: item.productName.slice(0, 128),
+            price: item.productPrice,
+            quantity: item.quantity,
+          }));
+          if (order.shippingCost > 0) {
+            receiptItems.push({
+              name: "Доставка",
+              price: order.shippingCost,
+              quantity: 1,
+            });
+          }
+          const discountAmount = order.promoDiscount ?? 0;
+          if (discountAmount > 0) {
+            receiptItems.push({
+              name: "Скидка по промокоду",
+              price: -discountAmount,
+              quantity: 1,
+            });
+          }
+          const result = await sendFiscalReceipt({
+            orderId: order.id,
+            email: order.email,
+            items: receiptItems,
+            totalAmount: order.totalAmount,
+          });
+          await prisma.order.update({
+            where: { id: order.id },
+            data: {
+              fiscalReceiptId: result.docId ?? null,
+              fiscalReceiptStatus: result.success ? "sent" : "error",
+            },
+          });
+          if (!result.success) {
+            logError("OrangeData_sendReceipt", { error: result.error, orderId: order.id });
+          }
+        } catch (orangeErr) {
+          console.error("T-Bank webhook: Orange Data sendFiscalReceipt failed", orangeErr);
+          logError("OrangeData_sendReceipt", {
+            error: orangeErr instanceof Error ? orangeErr.message : String(orangeErr),
+            orderId: order.id,
+          });
+          await prisma.order.update({
+            where: { id: order.id },
+            data: { fiscalReceiptStatus: "error" },
+          });
+        }
       }
     } catch (emailError) {
       console.error("T-Bank webhook: sendOrderPaidEmail failed", emailError);

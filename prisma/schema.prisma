@@ -145,6 +145,10 @@ model Order {
   paymentLink    String?  // URL для оплаты
   paidAt         DateTime? // момент успешной оплаты по вебхуку
   accessToken    String?  // секретный токен для доступа к заказу (гостевые заказы, ссылки)
+
+  // Orange Data (фискализация 54-ФЗ)
+  fiscalReceiptId   String?  // ID документа в Orange Data
+  fiscalReceiptStatus String? // sent | error | null
   
   // Информация о клиенте при создании заказа
   ipAddress      String?  // IP-адрес при создании заказа
@@ -165,6 +169,7 @@ model OrderItem {
   productName      String   // snapshot на момент заказа
   productPrice     Float    // snapshot цены в RUB
   originalPriceEur Float?   // оригинальная цена в EUR (для расчета вознаграждения комиссионера)
+  commissionAmount Float?  // вознаграждение сервиса за позицию (на момент заказа)
   selectedColor    String
   quantity         Int
   

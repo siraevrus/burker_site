@@ -64,31 +64,32 @@ export async function getExchangeRates(): Promise<ExchangeRates> {
 }
 
 /**
- * Обновить курсы валют в БД и записать в историю
- * @param source — источник: "cbr" (ЦБ РФ) или "default" (дефолт при ошибке)
+ * Обновить курсы валют в БД
  */
-export async function updateExchangeRates(
-  eurRate: number,
-  rubRate: number,
-  source: string = "manual"
-): Promise<void> {
-  console.log(`[updateExchangeRates] Saving rates: EUR=${eurRate}, RUB=${rubRate}, source=${source}`);
-
+export async function updateExchangeRates(eurRate: number, rubRate: number): Promise<void> {
+  console.log(`[updateExchangeRates] Saving rates: EUR=${eurRate}, RUB=${rubRate}`);
+  
   try {
-    await prisma.$transaction([
-      prisma.exchangeRate.upsert({
-        where: { id: "current" },
-        update: { eurRate, rubRate },
-        create: { id: "current", eurRate, rubRate },
-      }),
-      prisma.exchangeRateHistory.create({
-        data: { eurRate, rubRate, source },
-      }),
-    ]);
+    // Используем upsert для атомарной операции
+    const result = await prisma.exchangeRate.upsert({
+      where: { id: "current" },
+      update: {
+        eurRate,
+        rubRate,
+      },
+      create: {
+        id: "current",
+        eurRate,
+        rubRate,
+      },
+    });
+    console.log(`[updateExchangeRates] Saved successfully:`, result);
   } catch (error) {
     console.error(`[updateExchangeRates] Error saving to DB:`, error);
+    // Не прерываем выполнение — курсы будут храниться в кэше
   }
 
+  // Обновляем кэш в любом случае (даже если БД не сработала)
   cachedRates = {
     eurRate,
     rubRate,

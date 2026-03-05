@@ -268,14 +268,23 @@ export async function POST(request: NextRequest) {
       promoCode: promoCode || null,
       promoDiscount: discountAmount,
       promoDiscountType: validatedPromoDiscountType,
-      items: items.map((item: any) => ({
-        productId: item.productId,
-        productName: item.productName,
-        productPrice: item.productPrice,
-        originalPriceEur: productSellingPriceEur.get(item.productId) ?? null,
-        selectedColor: item.selectedColor,
-        quantity: item.quantity,
-      })),
+      items: items.map((item: any) => {
+        const priceEur = productSellingPriceEur.get(item.productId) ?? null;
+        let commissionAmount: number | null = null;
+        if (priceEur != null && priceEur > 0 && rates.eurRate && rates.rubRate) {
+          const costInRub = (priceEur / rates.eurRate) * rates.rubRate;
+          commissionAmount = Math.max(0, (item.productPrice - costInRub) * item.quantity);
+        }
+        return {
+          productId: item.productId,
+          productName: item.productName,
+          productPrice: item.productPrice,
+          originalPriceEur: priceEur,
+          commissionAmount,
+          selectedColor: item.selectedColor,
+          quantity: item.quantity,
+        };
+      }),
       totalAmount,
       shippingCost, // полная стоимость доставки (скидка только с комиссии)
       eurRate: rates.eurRate,

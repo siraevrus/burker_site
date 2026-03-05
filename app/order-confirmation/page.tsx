@@ -84,25 +84,24 @@ function OrderConfirmationContent() {
       : rates;
 
   const calculateCommission = () => {
-    if (!order || !ratesForCommission) return null;
+    if (!order) return null;
 
     let totalCommission = 0;
-    let hasOriginalPrices = false;
+    let hasCommission = false;
 
     for (const item of order.items) {
-      if (item.originalPriceEur) {
-        hasOriginalPrices = true;
-        const originalPriceInUsd = item.originalPriceEur / ratesForCommission.eurRate;
-        const originalPriceInRub = originalPriceInUsd * ratesForCommission.rubRate;
-        const commission = (item.productPrice - originalPriceInRub) * item.quantity;
-        totalCommission += commission;
+      const itemComm = getItemCommission(item, ratesForCommission);
+      if (itemComm !== null) {
+        hasCommission = true;
+        totalCommission += itemComm;
       }
     }
 
-    return hasOriginalPrices ? totalCommission : null;
+    return hasCommission ? totalCommission : null;
   };
 
   function getItemCommission(item: OrderItem, ratesToUse: ExchangeRates | null): number | null {
+    if (item.commissionAmount != null) return item.commissionAmount;
     if (!ratesToUse || !item.originalPriceEur) return null;
     const originalPriceInUsd = item.originalPriceEur / ratesToUse.eurRate;
     const originalPriceInRub = originalPriceInUsd * ratesToUse.rubRate;
@@ -360,6 +359,14 @@ function OrderConfirmationContent() {
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-bold mb-4">Товары</h2>
+          {order.eurRate != null && order.rubRate != null && (
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg text-sm">
+              <p className="font-medium text-gray-700 mb-1">Курс на дату заказа</p>
+              <p className="text-gray-600">
+                EUR/USD: {order.eurRate.toFixed(4)} · RUB/USD: {order.rubRate.toFixed(4)}
+              </p>
+            </div>
+          )}
           <div className="space-y-3">
             {order.items.map((item) => {
               const itemCommission = getItemCommission(item, ratesForCommission);
@@ -371,18 +378,22 @@ function OrderConfirmationContent() {
                       {(item.productPrice * item.quantity).toFixed(0)} ₽
                     </p>
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between text-gray-600">
+                      <span>Цена за шт.:</span>
+                      <span>{item.productPrice.toFixed(0)} ₽</span>
+                    </div>
                     {item.selectedColor ? (
-                      <p className="text-sm text-gray-600">
+                      <p className="text-gray-600">
                         Цвет: {item.selectedColor}
                       </p>
                     ) : null}
-                    <p className="text-sm text-gray-600">
+                    <p className="text-gray-600">
                       Количество: {item.quantity}
                     </p>
                     {itemCommission !== null && (
-                      <div className="flex justify-between items-baseline gap-x-2 text-sm text-gray-500">
-                        <span className="min-w-0">В т.ч. вознаграждение сервиса:</span>
+                      <div className="flex justify-between items-baseline gap-x-2 text-gray-500">
+                        <span className="min-w-0">Комиссия товара:</span>
                         <span className="whitespace-nowrap flex-shrink-0">{itemCommission.toFixed(0)} ₽</span>
                       </div>
                     )}

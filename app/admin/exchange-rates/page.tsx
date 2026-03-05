@@ -9,41 +9,10 @@ interface RatesData {
   updatedAt: string | null;
 }
 
-interface HistoryItem {
-  id: string;
-  eurRate: number;
-  rubRate: number;
-  rubPerEur: number;
-  source: string;
-  createdAt: string;
-}
-
-interface HistoryResponse {
-  items: HistoryItem[];
-  total: number;
-  limit: number;
-  offset: number;
-}
-
-const SOURCE_LABELS: Record<string, string> = {
-  cbr: "ЦБ РФ",
-  default: "Дефолт (ошибка ЦБ)",
-  manual: "Вручную",
-};
-
-const DEFAULT_RUB_USD = 100;
-const DEFAULT_RUB_EUR = 105;
-
 export default function AdminExchangeRatesPage() {
   const [data, setData] = useState<RatesData | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [historyTotal, setHistoryTotal] = useState(0);
-  const [historyLoading, setHistoryLoading] = useState(true);
-  const [manualRubUsd, setManualRubUsd] = useState("");
-  const [manualRubEur, setManualRubEur] = useState("");
-  const [savingManual, setSavingManual] = useState(false);
 
   const loadRates = async () => {
     try {
@@ -62,69 +31,9 @@ export default function AdminExchangeRatesPage() {
     }
   };
 
-  const loadHistory = async () => {
-    setHistoryLoading(true);
-    try {
-      const res = await fetch("/api/admin/exchange-rates/history?limit=100", { credentials: "include" });
-      if (res.ok) {
-        const json: HistoryResponse = await res.json();
-        setHistory(json.items);
-        setHistoryTotal(json.total);
-      } else {
-        setHistory([]);
-      }
-    } catch (e) {
-      console.error(e);
-      setHistory([]);
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
-
   useEffect(() => {
     loadRates();
   }, []);
-
-  useEffect(() => {
-    loadHistory();
-  }, []);
-
-  const handleSetManual = async () => {
-    const rubUsd = parseFloat(manualRubUsd.replace(",", "."));
-    const rubEur = parseFloat(manualRubEur.replace(",", "."));
-    if (!Number.isFinite(rubUsd) || !Number.isFinite(rubEur) || rubUsd <= 0 || rubEur <= 0) {
-      alert("Введите положительные числа: ₽ за 1 USD и ₽ за 1 EUR.");
-      return;
-    }
-    setSavingManual(true);
-    try {
-      const res = await fetch("/api/admin/exchange-rates/set", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rubPerUsd: rubUsd, rubPerEur: rubEur }),
-      });
-      const json = await res.json().catch(() => ({}));
-      if (res.ok) {
-        setData({
-          eurRate: json.rates.eurRate,
-          rubRate: json.rates.rubRate,
-          rubPerEur: json.rubPerEur,
-          updatedAt: json.updatedAt,
-        });
-        setManualRubUsd("");
-        setManualRubEur("");
-        loadHistory();
-      } else {
-        alert(json.error || "Ошибка сохранения");
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Ошибка сохранения курсов");
-    } finally {
-      setSavingManual(false);
-    }
-  };
 
   const handleUpdate = async () => {
     setUpdating(true);
@@ -133,37 +42,23 @@ export default function AdminExchangeRatesPage() {
         method: "POST",
         credentials: "include",
       });
-      const json = await res.json().catch(() => ({}));
       if (res.ok) {
+        const json = await res.json();
         setData({
           eurRate: json.rates.eurRate,
           rubRate: json.rates.rubRate,
           rubPerEur: json.rubPerEur,
           updatedAt: json.updatedAt,
         });
-        loadHistory();
       } else {
-        const msg =
-          json.code === "CBR_UNAVAILABLE"
-            ? "Сайт ЦБ РФ недоступен. Текущие курсы не изменены."
-            : json.error || "Ошибка обновления курсов";
-        alert(msg);
+        const err = await res.json();
+        alert(err.error || "Ошибка обновления курсов");
       }
     } catch (e) {
       console.error(e);
       alert("Ошибка обновления курсов");
     } finally {
       setUpdating(false);
-    }
-  };
-
-  const formatDate = (s: string | null) => {
-    if (!s) return "—";
-    try {
-      const d = new Date(s);
-      return d.toLocaleString("ru-RU");
-    } catch {
-      return s;
     }
   };
 
@@ -175,27 +70,35 @@ export default function AdminExchangeRatesPage() {
     );
   }
 
+  const formatDate = (s: string | null) => {
+    if (!s) return "—";
+    try {
+      const d = new Date(s);
+      return d.toLocaleString("ru-RU");
+    } catch {
+      return s;
+    }
+  };
+
   return (
-    <div className="p-6 max-w-4xl">
+    <div className="p-6 max-w-2xl">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Курсы валют</h1>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleUpdate}
-            disabled={updating}
-            className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {updating ? "Обновление…" : "Скачать с ЦБ РФ"}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handleUpdate}
+          disabled={updating}
+          className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {updating ? "Обновление…" : "Обновить курсы"}
+        </button>
       </div>
 
       <p className="text-sm text-gray-600 mb-4">
-        Курсы используются при парсинге и расчёте цен. Кнопка «Обновить курсы» загружает данные с сайта ЦБ РФ. Если ЦБ недоступен, текущие курсы не изменяются. Раз в сутки курсы также обновляет cron (05:00 UTC).
+        Курсы используются при парсинге и расчёте цен. Обновление загружает данные с сайта ЦБ РФ; при ошибке подставляются значения по умолчанию (80 ₽/USD, 95 ₽/EUR).
       </p>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-8">
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50">
@@ -217,80 +120,6 @@ export default function AdminExchangeRatesPage() {
         <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 text-sm text-gray-600">
           Обновлено: {formatDate(data?.updatedAt ?? null)}
         </div>
-      </div>
-
-      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Установить курсы вручную</h2>
-        <p className="text-sm text-gray-600 mb-3">
-          Введите курсы, скопированные с любого сайта (руб за 1 USD и руб за 1 EUR). Эти значения сохранятся и не будут заменены дефолтами при сбое ЦБ.
-        </p>
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-gray-700">₽ за 1 USD</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              placeholder={String(DEFAULT_RUB_USD)}
-              value={manualRubUsd}
-              onChange={(e) => setManualRubUsd(e.target.value)}
-              className="w-28 px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-gray-800 focus:border-gray-800"
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-gray-700">₽ за 1 EUR</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              placeholder={String(DEFAULT_RUB_EUR)}
-              value={manualRubEur}
-              onChange={(e) => setManualRubEur(e.target.value)}
-              className="w-28 px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-gray-800 focus:border-gray-800"
-            />
-          </label>
-          <button
-            type="button"
-            onClick={handleSetManual}
-            disabled={savingManual}
-            className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {savingManual ? "Сохранение…" : "Сохранить вручную"}
-          </button>
-        </div>
-      </div>
-
-      <h2 className="text-lg font-semibold text-gray-900 mb-3">История парсинга курсов</h2>
-      <p className="text-sm text-gray-600 mb-4">
-        Последние обновления курсов (cron или ручное). Всего записей: {historyTotal}.
-      </p>
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        {historyLoading ? (
-          <div className="px-4 py-8 text-center text-gray-500">Загрузка истории…</div>
-        ) : history.length === 0 ? (
-          <div className="px-4 py-8 text-center text-gray-500">История пуста. Обновите курсы вручную или дождитесь запуска cron.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 font-semibold text-gray-700">Дата и время</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">USD, ₽</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">EUR, ₽</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Источник</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.map((row) => (
-                  <tr key={row.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-4 py-2.5 font-mono text-gray-700">{formatDate(row.createdAt)}</td>
-                    <td className="px-4 py-2.5">{row.rubRate.toFixed(2)}</td>
-                    <td className="px-4 py-2.5">{row.rubPerEur.toFixed(2)}</td>
-                    <td className="px-4 py-2.5">{SOURCE_LABELS[row.source] ?? row.source}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -39,26 +39,22 @@ const paymentStatusLabels: Record<string, string> = {
 };
 
 function getItemCommission(item: OrderItem, rates: ExchangeRates | null): number | null {
+  if (item.commissionAmount != null) return item.commissionAmount;
   if (!rates || !item.originalPriceEur) return null;
   const originalPriceInUsd = item.originalPriceEur / rates.eurRate;
   const originalPriceInRub = originalPriceInUsd * rates.rubRate;
   return (item.productPrice - originalPriceInRub) * item.quantity;
 }
 
+function getRatesForOrder(order: Order): ExchangeRates | null {
+  if (order.eurRate != null && order.rubRate != null) {
+    return { eurRate: order.eurRate, rubRate: order.rubRate };
+  }
+  return null;
+}
+
 export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
-  const [rates, setRates] = useState<ExchangeRates | null>(null);
-
-  useEffect(() => {
-    fetch("/api/exchange-rates")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.eurRate && data.rubRate) {
-          setRates({ eurRate: data.eurRate, rubRate: data.rubRate });
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   const toggleOrder = (orderId: string) => {
     const newExpanded = new Set(expandedOrders);
@@ -179,9 +175,17 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                     </div>
                   )}
                   <h3 className="text-lg font-bold mb-4">Товары</h3>
+                  {getRatesForOrder(order) && (
+                    <div className="mb-4 p-3 bg-gray-50 rounded-lg text-sm">
+                      <p className="font-medium text-gray-700 mb-1">Курс на дату заказа</p>
+                      <p className="text-gray-600">
+                        EUR/USD: {order.eurRate!.toFixed(4)} · RUB/USD: {order.rubRate!.toFixed(4)}
+                      </p>
+                    </div>
+                  )}
                   <div className="space-y-3 mb-6">
                     {order.items.map((item) => {
-                      const itemCommission = getItemCommission(item, rates);
+                      const itemCommission = getItemCommission(item, getRatesForOrder(order));
                       return (
                         <div
                           key={item.id}
@@ -194,11 +198,15 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                             </p>
                           </div>
                           <div className="text-sm text-gray-600 space-y-1">
+                            <div className="flex justify-between">
+                              <span>Цена за шт.:</span>
+                              <span>{item.productPrice.toFixed(0)} ₽</span>
+                            </div>
                             {item.selectedColor ? <p>Цвет: {item.selectedColor}</p> : null}
                             <p>Кол-во: {item.quantity}</p>
                             {itemCommission !== null && (
                               <p className="text-gray-500 flex flex-wrap items-baseline gap-x-1">
-                                <span>В т.ч. вознаграждение сервиса:</span>
+                                <span>Комиссия товара:</span>
                                 <span className="whitespace-nowrap flex-shrink-0">{itemCommission.toFixed(0)} ₽</span>
                               </p>
                             )}
@@ -383,6 +391,20 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                       <span>Итого:</span>
                       <span>{order.totalAmount.toFixed(0)} ₽</span>
                     </div>
+                    {(() => {
+                      const rates = getRatesForOrder(order);
+                      let totalComm = 0;
+                      let hasComm = false;
+                      order.items.forEach((it) => {
+                        const c = getItemCommission(it, rates);
+                        if (c != null) { hasComm = true; totalComm += c; }
+                      });
+                      return hasComm ? (
+                        <p className="text-xs text-gray-400 mt-1">
+                          Итого вознаграждение комиссионера: {totalComm.toFixed(0)} ₽
+                        </p>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
               )}

@@ -66,6 +66,7 @@ export interface OrderItem {
   productName: string;
   productPrice: number;
   originalPriceEur?: number;
+  commissionAmount?: number; // вознаграждение сервиса за позицию (на момент заказа)
   selectedColor: string;
   quantity: number;
 }
@@ -110,6 +111,8 @@ export interface Order {
   paymentLink?: string | null;
   paidAt?: Date | null;
   accessToken?: string; // секретный токен доступа (не отдаётся клиенту)
+  fiscalReceiptId?: string | null;
+  fiscalReceiptStatus?: string | null; // sent | error
   items: OrderItem[];
   createdAt: Date;
   updatedAt: Date;

@@ -62,6 +62,8 @@ function mapOrderFromDb(dbOrder: any): Order {
     paymentLink: dbOrder.paymentLink ?? undefined,
     paidAt: dbOrder.paidAt ?? undefined,
     accessToken: dbOrder.accessToken ?? undefined,
+    fiscalReceiptId: dbOrder.fiscalReceiptId ?? undefined,
+    fiscalReceiptStatus: dbOrder.fiscalReceiptStatus ?? undefined,
     items: dbOrder.items?.map((item: any) => ({
       id: item.id,
       orderId: item.orderId,
@@ -69,6 +71,7 @@ function mapOrderFromDb(dbOrder: any): Order {
       productName: item.productName,
       productPrice: item.productPrice,
       originalPriceEur: item.originalPriceEur ?? undefined,
+      commissionAmount: item.commissionAmount ?? undefined,
       selectedColor: item.selectedColor,
       quantity: item.quantity,
     })) || [],
@@ -146,6 +149,7 @@ export async function createOrder(orderData: {
     originalPriceEur?: number | null;
     selectedColor: string;
     quantity: number;
+    commissionAmount?: number | null;
   }>;
   totalAmount: number;
   shippingCost: number;
@@ -196,6 +200,7 @@ export async function createOrder(orderData: {
         productName: item.productName,
         productPrice: item.productPrice,
         originalPriceEur: item.originalPriceEur ?? null,
+        commissionAmount: item.commissionAmount ?? null,
         selectedColor: item.selectedColor,
         quantity: item.quantity,
       })),
