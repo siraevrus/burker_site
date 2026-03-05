@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const rubRate = rubPerUsd;
     const eurRate = rubPerUsd / rubPerEur;
 
-    await updateExchangeRates(eurRate, rubRate, "manual");
+    await updateExchangeRates(eurRate, rubRate);
 
     return NextResponse.json({
       success: true,
