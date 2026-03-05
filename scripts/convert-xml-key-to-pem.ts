@@ -67,4 +67,4 @@ if (!fs.existsSync(xmlPath)) {
 const pem = xmlToPem(xmlPath);
 fs.writeFileSync(outPath, pem);
 console.log("Сохранено:", outPath);
-console.log("Запустите: npx tsx scripts/test-orangedata.ts");
+console.log("Запустите: npx tsx scripts/check-orangedata.ts");

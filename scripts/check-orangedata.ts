@@ -1,10 +1,12 @@
 #!/usr/bin/env npx tsx
 /**
- * Проверка работоспособности Orange Data API (боевая среда).
+ * Проверка Orange Data API (боевая среда).
+ * Загружает .env для ORANGEDATA_TLS_INSECURE и других переменных.
  *
- * Запуск: npx tsx scripts/test-orangedata.ts
+ * Запуск: npx tsx scripts/check-orangedata.ts
  */
 
+import "./load-env";
 import {
   isOrangeDataConfigured,
   sendFiscalReceipt,
@@ -33,12 +35,14 @@ async function main() {
     console.log("✓ Успех! docId:", result.docId);
   } else {
     console.log("❌ Ошибка:", result.error);
+    if (String(result.error).includes("self-signed certificate")) {
+      console.log("\n→ Добавьте в .env: ORANGEDATA_TLS_INSECURE=1");
+    }
     if (String(result.error).includes("Не найден ключ для подписи")) {
       console.log("\n→ Публичный ключ не зарегистрирован в Orange Data ЛК.");
       console.log("  1. npx tsx scripts/convert-xml-key-to-pem.ts");
       console.log("  2. npx tsx scripts/extract-orangedata-public-key.ts");
-      console.log("  3. Скопируйте публичный ключ в https://lk.orangedata.ru → Интеграция");
-      console.log("  4. Укажите ИНН 290124976119, ключ 290124976119_40633 в ЛК");
+      console.log("  3. Зарегистрируйте ключ в https://lk.orangedata.ru");
     }
     process.exit(1);
   }

@@ -31,5 +31,5 @@ npx tsx scripts/convert-xml-key-to-pem.ts prod
 ## Проверка (боевая среда)
 
 ```bash
-npx tsx scripts/test-orangedata.ts
+npx tsx scripts/check-orangedata.ts
 ```
