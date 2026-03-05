@@ -55,11 +55,19 @@ function xmlToPem(xmlPath: string): string {
   return forge.pki.privateKeyToPem(privateKey);
 }
 
-const xmlPath = path.join(process.cwd(), "orange", "files_for_test", "private_key_test.xml");
-const outPath = path.join(process.cwd(), "orange", "files_for_test", "rsa_private.pem");
+const mode = process.argv[2] || "test"; // test | prod
+const xmlPath =
+  mode === "prod"
+    ? path.join(process.cwd(), "orange_prod", "rsa_2048_private_key.xml")
+    : path.join(process.cwd(), "orange", "files_for_test", "private_key_test.xml");
+const outPath =
+  mode === "prod"
+    ? path.join(process.cwd(), "orange_prod", "rsa_private.pem")
+    : path.join(process.cwd(), "orange", "files_for_test", "rsa_private.pem");
 
 if (!fs.existsSync(xmlPath)) {
   console.error("Файл не найден:", xmlPath);
+  console.error("Использование: npx tsx scripts/convert-xml-key-to-pem.ts [test|prod]");
   process.exit(1);
 }
 

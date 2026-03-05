@@ -19,28 +19,38 @@ const DEFAULT_API_URL = ORANGEDATA_TEST
   : "https://api.orangedata.ru:12003/api/v2/documents/";
 
 const ORANGEDATA_API_URL = process.env.ORANGEDATA_API_URL || DEFAULT_API_URL;
-const ORANGEDATA_INN = process.env.ORANGEDATA_INN || (ORANGEDATA_TEST ? DEFAULT_TEST_INN : undefined);
-const ORANGEDATA_GROUP = process.env.ORANGEDATA_GROUP || "Main";
+const DEFAULT_PROD_INN = "290124976119";
+const DEFAULT_PROD_GROUP = "40633";
+const ORANGEDATA_INN = process.env.ORANGEDATA_INN || (ORANGEDATA_TEST ? DEFAULT_TEST_INN : DEFAULT_PROD_INN);
+const ORANGEDATA_GROUP = process.env.ORANGEDATA_GROUP || (ORANGEDATA_TEST ? "Main" : DEFAULT_PROD_GROUP);
+
+const ORANGE_PROD = path.join(process.cwd(), "orange_prod");
 const ORANGEDATA_PRIVATE_KEY_PATH =
   process.env.ORANGEDATA_PRIVATE_KEY_PATH ||
-  (ORANGEDATA_TEST ? path.join(process.cwd(), "orange", "files_for_test", "rsa_private.pem") : undefined);
+  (ORANGEDATA_TEST
+    ? path.join(process.cwd(), "orange", "files_for_test", "rsa_private.pem")
+    : path.join(ORANGE_PROD, "rsa_private.pem"));
 const ORANGEDATA_PRIVATE_KEY_PEM = process.env.ORANGEDATA_PRIVATE_KEY_PEM;
 const ORANGEDATA_CLIENT_CERT_PATH =
   process.env.ORANGEDATA_CLIENT_CERT_PATH ||
   (ORANGEDATA_TEST
     ? path.join(process.cwd(), "orange", "files_for_test", "client.pfx")
-    : path.join(process.cwd(), "orange", "290124976119_40633.pfx"));
-// Для теста (files_for_test) можно использовать client.crt+client.key вместо PFX
+    : path.join(ORANGE_PROD, "290124976119_40633.pfx"));
 const ORANGEDATA_CLIENT_CERT_KEY_PATH =
   process.env.ORANGEDATA_CLIENT_CERT_KEY_PATH ||
   (ORANGEDATA_TEST
     ? path.join(process.cwd(), "orange", "files_for_test", "client.key")
-    : undefined);
+    : path.join(ORANGE_PROD, "290124976119_40633.key"));
+const ORANGEDATA_CLIENT_CERT_CRT_PATH = ORANGEDATA_TEST
+  ? path.join(process.cwd(), "orange", "files_for_test", "client.crt")
+  : path.join(ORANGE_PROD, "290124976119_40633.crt");
 const ORANGEDATA_CLIENT_CERT_PASSWORD =
   process.env.ORANGEDATA_CLIENT_CERT_PASSWORD || "1234";
 const ORANGEDATA_CA_PATH =
   process.env.ORANGEDATA_CA_PATH ||
-  (ORANGEDATA_TEST ? path.join(process.cwd(), "orange", "files_for_test", "cacert.pem") : undefined);
+  (ORANGEDATA_TEST
+    ? path.join(process.cwd(), "orange", "files_for_test", "cacert.pem")
+    : path.join(ORANGE_PROD, "client_ca.crt"));
 
 export interface OrangeDataReceiptItem {
   name: string;
@@ -91,7 +101,7 @@ export function isOrangeDataConfigured(): boolean {
     (ORANGEDATA_CLIENT_CERT_PATH && fs.existsSync(path.resolve(ORANGEDATA_CLIENT_CERT_PATH))) ||
     (ORANGEDATA_CLIENT_CERT_KEY_PATH &&
       fs.existsSync(path.resolve(ORANGEDATA_CLIENT_CERT_KEY_PATH)) &&
-      fs.existsSync(path.join(path.dirname(ORANGEDATA_CLIENT_CERT_KEY_PATH), "client.crt")));
+      fs.existsSync(path.resolve(ORANGEDATA_CLIENT_CERT_CRT_PATH)));
   return !!(hasInn && (hasKey || hasCert));
 }
 
@@ -149,14 +159,12 @@ export async function sendFiscalReceipt(
     const keyPath = ORANGEDATA_CLIENT_CERT_KEY_PATH
       ? path.resolve(ORANGEDATA_CLIENT_CERT_KEY_PATH)
       : null;
-    const certPathAlt = keyPath
-      ? path.join(path.dirname(keyPath), "client.crt")
-      : null;
+    const crtPath = path.resolve(ORANGEDATA_CLIENT_CERT_CRT_PATH);
 
     let tlsOpts: { pfx?: Buffer; passphrase?: string; cert?: string; key?: string; ca?: string } = {};
-    if (keyPath && certPathAlt && fs.existsSync(keyPath) && fs.existsSync(certPathAlt)) {
+    if (keyPath && fs.existsSync(keyPath) && fs.existsSync(crtPath)) {
       tlsOpts = {
-        cert: fs.readFileSync(certPathAlt, "utf8"),
+        cert: fs.readFileSync(crtPath, "utf8"),
         key: fs.readFileSync(keyPath, "utf8"),
       };
     } else if (fs.existsSync(certPath)) {

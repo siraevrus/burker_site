@@ -53,3 +53,9 @@ public/promo/
 public/products/
 public/order-proofs/
 uploads/
+
+# Orange Data production keys/certs (deploy manually)
+orange_prod/*.key
+orange_prod/*.pfx
+orange_prod/*.pem
+orange_prod/rsa_2048_private_key.xml

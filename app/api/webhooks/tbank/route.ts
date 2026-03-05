@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { sendOrderPaidEmail, sendOrderNotPaidEmail } from "@/lib/email";
+import { sendOrderPaidEmail, sendOrderNotPaidEmail, sendReceiptPdfEmail } from "@/lib/email";
 import { verifyNotificationToken } from "@/lib/tbank";
 import { notifyNewOrder } from "@/lib/telegram";
 import { sendFiscalReceipt, isOrangeDataConfigured } from "@/lib/orange-data";
@@ -56,11 +56,9 @@ export async function POST(request: NextRequest) {
   const status =
     typeof rawStatus === "string" ? rawStatus.toUpperCase() : "";
 
-  // EACQ: CONFIRMED / AUTHORIZED — успешная оплата; REJECTED, CANCELLED, DEADLINE_EXPIRED — неуспех
-  // REVERSED — отмена платежа (из AUTHORIZED), REFUNDED/PARTIAL_REFUNDED — возврат (из CONFIRMED)
-  const isPaid =
-    success &&
-    (status === "CONFIRMED" || status === "AUTHORIZED");
+  // EACQ: CONFIRMED — итоговое подтверждение; AUTHORIZED — холдирование (T-Bank шлёт оба одновременно)
+  // Отправляем письмо только по CONFIRMED, чтобы избежать дублирования
+  const isPaid = success && status === "CONFIRMED";
   const isCancelledOrExpired = [
     "REJECTED",
     "CANCELLED",
@@ -89,7 +87,6 @@ export async function POST(request: NextRequest) {
         : "cancelled"
       : order.paymentStatus; // не меняем при неизвестном статусе
 
-  // Отправляем письмо только если статус изменился (избегаем дублирования)
   const statusChanged = order.paymentStatus !== newPaymentStatus;
   const wasPaid = order.paymentStatus === "paid";
   const wasCancelledOrExpired = ["cancelled", "expired"].includes(order.paymentStatus);
@@ -102,7 +99,7 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  // Письмо "Заказ оплачен" — только если статус изменился на "paid"
+  // Письмо "Заказ оплачен" — только при CONFIRMED (AUTHORIZED игнорируем)
   if (isPaid && statusChanged && !wasPaid) {
     try {
       const orderNumber = order.orderNumber || order.id.slice(0, 8);
@@ -175,6 +172,17 @@ export async function POST(request: NextRequest) {
           });
           if (!result.success) {
             logError("OrangeData_sendReceipt", { error: result.error, orderId: order.id });
+          } else {
+            try {
+              await sendReceiptPdfEmail(
+                order.email,
+                order.firstName,
+                order.orderNumber || order.id.slice(0, 8),
+                order.id
+              );
+            } catch (receiptEmailErr) {
+              console.error("T-Bank webhook: sendReceiptPdfEmail failed", receiptEmailErr);
+            }
           }
         } catch (orangeErr) {
           console.error("T-Bank webhook: Orange Data sendFiscalReceipt failed", orangeErr);

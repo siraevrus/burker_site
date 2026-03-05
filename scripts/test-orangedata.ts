@@ -36,6 +36,13 @@ async function main() {
     console.log("✓ Успех! docId:", result.docId);
   } else {
     console.log("❌ Ошибка:", result.error);
+    if (String(result.error).includes("Не найден ключ для подписи")) {
+      console.log("\n→ Публичный ключ не зарегистрирован в Orange Data ЛК.");
+      console.log("  1. npx tsx scripts/convert-xml-key-to-pem.ts");
+      console.log("  2. npx tsx scripts/extract-orangedata-public-key.ts");
+      console.log("  3. Скопируйте публичный ключ в https://lk.orangedata.ru → Интеграция");
+      console.log("  4. Укажите ИНН 3123011520 (тест) или ваш ИНН");
+    }
     process.exit(1);
   }
 }

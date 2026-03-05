@@ -1,4 +1,4 @@
-import { sendEmailViaMailopost } from "./mailopost";
+import { sendEmailViaMailopost, sendEmailWithAttachment } from "./mailopost";
 
 // Конфигурация из переменных окружения
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.MAILOPOST_FROM_EMAIL || "";
@@ -539,6 +539,43 @@ export async function sendOrderNotPaidEmail(
     `Заказ #${orderNumber} — оплата не проведена`,
     html
   );
+
+  return result.success;
+}
+
+/**
+ * Отправка чека (PDF) на email пользователя.
+ * Вызывается после успешной фискализации в Orange Data.
+ */
+export async function sendReceiptPdfEmail(
+  email: string,
+  firstName: string,
+  orderNumber: string,
+  orderId: string
+): Promise<boolean> {
+  if (!IS_PRODUCTION) {
+    console.log("🧾 Отправка чека на email #" + orderNumber);
+  }
+
+  const { generateReceiptPdf } = await import("./receipt-pdf");
+  const pdfBuffer = await generateReceiptPdf(orderId);
+  const filename = `check-${orderNumber}.pdf`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">Ваш кассовый чек</h2>
+      <p>Здравствуйте, ${esc(firstName)}!</p>
+      <p>Во вложении — кассовый чек по заказу <strong>#${orderNumber}</strong>.</p>
+      <p>Чек сформирован в соответствии с требованиями 54-ФЗ.</p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      ${EMAIL_FOOTER}
+    </div>
+  `;
+
+  const result = await sendEmailWithAttachment(email, `Чек по заказу #${orderNumber}`, html, {
+    filename,
+    content: pdfBuffer,
+  });
 
   return result.success;
 }
