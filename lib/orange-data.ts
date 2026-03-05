@@ -159,6 +159,7 @@ export async function sendFiscalReceipt(
       group: ORANGEDATA_GROUP,
       key: params.orderId,
       type: 1,
+      ffdVersion: 4, // ФФД 1.2 (касса в ЛК Orange Data настроена на этот режим)
       customerContact: params.email,
       taxationSystem: params.taxationSystem ?? 1,
     });
