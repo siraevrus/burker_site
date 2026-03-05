@@ -91,7 +91,8 @@ export async function sendEmailWithAttachment(
   formData.append("html", html);
   formData.append("text", html.replace(/<[^>]+>/g, ""));
   formData.append("payment", "credit");
-  formData.append("attachments[]", new Blob([attachment.content], { type: "application/pdf" }), attachment.filename);
+  const blobContent = new Uint8Array(attachment.content);
+  formData.append("attachments[]", new Blob([blobContent], { type: "application/pdf" }), attachment.filename);
 
   try {
     const res = await fetch(`${API_URL}/email/messages`, {
