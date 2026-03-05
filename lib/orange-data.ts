@@ -46,11 +46,11 @@ const ORANGEDATA_CLIENT_CERT_CRT_PATH = ORANGEDATA_TEST
   : path.join(ORANGE_PROD, "290124976119_40633.crt");
 const ORANGEDATA_CLIENT_CERT_PASSWORD =
   process.env.ORANGEDATA_CLIENT_CERT_PASSWORD || "1234";
+// CA для проверки сервера: тест — cacert.pem; prod — только если явно задан (client_ca.crt подписывает наш клиент, не сервер Orange Data)
 const ORANGEDATA_CA_PATH =
   process.env.ORANGEDATA_CA_PATH ||
-  (ORANGEDATA_TEST
-    ? path.join(process.cwd(), "orange", "files_for_test", "cacert.pem")
-    : path.join(ORANGE_PROD, "client_ca.crt"));
+  (ORANGEDATA_TEST ? path.join(process.cwd(), "orange", "files_for_test", "cacert.pem") : undefined);
+const ORANGEDATA_TLS_INSECURE = process.env.ORANGEDATA_TLS_INSECURE === "1";
 
 export interface OrangeDataReceiptItem {
   name: string;
@@ -171,6 +171,7 @@ export async function sendFiscalReceipt(
       const pfx = fs.readFileSync(certPath);
       tlsOpts = { pfx, passphrase: ORANGEDATA_CLIENT_CERT_PASSWORD };
     }
+    // ca: для теста — cacert.pem; для prod — client_ca.crt может быть для клиента, не для сервера
     if (ORANGEDATA_CA_PATH && fs.existsSync(path.resolve(ORANGEDATA_CA_PATH))) {
       tlsOpts.ca = fs.readFileSync(path.resolve(ORANGEDATA_CA_PATH), "utf8");
     }
@@ -187,7 +188,7 @@ export async function sendFiscalReceipt(
       },
       ...(Object.keys(tlsOpts).length > 0 && {
         ...tlsOpts,
-        rejectUnauthorized: true,
+        rejectUnauthorized: !ORANGEDATA_TLS_INSECURE,
       }),
     };
 
