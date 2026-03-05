@@ -1,5 +1,7 @@
 # Orange Data — production
 
+Используется библиотека [node-orangedata](https://github.com/orangedata-official/node-orangedata).
+
 ИНН: **290124976119**, ключ: **290124976119_40633**
 
 Сертификаты и ключи для продакшен-фискализации (api.orangedata.ru:12003).
@@ -13,7 +15,7 @@
 | `290124976119_40633.pfx` | PFX (альтернатива crt+key) |
 | `client_ca.crt` | CA-сертификат |
 | `rsa_private.pem` | Ключ для подписи X-Signature |
-| `rsa_2048_public_key.xml` | Публичный ключ (для ЛК) |
+| `rsa_2048_public_key.xml` | Публичный ключ — загрузить в ЛК Orange Data для регистрации |
 
 ## Ключ подписи (rsa_private.pem)
 

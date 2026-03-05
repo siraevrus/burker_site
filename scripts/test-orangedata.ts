@@ -15,7 +15,7 @@ async function main() {
 
   if (!isOrangeDataConfigured()) {
     console.log("❌ Orange Data не настроен.");
-    console.log("   Проверьте orange_prod/ и выполните: npx tsx scripts/convert-xml-key-to-pem.ts prod");
+    console.log("   Проверьте orange_prod/ и выполните: npx tsx scripts/convert-xml-key-to-pem.ts");
     process.exit(1);
   }
 

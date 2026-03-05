@@ -1,13 +1,10 @@
 /**
  * Orange Data API — фискализация чеков 54-ФЗ.
- * Документация: https://github.com/orangedata-official/API
- * Ferma/OFD: https://ofd.ru/razrabotchikam/ferma/orangedata
- * Endpoint: https://api.orangedata.ru:12003/api/v2/documents/
- * Подпись: X-Signature (SHA256-RSA 2048, base64)
+ * Использует официальную библиотеку node-orangedata.
+ * Документация: https://github.com/orangedata-official/node-orangedata
  */
 
 import crypto from "crypto";
-import https from "https";
 import fs from "fs";
 import path from "path";
 
@@ -15,14 +12,13 @@ const ORANGEDATA_INN_DEFAULT = "290124976119";
 const ORANGEDATA_KEY_NAME = "290124976119_40633";
 
 const ORANGEDATA_API_URL =
-  process.env.ORANGEDATA_API_URL || "https://api.orangedata.ru:12003/api/v2/documents/";
+  process.env.ORANGEDATA_API_URL || "https://api.orangedata.ru:12003/api/v2";
 const ORANGEDATA_INN = process.env.ORANGEDATA_INN || ORANGEDATA_INN_DEFAULT;
-const ORANGEDATA_GROUP = process.env.ORANGEDATA_GROUP || "Main"; // Main — стандартная группа в ЛК Orange Data
+const ORANGEDATA_GROUP = process.env.ORANGEDATA_GROUP || "Main";
 
 const ORANGE_PROD = path.join(process.cwd(), "orange_prod");
 const ORANGEDATA_PRIVATE_KEY_PATH =
   process.env.ORANGEDATA_PRIVATE_KEY_PATH || path.join(ORANGE_PROD, "rsa_private.pem");
-const ORANGEDATA_PRIVATE_KEY_PEM = process.env.ORANGEDATA_PRIVATE_KEY_PEM;
 const ORANGEDATA_CLIENT_CERT_PATH =
   process.env.ORANGEDATA_CLIENT_CERT_PATH ||
   path.join(ORANGE_PROD, `${ORANGEDATA_KEY_NAME}.pfx`);
@@ -32,66 +28,63 @@ const ORANGEDATA_CLIENT_CERT_KEY_PATH =
 const ORANGEDATA_CLIENT_CERT_CRT_PATH = path.join(ORANGE_PROD, `${ORANGEDATA_KEY_NAME}.crt`);
 const ORANGEDATA_CLIENT_CERT_PASSWORD =
   process.env.ORANGEDATA_CLIENT_CERT_PASSWORD || "1234";
-const ORANGEDATA_CA_PATH = process.env.ORANGEDATA_CA_PATH;
+const ORANGEDATA_CA_PATH =
+  process.env.ORANGEDATA_CA_PATH || path.join(ORANGE_PROD, "client_ca.crt");
 const ORANGEDATA_TLS_INSECURE = process.env.ORANGEDATA_TLS_INSECURE === "1";
 
 export interface OrangeDataReceiptItem {
   name: string;
-  price: number; // в рублях
+  price: number;
   quantity: number;
-  tax?: number; // 1-6: 6=НДС не облагается
-  paymentMethodType?: number; // 4=полный расчёт
-  paymentSubjectType?: number; // 1=товар
+  tax?: number;
+  paymentMethodType?: number;
+  paymentSubjectType?: number;
 }
 
 export interface OrangeDataReceiptParams {
   orderId: string;
   email: string;
-  taxationSystem?: number; // 1=УСН доход
+  taxationSystem?: number;
   items: OrangeDataReceiptItem[];
-  totalAmount: number; // в рублях
+  totalAmount: number;
 }
 
-/**
- * Подпись тела запроса: SHA256-RSA(privateKey) → base64.
- */
-function signBody(body: string, privateKeyPem: string): string {
-  const sign = crypto.createSign("RSA-SHA256");
-  sign.update(body, "utf8");
-  sign.end();
-  return sign.sign(privateKeyPem, "base64");
-}
+function getOrangeProdFiles() {
+  const certPath = path.resolve(ORANGEDATA_CLIENT_CERT_CRT_PATH);
+  const keyPath = path.resolve(ORANGEDATA_CLIENT_CERT_KEY_PATH);
+  const privateKeyPath = path.resolve(ORANGEDATA_PRIVATE_KEY_PATH);
 
-function getPrivateKeyPem(): string | null {
-  if (ORANGEDATA_PRIVATE_KEY_PEM) return ORANGEDATA_PRIVATE_KEY_PEM;
-  if (ORANGEDATA_PRIVATE_KEY_PATH) {
-    const keyPath = path.resolve(ORANGEDATA_PRIVATE_KEY_PATH);
-    if (fs.existsSync(keyPath)) {
-      return fs.readFileSync(keyPath, "utf8");
-    }
-  }
-  return null;
+  if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) return null;
+
+  const privateKey = fs.existsSync(privateKeyPath)
+    ? fs.readFileSync(privateKeyPath, "utf8")
+    : null;
+  if (!privateKey) return null;
+
+  const caPathRes = path.resolve(ORANGEDATA_CA_PATH);
+  const ca = fs.existsSync(caPathRes) ? fs.readFileSync(caPathRes) : fs.readFileSync(certPath);
+
+  return {
+    apiUrl: ORANGEDATA_API_URL,
+    cert: fs.readFileSync(certPath),
+    key: fs.readFileSync(keyPath),
+    passphrase: ORANGEDATA_CLIENT_CERT_PASSWORD,
+    ca,
+    privateKey,
+    strictSSL: !ORANGEDATA_TLS_INSECURE,
+  };
 }
 
 /**
  * Проверяет, настроена ли интеграция Orange Data.
  */
 export function isOrangeDataConfigured(): boolean {
-  const hasInn = Boolean(ORANGEDATA_INN);
-  const hasGroup = Boolean(ORANGEDATA_GROUP);
-  const hasKey = Boolean(getPrivateKeyPem());
-  const hasCert =
-    (ORANGEDATA_CLIENT_CERT_PATH && fs.existsSync(path.resolve(ORANGEDATA_CLIENT_CERT_PATH))) ||
-    (ORANGEDATA_CLIENT_CERT_KEY_PATH &&
-      fs.existsSync(path.resolve(ORANGEDATA_CLIENT_CERT_KEY_PATH)) &&
-      fs.existsSync(path.resolve(ORANGEDATA_CLIENT_CERT_CRT_PATH)));
-  return !!(hasInn && (hasKey || hasCert));
+  const files = getOrangeProdFiles();
+  return !!(files && ORANGEDATA_INN && ORANGEDATA_GROUP);
 }
 
 /**
- * Формирует и отправляет фискальный чек в Orange Data.
- * Вызывается при успешной оплате (webhook T-Bank).
- * Формат по Ferma/Orange Data: type 1=приход, tax 6=без НДС, paymentMethodType 4, paymentSubjectType 1.
+ * Формирует и отправляет фискальный чек в Orange Data через node-orangedata.
  */
 export async function sendFiscalReceipt(
   params: OrangeDataReceiptParams
@@ -100,106 +93,60 @@ export async function sendFiscalReceipt(
     return { success: false, error: "Orange Data не настроен" };
   }
 
-  const inn = ORANGEDATA_INN!;
-  const group = ORANGEDATA_GROUP!;
-  const privateKeyPem = getPrivateKeyPem();
-  if (!privateKeyPem) {
-    return { success: false, error: "Приватный ключ (PEM) не задан" };
+  const files = getOrangeProdFiles();
+  if (!files) {
+    return { success: false, error: "Файлы сертификатов не найдены в orange_prod/" };
   }
 
-  const content = {
-    type: 1, // приход
-    positions: params.items.map((item) => ({
-      quantity: item.quantity,
-      price: item.price,
-      tax: item.tax ?? 6, // 6 = НДС не облагается
-      text: item.name.slice(0, 128),
-      paymentMethodType: item.paymentMethodType ?? 4, // полный расчёт
-      paymentSubjectType: item.paymentSubjectType ?? 1, // товар
-    })),
-    checkClose: {
-      payments: [{ type: 2, amount: params.totalAmount }], // 2 = безналичный
-      taxationSystem: params.taxationSystem ?? 1, // УСН доход
-    },
-    customerContact: params.email,
-  };
+  try {
+    const { OrangeData, Order } = await import("node-orangedata");
+    const { OrangeDataError, OrangeDataApiError } = await import("node-orangedata/lib/errors");
 
-  const docId = crypto.randomUUID();
-  const bodyObj = {
-    id: docId,
-    inn,
-    group,
-    key: params.orderId,
-    content,
-  };
+    const agent = new OrangeData(files as Record<string, unknown>);
 
-  const bodyStr = JSON.stringify(bodyObj);
-  const signature = signBody(bodyStr, privateKeyPem);
+    const order = new Order({
+      id: crypto.randomUUID(),
+      inn: ORANGEDATA_INN,
+      group: ORANGEDATA_GROUP,
+      key: params.orderId,
+      type: 1,
+      customerContact: params.email,
+      taxationSystem: params.taxationSystem ?? 1,
+    });
 
-  return new Promise((resolve) => {
-    const url = new URL(ORANGEDATA_API_URL);
-    const certPath = path.resolve(ORANGEDATA_CLIENT_CERT_PATH);
-    const keyPath = ORANGEDATA_CLIENT_CERT_KEY_PATH
-      ? path.resolve(ORANGEDATA_CLIENT_CERT_KEY_PATH)
-      : null;
-    const crtPath = path.resolve(ORANGEDATA_CLIENT_CERT_CRT_PATH);
-
-    let tlsOpts: { pfx?: Buffer; passphrase?: string; cert?: string; key?: string; ca?: string } = {};
-    if (keyPath && fs.existsSync(keyPath) && fs.existsSync(crtPath)) {
-      tlsOpts = {
-        cert: fs.readFileSync(crtPath, "utf8"),
-        key: fs.readFileSync(keyPath, "utf8"),
-      };
-    } else if (fs.existsSync(certPath)) {
-      const pfx = fs.readFileSync(certPath);
-      tlsOpts = { pfx, passphrase: ORANGEDATA_CLIENT_CERT_PASSWORD };
-    }
-    // ca: опционально для проверки сертификата сервера
-    if (ORANGEDATA_CA_PATH && fs.existsSync(path.resolve(ORANGEDATA_CA_PATH))) {
-      tlsOpts.ca = fs.readFileSync(path.resolve(ORANGEDATA_CA_PATH), "utf8");
-    }
-
-    const options: https.RequestOptions = {
-      hostname: url.hostname,
-      port: url.port || 12003,
-      path: url.pathname,
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        "X-Signature": signature,
-        "Content-Length": Buffer.byteLength(bodyStr, "utf8"),
-      },
-      ...(Object.keys(tlsOpts).length > 0 && {
-        ...tlsOpts,
-        rejectUnauthorized: !ORANGEDATA_TLS_INSECURE,
-      }),
-    };
-
-    const req = https.request(options, (res) => {
-      let data = "";
-      res.on("data", (chunk) => (data += chunk));
-      res.on("end", () => {
-        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-          resolve({ success: true, docId });
-        } else {
-          resolve({
-            success: false,
-            error: data || `HTTP ${res.statusCode}`,
-          });
-        }
+    for (const item of params.items) {
+      order.addPosition({
+        text: item.name.slice(0, 128),
+        quantity: item.quantity,
+        price: item.price,
+        tax: item.tax ?? 6,
+        paymentMethodType: item.paymentMethodType ?? 4,
+        paymentSubjectType: item.paymentSubjectType ?? 1,
       });
-    });
+    }
+    order.addPayment({ type: 2, amount: params.totalAmount });
 
-    req.on("error", (err) => {
-      resolve({ success: false, error: err.message });
-    });
+    await agent.sendOrder(order);
 
-    req.setTimeout(15000, () => {
-      req.destroy();
-      resolve({ success: false, error: "Timeout" });
-    });
+    return {
+      success: true,
+      docId: order.id,
+    };
+  } catch (err: unknown) {
+    const { OrangeDataError, OrangeDataApiError } = await import("node-orangedata/lib/errors").catch(
+      () => ({ OrangeDataError: Error, OrangeDataApiError: Error })
+    );
 
-    req.write(bodyStr, "utf8");
-    req.end();
-  });
+    let message = err instanceof Error ? err.message : String(err);
+    if (err instanceof OrangeDataApiError) {
+      message = (err as { errors?: string[] }).errors?.join("; ") ?? message;
+    } else if (err instanceof OrangeDataError) {
+      message = (err as { message: string }).message;
+    }
+
+    return {
+      success: false,
+      error: typeof message === "string" ? message : JSON.stringify(message),
+    };
+  }
 }
