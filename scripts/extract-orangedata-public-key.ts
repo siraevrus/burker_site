@@ -12,7 +12,7 @@
  * 2. Запустите этот скрипт
  * 3. Скопируйте вывод (включая -----BEGIN/END-----) в ЛК Orange Data:
  *    https://lk.orangedata.ru → Интеграция → Ключ для проверки подписи
- * 4. Укажите ИНН (для теста: 3123011520)
+ * 4. Укажите ИНН: 290124976119, имя ключа: 290124976119_40633
  */
 
 import crypto from "crypto";
@@ -21,12 +21,12 @@ import path from "path";
 
 const keyPath =
   process.env.ORANGEDATA_PRIVATE_KEY_PATH ||
-  path.join(process.cwd(), "orange", "files_for_test", "rsa_private.pem");
+  path.join(process.cwd(), "orange_prod", "rsa_private.pem");
 
 if (!fs.existsSync(path.resolve(keyPath))) {
   console.error("Файл ключа не найден:", keyPath);
   console.error("\nСначала выполните:");
-  console.error("  npx tsx scripts/convert-xml-key-to-pem.ts");
+  console.error("  npx tsx scripts/convert-xml-key-to-pem.ts prod");
   process.exit(1);
 }
 
@@ -39,5 +39,5 @@ console.log("=== Публичный ключ для Orange Data ===\n");
 console.log("Скопируйте блок ниже целиком в ЛК Orange Data (Интеграция → Ключ для проверки подписи):\n");
 console.log(publicPem);
 console.log("=== Конец ключа ===");
-console.log("\nТестовый ИНН: 3123011520");
+console.log("\nИНН: 290124976119, ключ: 290124976119_40633");
 console.log("ЛК: https://lk.orangedata.ru");

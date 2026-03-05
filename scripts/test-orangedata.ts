@@ -41,7 +41,7 @@ async function main() {
       console.log("  1. npx tsx scripts/convert-xml-key-to-pem.ts");
       console.log("  2. npx tsx scripts/extract-orangedata-public-key.ts");
       console.log("  3. Скопируйте публичный ключ в https://lk.orangedata.ru → Интеграция");
-      console.log("  4. Укажите ИНН 3123011520 (тест) или ваш ИНН");
+      console.log("  4. Укажите ИНН 290124976119, ключ 290124976119_40633");
     }
     process.exit(1);
   }

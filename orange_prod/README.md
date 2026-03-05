@@ -1,5 +1,7 @@
 # Orange Data — production
 
+ИНН: **290124976119**, ключ: **290124976119_40633**
+
 Сертификаты и ключи для продакшен-фискализации (api.orangedata.ru:12003).
 
 ## Файлы (по умолчанию)
@@ -11,6 +13,7 @@
 | `290124976119_40633.pfx` | PFX (альтернатива crt+key) |
 | `client_ca.crt` | CA-сертификат |
 | `rsa_private.pem` | Ключ для подписи X-Signature |
+| `rsa_2048_public_key.xml` | Публичный ключ (для ЛК) |
 
 ## Ключ подписи (rsa_private.pem)
 
@@ -23,8 +26,8 @@ npx tsx scripts/convert-xml-key-to-pem.ts prod
 
 Создастся `orange_prod/rsa_private.pem`.
 
-## Тест (без production)
+## Проверка
 
 ```bash
-ORANGEDATA_TEST=1 npx tsx scripts/test-orangedata.ts
+npx tsx scripts/test-orangedata.ts
 ```

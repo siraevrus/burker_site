@@ -12,15 +12,15 @@ import fs from "fs";
 import path from "path";
 
 const ORANGEDATA_TEST = process.env.ORANGEDATA_TEST === "1" || process.env.ORANGEDATA_TEST === "true";
-const DEFAULT_TEST_INN = "3123011520"; // из Python-OrangeData example, files_for_test
+const ORANGEDATA_INN_DEFAULT = "290124976119";
+const ORANGEDATA_KEY_NAME = "290124976119_40633";
 
 const DEFAULT_API_URL = ORANGEDATA_TEST
   ? "https://apip.orangedata.ru:2443/api/v2/documents/"
   : "https://api.orangedata.ru:12003/api/v2/documents/";
 
 const ORANGEDATA_API_URL = process.env.ORANGEDATA_API_URL || DEFAULT_API_URL;
-const DEFAULT_PROD_INN = "290124976119";
-const ORANGEDATA_INN = process.env.ORANGEDATA_INN || (ORANGEDATA_TEST ? DEFAULT_TEST_INN : DEFAULT_PROD_INN);
+const ORANGEDATA_INN = process.env.ORANGEDATA_INN || ORANGEDATA_INN_DEFAULT;
 const ORANGEDATA_GROUP = process.env.ORANGEDATA_GROUP || "Main"; // Main — стандартная группа в ЛК Orange Data
 
 const ORANGE_PROD = path.join(process.cwd(), "orange_prod");
@@ -34,15 +34,15 @@ const ORANGEDATA_CLIENT_CERT_PATH =
   process.env.ORANGEDATA_CLIENT_CERT_PATH ||
   (ORANGEDATA_TEST
     ? path.join(process.cwd(), "orange", "files_for_test", "client.pfx")
-    : path.join(ORANGE_PROD, "290124976119_40633.pfx"));
+    : path.join(ORANGE_PROD, `${ORANGEDATA_KEY_NAME}.pfx`));
 const ORANGEDATA_CLIENT_CERT_KEY_PATH =
   process.env.ORANGEDATA_CLIENT_CERT_KEY_PATH ||
   (ORANGEDATA_TEST
     ? path.join(process.cwd(), "orange", "files_for_test", "client.key")
-    : path.join(ORANGE_PROD, "290124976119_40633.key"));
+    : path.join(ORANGE_PROD, `${ORANGEDATA_KEY_NAME}.key`));
 const ORANGEDATA_CLIENT_CERT_CRT_PATH = ORANGEDATA_TEST
   ? path.join(process.cwd(), "orange", "files_for_test", "client.crt")
-  : path.join(ORANGE_PROD, "290124976119_40633.crt");
+  : path.join(ORANGE_PROD, `${ORANGEDATA_KEY_NAME}.crt`);
 const ORANGEDATA_CLIENT_CERT_PASSWORD =
   process.env.ORANGEDATA_CLIENT_CERT_PASSWORD || "1234";
 // CA для проверки сервера: тест — cacert.pem; prod — только если явно задан (client_ca.crt подписывает наш клиент, не сервер Orange Data)
