@@ -14,7 +14,8 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "test:tbank": "tsx scripts/test-tbank.ts"
+    "test:tbank": "tsx scripts/test-tbank.ts",
+    "test:orangedata": "tsx scripts/test-orangedata.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
@@ -44,6 +45,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "node-forge": "^1.3.3",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"

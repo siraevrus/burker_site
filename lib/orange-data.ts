@@ -11,17 +11,36 @@ import https from "https";
 import fs from "fs";
 import path from "path";
 
-const ORANGEDATA_API_URL =
-  process.env.ORANGEDATA_API_URL || "https://api.orangedata.ru:12003/api/v2/documents/";
-const ORANGEDATA_INN = process.env.ORANGEDATA_INN;
+const ORANGEDATA_TEST = process.env.ORANGEDATA_TEST === "1" || process.env.ORANGEDATA_TEST === "true";
+const DEFAULT_TEST_INN = "3123011520"; // из Python-OrangeData example, files_for_test
+
+const DEFAULT_API_URL = ORANGEDATA_TEST
+  ? "https://apip.orangedata.ru:2443/api/v2/documents/"
+  : "https://api.orangedata.ru:12003/api/v2/documents/";
+
+const ORANGEDATA_API_URL = process.env.ORANGEDATA_API_URL || DEFAULT_API_URL;
+const ORANGEDATA_INN = process.env.ORANGEDATA_INN || (ORANGEDATA_TEST ? DEFAULT_TEST_INN : undefined);
 const ORANGEDATA_GROUP = process.env.ORANGEDATA_GROUP || "Main";
-const ORANGEDATA_PRIVATE_KEY_PATH = process.env.ORANGEDATA_PRIVATE_KEY_PATH;
-const ORANGEDATA_PRIVATE_KEY_PEM = process.env.ORANGEDATA_PRIVATE_KEY_PEM; // альтернатива: содержимое PEM в env
+const ORANGEDATA_PRIVATE_KEY_PATH =
+  process.env.ORANGEDATA_PRIVATE_KEY_PATH ||
+  (ORANGEDATA_TEST ? path.join(process.cwd(), "orange", "files_for_test", "rsa_private.pem") : undefined);
+const ORANGEDATA_PRIVATE_KEY_PEM = process.env.ORANGEDATA_PRIVATE_KEY_PEM;
 const ORANGEDATA_CLIENT_CERT_PATH =
   process.env.ORANGEDATA_CLIENT_CERT_PATH ||
-  path.join(process.cwd(), "orange", "290124976119_40633.pfx");
+  (ORANGEDATA_TEST
+    ? path.join(process.cwd(), "orange", "files_for_test", "client.pfx")
+    : path.join(process.cwd(), "orange", "290124976119_40633.pfx"));
+// Для теста (files_for_test) можно использовать client.crt+client.key вместо PFX
+const ORANGEDATA_CLIENT_CERT_KEY_PATH =
+  process.env.ORANGEDATA_CLIENT_CERT_KEY_PATH ||
+  (ORANGEDATA_TEST
+    ? path.join(process.cwd(), "orange", "files_for_test", "client.key")
+    : undefined);
 const ORANGEDATA_CLIENT_CERT_PASSWORD =
   process.env.ORANGEDATA_CLIENT_CERT_PASSWORD || "1234";
+const ORANGEDATA_CA_PATH =
+  process.env.ORANGEDATA_CA_PATH ||
+  (ORANGEDATA_TEST ? path.join(process.cwd(), "orange", "files_for_test", "cacert.pem") : undefined);
 
 export interface OrangeDataReceiptItem {
   name: string;
@@ -69,8 +88,10 @@ export function isOrangeDataConfigured(): boolean {
   const hasGroup = Boolean(ORANGEDATA_GROUP);
   const hasKey = Boolean(getPrivateKeyPem());
   const hasCert =
-    ORANGEDATA_CLIENT_CERT_PATH &&
-    fs.existsSync(path.resolve(ORANGEDATA_CLIENT_CERT_PATH));
+    (ORANGEDATA_CLIENT_CERT_PATH && fs.existsSync(path.resolve(ORANGEDATA_CLIENT_CERT_PATH))) ||
+    (ORANGEDATA_CLIENT_CERT_KEY_PATH &&
+      fs.existsSync(path.resolve(ORANGEDATA_CLIENT_CERT_KEY_PATH)) &&
+      fs.existsSync(path.join(path.dirname(ORANGEDATA_CLIENT_CERT_KEY_PATH), "client.crt")));
   return !!(hasInn && (hasKey || hasCert));
 }
 
@@ -125,14 +146,30 @@ export async function sendFiscalReceipt(
   return new Promise((resolve) => {
     const url = new URL(ORANGEDATA_API_URL);
     const certPath = path.resolve(ORANGEDATA_CLIENT_CERT_PATH);
-    let pfx: Buffer | undefined;
-    if (fs.existsSync(certPath)) {
-      pfx = fs.readFileSync(certPath);
+    const keyPath = ORANGEDATA_CLIENT_CERT_KEY_PATH
+      ? path.resolve(ORANGEDATA_CLIENT_CERT_KEY_PATH)
+      : null;
+    const certPathAlt = keyPath
+      ? path.join(path.dirname(keyPath), "client.crt")
+      : null;
+
+    let tlsOpts: { pfx?: Buffer; passphrase?: string; cert?: string; key?: string; ca?: string } = {};
+    if (keyPath && certPathAlt && fs.existsSync(keyPath) && fs.existsSync(certPathAlt)) {
+      tlsOpts = {
+        cert: fs.readFileSync(certPathAlt, "utf8"),
+        key: fs.readFileSync(keyPath, "utf8"),
+      };
+    } else if (fs.existsSync(certPath)) {
+      const pfx = fs.readFileSync(certPath);
+      tlsOpts = { pfx, passphrase: ORANGEDATA_CLIENT_CERT_PASSWORD };
+    }
+    if (ORANGEDATA_CA_PATH && fs.existsSync(path.resolve(ORANGEDATA_CA_PATH))) {
+      tlsOpts.ca = fs.readFileSync(path.resolve(ORANGEDATA_CA_PATH), "utf8");
     }
 
     const options: https.RequestOptions = {
       hostname: url.hostname,
-      port: url.port || 12003,
+      port: url.port || (ORANGEDATA_TEST ? 2443 : 12003),
       path: url.pathname,
       method: "POST",
       headers: {
@@ -140,9 +177,8 @@ export async function sendFiscalReceipt(
         "X-Signature": signature,
         "Content-Length": Buffer.byteLength(bodyStr, "utf8"),
       },
-      ...(pfx && {
-        pfx,
-        passphrase: ORANGEDATA_CLIENT_CERT_PASSWORD,
+      ...(Object.keys(tlsOpts).length > 0 && {
+        ...tlsOpts,
         rejectUnauthorized: true,
       }),
     };
