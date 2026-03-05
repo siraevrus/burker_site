@@ -20,9 +20,8 @@ const DEFAULT_API_URL = ORANGEDATA_TEST
 
 const ORANGEDATA_API_URL = process.env.ORANGEDATA_API_URL || DEFAULT_API_URL;
 const DEFAULT_PROD_INN = "290124976119";
-const DEFAULT_PROD_GROUP = "40633";
 const ORANGEDATA_INN = process.env.ORANGEDATA_INN || (ORANGEDATA_TEST ? DEFAULT_TEST_INN : DEFAULT_PROD_INN);
-const ORANGEDATA_GROUP = process.env.ORANGEDATA_GROUP || (ORANGEDATA_TEST ? "Main" : DEFAULT_PROD_GROUP);
+const ORANGEDATA_GROUP = process.env.ORANGEDATA_GROUP || "Main"; // Main — стандартная группа в ЛК Orange Data
 
 const ORANGE_PROD = path.join(process.cwd(), "orange_prod");
 const ORANGEDATA_PRIVATE_KEY_PATH =
