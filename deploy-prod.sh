@@ -45,12 +45,12 @@ log_info "Рабочая директория: ${PROJECT_DIR}"
 log_info "Проверка git-статуса..."
 DIRTY=$(git status --porcelain)
 if [[ -n "$DIRTY" ]]; then
-  # Не блокируем деплой из-за изменений в загружаемом контенте и локальном ecosystem.config.js
+  # Не блокируем деплой из-за изменений в загружаемом контенте, локальных бэкапах и ecosystem.config.js
   REMAINING=""
   while IFS= read -r line; do
     path="${line:3}"
     case "$path" in
-      public/promo/*|public/products/*|public/order-proofs/*|ecosystem.config.js) ;;
+      public/promo/*|public/products/*|public/order-proofs/*|ecosystem.config.js|backups|backups/|backups/*) ;;
       *) REMAINING="${REMAINING}${line}\n" ;;
     esac
   done <<< "$DIRTY"
