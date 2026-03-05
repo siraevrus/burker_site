@@ -10,9 +10,8 @@
  * Шаги:
  * 1. Создайте rsa_private.pem: npx tsx scripts/convert-xml-key-to-pem.ts
  * 2. Запустите этот скрипт
- * 3. Скопируйте вывод (включая -----BEGIN/END-----) в ЛК Orange Data:
- *    https://lk.orangedata.ru → Интеграция → Ключ для проверки подписи
- * 4. Укажите ИНН: 290124976119, имя ключа: 290124976119_40633
+ * 3. Скопируйте вывод в ЛК Orange Data: Интеграция → Ключ для проверки подписи
+ * 4. ИНН: 290124976119, ключ: 290124976119_40633
  */
 
 import crypto from "crypto";
@@ -26,7 +25,7 @@ const keyPath =
 if (!fs.existsSync(path.resolve(keyPath))) {
   console.error("Файл ключа не найден:", keyPath);
   console.error("\nСначала выполните:");
-  console.error("  npx tsx scripts/convert-xml-key-to-pem.ts prod");
+  console.error("  npx tsx scripts/convert-xml-key-to-pem.ts");
   process.exit(1);
 }
 

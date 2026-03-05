@@ -1,10 +1,8 @@
 #!/usr/bin/env npx tsx
 /**
- * Проверка работоспособности Orange Data API.
- * Использует lib/orange-data.ts и env-переменные.
+ * Проверка работоспособности Orange Data API (боевая среда).
  *
  * Запуск: npx tsx scripts/test-orangedata.ts
- * или:   ORANGEDATA_INN=... ORANGEDATA_GROUP=... npx tsx scripts/test-orangedata.ts
  */
 
 import {
@@ -13,21 +11,20 @@ import {
 } from "../lib/orange-data";
 
 async function main() {
-  console.log("=== Orange Data API — тест ===\n");
+  console.log("=== Orange Data API ===\n");
 
   if (!isOrangeDataConfigured()) {
     console.log("❌ Orange Data не настроен.");
-    console.log("   Тест: ORANGEDATA_TEST=1 npx tsx scripts/test-orangedata.ts");
-    console.log("   (сначала: npx tsx scripts/convert-xml-key-to-pem.ts)");
+    console.log("   Проверьте orange_prod/ и выполните: npx tsx scripts/convert-xml-key-to-pem.ts prod");
     process.exit(1);
   }
 
   console.log("✓ Конфигурация найдена\n");
-  console.log("Отправка тестового чека (1 товар, 10 ₽)...\n");
+  console.log("Отправка чека (1 товар, 10 ₽)...\n");
 
   const result = await sendFiscalReceipt({
-    orderId: `test-${Date.now()}`,
-    email: "test@example.com",
+    orderId: `check-${Date.now()}`,
+    email: "check@example.com",
     items: [{ name: "Тестовый товар", price: 10, quantity: 1 }],
     totalAmount: 10,
   });
@@ -41,7 +38,7 @@ async function main() {
       console.log("  1. npx tsx scripts/convert-xml-key-to-pem.ts");
       console.log("  2. npx tsx scripts/extract-orangedata-public-key.ts");
       console.log("  3. Скопируйте публичный ключ в https://lk.orangedata.ru → Интеграция");
-      console.log("  4. Укажите ИНН 290124976119, ключ 290124976119_40633");
+      console.log("  4. Укажите ИНН 290124976119, ключ 290124976119_40633 в ЛК");
     }
     process.exit(1);
   }

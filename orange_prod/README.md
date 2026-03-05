@@ -26,7 +26,7 @@ npx tsx scripts/convert-xml-key-to-pem.ts prod
 
 Создастся `orange_prod/rsa_private.pem`.
 
-## Проверка
+## Проверка (боевая среда)
 
 ```bash
 npx tsx scripts/test-orangedata.ts
