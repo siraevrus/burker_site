@@ -67,6 +67,9 @@ git fetch origin main
 git pull --ff-only origin main
 log_ok "Код обновлён"
 
+# Удаление дубликатов "(2)" (могут ломать сборку Next.js)
+find "${PROJECT_DIR}" -name "* (2)*" -type f -delete 2>/dev/null || true
+
 log_info "Установка зависимостей..."
 if [[ -f package-lock.json ]]; then
   npm ci
