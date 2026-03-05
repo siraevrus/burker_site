@@ -21,9 +21,18 @@ async function main() {
   if (!isOrangeDataConfigured()) {
     console.log("❌ Orange Data не настроен.\n");
     const diag = getOrangeDataDiagnostics();
-    for (const { path: p, exists } of diag) {
-      console.log(`   ${exists ? "✓" : "✗"} ${path.relative(process.cwd(), p) || p}`);
+    for (const { path: p, exists, note } of diag.paths) {
+      const rel = path.relative(process.cwd(), p) || p;
+      console.log(`   ${exists ? "✓" : "✗"} ${rel}${note ? " " + note : ""}`);
     }
+    if (diag.failReason) {
+      console.log("\n   Причина:", diag.failReason);
+    } else {
+      console.log("\n   (все файлы найдены — проверьте INN/GROUP в .env)");
+    }
+    console.log("\n   CWD для путей:", process.cwd());
+    console.log("   INN:", process.env.ORANGEDATA_INN ?? "(по умолчанию)");
+    console.log("   GROUP:", process.env.ORANGEDATA_GROUP ?? "(по умолчанию)");
     console.log("\n   Выполните: npx tsx scripts/convert-xml-key-to-pem.ts");
     process.exit(1);
   }

@@ -13,23 +13,27 @@ const ORANGEDATA_KEY_NAME = "290124976119_40633";
 
 const ORANGEDATA_API_URL =
   process.env.ORANGEDATA_API_URL || "https://api.orangedata.ru:12003/api/v2";
-const ORANGEDATA_INN = process.env.ORANGEDATA_INN || ORANGEDATA_INN_DEFAULT;
-const ORANGEDATA_GROUP = process.env.ORANGEDATA_GROUP || "Main";
+const ORANGEDATA_INN =
+  (process.env.ORANGEDATA_INN || "").trim() || ORANGEDATA_INN_DEFAULT;
+const ORANGEDATA_GROUP =
+  (process.env.ORANGEDATA_GROUP || "").trim() || "Main";
 
 const ORANGE_PROD = path.join(process.cwd(), "orange_prod");
 const ORANGEDATA_PRIVATE_KEY_PATH =
-  process.env.ORANGEDATA_PRIVATE_KEY_PATH || path.join(ORANGE_PROD, "rsa_private.pem");
+  (process.env.ORANGEDATA_PRIVATE_KEY_PATH || "").trim() ||
+  path.join(ORANGE_PROD, "rsa_private.pem");
 const ORANGEDATA_CLIENT_CERT_PATH =
   process.env.ORANGEDATA_CLIENT_CERT_PATH ||
   path.join(ORANGE_PROD, `${ORANGEDATA_KEY_NAME}.pfx`);
 const ORANGEDATA_CLIENT_CERT_KEY_PATH =
-  process.env.ORANGEDATA_CLIENT_CERT_KEY_PATH ||
+  (process.env.ORANGEDATA_CLIENT_CERT_KEY_PATH || "").trim() ||
   path.join(ORANGE_PROD, `${ORANGEDATA_KEY_NAME}.key`);
 const ORANGEDATA_CLIENT_CERT_CRT_PATH = path.join(ORANGE_PROD, `${ORANGEDATA_KEY_NAME}.crt`);
 const ORANGEDATA_CLIENT_CERT_PASSWORD =
   process.env.ORANGEDATA_CLIENT_CERT_PASSWORD || "1234";
 const ORANGEDATA_CA_PATH =
-  process.env.ORANGEDATA_CA_PATH || path.join(ORANGE_PROD, "client_ca.crt");
+  (process.env.ORANGEDATA_CA_PATH || "").trim() ||
+  path.join(ORANGE_PROD, "client_ca.crt");
 const ORANGEDATA_TLS_INSECURE = process.env.ORANGEDATA_TLS_INSECURE === "1";
 
 export interface OrangeDataReceiptItem {
@@ -84,20 +88,48 @@ export function isOrangeDataConfigured(): boolean {
 }
 
 /**
- * Диагностика: какие файлы найдены/отсутствуют.
+ * Диагностика: какие файлы найдены/отсутствуют и почему конфиг не проходит.
  */
-export function getOrangeDataDiagnostics(): { path: string; exists: boolean }[] {
-  const base = path.join(process.cwd(), "orange_prod");
-  const files = [
-    path.join(base, "290124976119_40633.crt"),
-    path.join(base, "290124976119_40633.key"),
-    path.join(base, "rsa_private.pem"),
-    path.join(base, "client_ca.crt"),
-  ];
-  return files.map((p) => ({
-    path: p,
-    exists: fs.existsSync(p),
-  }));
+export function getOrangeDataDiagnostics(): {
+  paths: { path: string; exists: boolean; note?: string }[];
+  configOk: boolean;
+  failReason?: string;
+} {
+  const certPath = path.resolve(ORANGEDATA_CLIENT_CERT_CRT_PATH);
+  const keyPath = path.resolve(ORANGEDATA_CLIENT_CERT_KEY_PATH);
+  const privateKeyPath = path.resolve(ORANGEDATA_PRIVATE_KEY_PATH);
+  const caPath = path.resolve(ORANGEDATA_CA_PATH);
+
+  const certExists = fs.existsSync(certPath);
+  const keyExists = fs.existsSync(keyPath);
+  const privExists = fs.existsSync(privateKeyPath);
+  const privContent = privExists ? fs.readFileSync(privateKeyPath, "utf8") : "";
+  const privEmpty = privExists && !privContent.trim();
+
+  let failReason: string | undefined;
+  if (!certExists || !keyExists) failReason = "нет crt или key";
+  else if (!privExists) failReason = "нет rsa_private.pem";
+  else if (privEmpty) failReason = "rsa_private.pem пустой или не читается";
+
+  const configOk = !!(certExists && keyExists && privExists && privContent.trim());
+  const innOk = !!ORANGEDATA_INN;
+  const groupOk = !!ORANGEDATA_GROUP;
+  if (configOk && (!innOk || !groupOk)) {
+    failReason = !innOk
+      ? "ORANGEDATA_INN пустой в .env"
+      : "ORANGEDATA_GROUP пустой в .env";
+  }
+
+  return {
+    paths: [
+      { path: certPath, exists: certExists },
+      { path: keyPath, exists: keyExists },
+      { path: privateKeyPath, exists: privExists, note: privEmpty ? "(файл пустой)" : undefined },
+      { path: caPath, exists: fs.existsSync(caPath) },
+    ],
+    configOk,
+    failReason,
+  };
 }
 
 /**
