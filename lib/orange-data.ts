@@ -154,10 +154,10 @@ export async function sendFiscalReceipt(
     const agent = new OrangeData(files as Record<string, unknown>);
 
     const order = new Order({
-      id: crypto.randomUUID(),
+      id: params.orderId.length <= 64 ? params.orderId : crypto.randomUUID(),
       inn: ORANGEDATA_INN,
       group: ORANGEDATA_GROUP,
-      key: params.orderId,
+      key: ORANGEDATA_KEY_NAME, // идентификатор ключа для проверки подписи (ИНН_id)
       type: 1,
       ffdVersion: 4, // ФФД 1.2 (касса в ЛК Orange Data настроена на этот режим)
       customerContact: params.email,
