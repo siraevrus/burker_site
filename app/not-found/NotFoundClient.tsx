@@ -67,7 +67,7 @@ export default function NotFoundClient({ bestsellers }: NotFoundClientProps) {
             На главную
           </Link>
           <Link
-            href="/collections/watches"
+            href="/products/watches"
             className="inline-block border border-black px-8 py-3 rounded-md hover:bg-black hover:text-white transition-colors font-medium"
             style={{ fontFamily: '"Open Sans", sans-serif' }}
           >

@@ -432,7 +432,7 @@ function BannerForm({
               setFormData({ ...formData, productLink: e.target.value })
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            placeholder="/sale или /product/id"
+            placeholder="/sale или /products/watches/isabell/isabell-gold-burgundy"
           />
         </div>
         <div className="flex gap-4 pt-4">

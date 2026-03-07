@@ -37,6 +37,7 @@ export const metadata: Metadata = {
   title: "Mira Brands | Burker | Официальный магазин",
   description: "Элегантные женские часы и украшения от Mira Brands | Burker",
   metadataBase: new URL(baseUrl),
+  alternates: { canonical: baseUrl },
   openGraph: {
     type: "website",
     locale: "ru_RU",

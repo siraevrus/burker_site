@@ -1,12 +1,16 @@
+import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
+import { getMetadataForPath } from "@/lib/seo";
 import ProfilePageClient from "./ProfilePageClient";
 
-export const metadata = {
-  title: "Профиль | Mira Brands | Burker",
-  description: "Личный кабинет — смена пароля",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return getMetadataForPath("/profile", {
+    title: "Профиль | Mira Brands | Burker",
+    description: "Личный кабинет — смена пароля",
+  });
+}
 
 export default async function ProfilePage() {
   const currentUser = await getCurrentUser();

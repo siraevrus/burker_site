@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { getProductById, getAllProducts } from "@/lib/products";
+import { getProductByPath, getAllProducts } from "@/lib/products";
 import { notFound } from "next/navigation";
 import ProductPageClient from "./ProductPageClient";
 import { CANONICAL_SITE_URL } from "@/lib/site-url";
-import { generateProductSlug } from "@/lib/utils";
+import { generateProductPath } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -17,18 +17,18 @@ function absoluteImageUrl(path: string): string {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ category: string; subcategory: string; productSlug: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
-  const product = await getProductById(id);
+  const { category, subcategory, productSlug } = await params;
+  const product = await getProductByPath(category, subcategory, productSlug);
   if (!product) return { title: "Товар | Mira Brands | Burker" };
 
   const title = `${product.name} | Mira Brands | Burker`;
   const description =
     product.description?.replace(/<[^>]+>/g, "").slice(0, 160) ||
     `Купить ${product.name} в официальном магазине Mira Brands | Burker`;
-  const slug = generateProductSlug(product.name);
-  const canonicalUrl = `${baseUrl}/product/${slug}`;
+  const productPath = generateProductPath(product);
+  const canonicalUrl = productPath ? `${baseUrl}${productPath}` : `${baseUrl}/products/${category}/${subcategory}/${productSlug}`;
   const imageUrl =
     product.images?.length > 0
       ? absoluteImageUrl(product.images[0])
@@ -61,18 +61,18 @@ export async function generateMetadata({
 export default async function ProductPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ category: string; subcategory: string; productSlug: string }>;
 }) {
-  const { id } = await params;
-  const product = await getProductById(id);
+  const { category, subcategory, productSlug } = await params;
+  const product = await getProductByPath(category, subcategory, productSlug);
   const allProducts = await getAllProducts();
 
   if (!product) {
     notFound();
   }
 
-  const slug = generateProductSlug(product.name);
-  const productUrl = `${baseUrl}/product/${slug}`;
+  const productPath = generateProductPath(product);
+  const productUrl = productPath ? `${baseUrl}${productPath}` : `${baseUrl}/products/${category}/${subcategory}/${productSlug}`;
   const imageUrls =
     product.images?.length > 0
       ? product.images.map((img) => absoluteImageUrl(img))

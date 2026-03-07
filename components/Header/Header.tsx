@@ -149,7 +149,7 @@ export default function Header() {
                       {/* Левое меню - подменю */}
                       <div className="text-xl">
                         <Link
-                          href="/collections/watches"
+                          href="/products/watches"
                           className="block py-2 hover:text-gray-600 transition-colors font-semibold"
                           onClick={() => setIsWatchesOpen(false)}
                         >
@@ -158,7 +158,7 @@ export default function Header() {
                         {collections.map((collection) => (
                           <Link
                             key={collection}
-                            href={`/collections/${collection.toLowerCase()}`}
+                            href={`/products/watches/${collection.toLowerCase()}`}
                             className="block py-2 hover:text-gray-600 transition-colors"
                             onClick={() => setIsWatchesOpen(false)}
                           >
@@ -166,28 +166,28 @@ export default function Header() {
                           </Link>
                         ))}
                         <Link
-                          href="/collections/olivia-petite"
+                          href="/products/watches/olivia-petite"
                           className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
                           onClick={() => setIsWatchesOpen(false)}
                         >
                           Olivia Petite
                         </Link>
                         <Link
-                          href="/collections/macy-petite"
+                          href="/products/watches/macy-petite"
                           className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
                           onClick={() => setIsWatchesOpen(false)}
                         >
                           Macy Petite
                         </Link>
                         <Link
-                          href="/collections/isabell-petite"
+                          href="/products/watches/isabell-petite"
                           className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
                           onClick={() => setIsWatchesOpen(false)}
                         >
                           Isabell Petite
                         </Link>
                         <Link
-                          href="/collections/ruby-petite"
+                          href="/products/watches/ruby-petite"
                           className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
                           onClick={() => setIsWatchesOpen(false)}
                         >
@@ -202,7 +202,7 @@ export default function Header() {
                           return (
                             <Link
                               key={collectionName}
-                              href={`/collections/${collectionName.toLowerCase()}`}
+                              href={`/products/watches/${collectionName.toLowerCase()}`}
                               className="group"
                               onClick={() => setIsWatchesOpen(false)}
                             >
@@ -253,35 +253,35 @@ export default function Header() {
                       {/* Левое меню - подменю */}
                       <div className="text-xl">
                         <Link
-                          href="/collections/jewelry"
+                          href="/products/jewelry"
                           className="block py-2 hover:text-gray-600 transition-colors font-semibold"
                           onClick={() => setIsJewelryOpen(false)}
                         >
                           Все украшения
                         </Link>
                         <Link
-                          href="/collections/bracelets"
+                          href="/products/jewelry/bracelets"
                           className="block py-2 hover:text-gray-600 transition-colors"
                           onClick={() => setIsJewelryOpen(false)}
                         >
                           Браслеты
                         </Link>
                         <Link
-                          href="/collections/necklaces"
+                          href="/products/jewelry/necklaces"
                           className="block py-2 hover:text-gray-600 transition-colors"
                           onClick={() => setIsJewelryOpen(false)}
                         >
                           Ожерелье
                         </Link>
                         <Link
-                          href="/collections/earrings"
+                          href="/products/jewelry/earrings"
                           className="block py-2 hover:text-gray-600 transition-colors"
                           onClick={() => setIsJewelryOpen(false)}
                         >
                           Серьги
                         </Link>
                         <Link
-                          href="/collections/rings"
+                          href="/products/jewelry/rings"
                           className="block py-2 hover:text-gray-600 transition-colors"
                           onClick={() => setIsJewelryOpen(false)}
                         >
@@ -303,7 +303,7 @@ export default function Header() {
                           return (
                             <Link
                               key={slug}
-                              href={`/collections/${slug}`}
+                              href={`/products/jewelry/${slug}`}
                               className="group"
                               onClick={() => setIsJewelryOpen(false)}
                             >
@@ -485,7 +485,7 @@ export default function Header() {
               {isWatchesOpen && (
                 <div className="pl-4 mt-2">
                   <Link
-                    href="/collections/watches"
+                    href="/products/watches"
                     className="block py-2 hover:text-gray-600"
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -494,7 +494,7 @@ export default function Header() {
                   {collections.map((collection) => (
                     <Link
                       key={collection}
-                      href={`/collections/${collection.toLowerCase()}`}
+                      href={`/products/watches/${collection.toLowerCase()}`}
                       className="block py-2 hover:text-gray-600"
                       onClick={() => setIsMenuOpen(false)}
                     >
@@ -514,35 +514,35 @@ export default function Header() {
               {isJewelryOpen && (
                 <div className="pl-4 mt-2">
                   <Link
-                    href="/collections/jewelry"
+                    href="/products/jewelry"
                     className="block py-2 hover:text-gray-600"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Все украшения
                   </Link>
                   <Link
-                    href="/collections/bracelets"
+                    href="/products/jewelry/bracelets"
                     className="block py-2 hover:text-gray-600"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Браслеты
                   </Link>
                   <Link
-                    href="/collections/necklaces"
+                    href="/products/jewelry/necklaces"
                     className="block py-2 hover:text-gray-600"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Ожерелье
                   </Link>
                   <Link
-                    href="/collections/earrings"
+                    href="/products/jewelry/earrings"
                     className="block py-2 hover:text-gray-600"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Серьги
                   </Link>
                   <Link
-                    href="/collections/rings"
+                    href="/products/jewelry/rings"
                     className="block py-2 hover:text-gray-600"
                     onClick={() => setIsMenuOpen(false)}
                   >

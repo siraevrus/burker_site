@@ -1,7 +1,8 @@
+import type { Metadata } from "next";
 import { getBestsellers } from "@/lib/products";
 import NotFoundClient from "./not-found/NotFoundClient";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "404 — Страница не найдена | Mira Brands | Burker",
   description: "Запрашиваемая страница не найдена. Вернитесь на главную или в каталог Mira Brands | Burker.",
 };

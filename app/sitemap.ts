@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
-import { generateProductSlug } from "@/lib/products";
+import { generateProductPath } from "@/lib/utils";
 import { CANONICAL_SITE_URL } from "@/lib/site-url";
 
 /**
@@ -10,25 +10,10 @@ import { CANONICAL_SITE_URL } from "@/lib/site-url";
  */
 export const revalidate = 86400; // 24 часа
 
-/** Список slug коллекций для URL /collections/[slug]. Дубли (watches, jewelry) не повторяем. */
-const COLLECTION_SLUGS = [
-  "watches",
-  "jewelry",
-  "diana",
-  "sophie",
-  "olivia",
-  "macy",
-  "isabell",
-  "julia",
-  "ruby",
-  "olivia-petite",
-  "macy-petite",
-  "isabell-petite",
-  "ruby-petite",
-  "bracelets",
-  "necklaces",
-  "earrings",
-  "rings",
+/** Категории и подкатегории для URL /products/[category] и /products/[category]/[subcategory] */
+const CATEGORY_PAGES = [
+  { url: "watches", subcategories: ["diana", "sophie", "olivia", "macy", "isabell", "julia", "ruby", "olivia-petite", "macy-petite", "isabell-petite", "ruby-petite"] },
+  { url: "jewelry", subcategories: ["bracelets", "necklaces", "earrings", "rings"] },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -49,39 +34,58 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/terms`, lastModified: new Date(), changeFrequency: "daily", priority: 0.5 },
   ];
 
-  // ——— Коллекции: каждая по одному разу (без дублей watches/jewelry) ———
-  // Если появится модель Collection в Prisma с полем slug и noindex — заменить на выборку из БД.
-  const collectionEntries: MetadataRoute.Sitemap = COLLECTION_SLUGS.map((slug) => ({
-    url: `${BASE_URL}/collections/${slug}`,
-    lastModified: new Date(),
-    changeFrequency: "daily" as const,
-    priority: 0.9,
-  }));
+  // ——— Категории и подкатегории /products/[category] и /products/[category]/[subcategory] ———
+  const collectionEntries: MetadataRoute.Sitemap = [];
+  for (const cat of CATEGORY_PAGES) {
+    collectionEntries.push({
+      url: `${BASE_URL}/products/${cat.url}`,
+      lastModified: new Date(),
+      changeFrequency: "daily" as const,
+      priority: 0.9,
+    });
+    for (const sub of cat.subcategories) {
+      collectionEntries.push({
+        url: `${BASE_URL}/products/${cat.url}/${sub}`,
+        lastModified: new Date(),
+        changeFrequency: "daily" as const,
+        priority: 0.9,
+      });
+    }
+  }
 
-  // ——— Товары из Prisma ———
-  // Условие: не отключён, не распродан. Когда в схему добавят noindex — добавить в where: { noindex: false }.
+  // ——— Товары из Prisma (только с subcategory) ———
   const products = await prisma.product.findMany({
     where: {
       disabled: { not: true },
       soldOut: false,
+      subcategory: { not: null },
     },
     select: {
       name: true,
+      collection: true,
+      subcategory: true,
       updatedAt: true,
-      // Когда в Product добавят seoCanonicalUrl — добавить в select и ниже использовать, если заполнено.
     },
   });
 
-  const productEntries: MetadataRoute.Sitemap = products.map((p) => {
-    const slug = generateProductSlug(p.name);
-    return {
-      url: `${BASE_URL}/product/${slug}`,
-      lastModified: p.updatedAt,
-      changeFrequency: "daily" as const,
-      priority: 0.8,
-    };
-  });
+  const productEntries: MetadataRoute.Sitemap = products
+    .filter((p) => p.subcategory)
+    .map((p) => {
+      const path = generateProductPath({
+        name: p.name,
+        collection: p.collection,
+        subcategory: p.subcategory,
+      });
+      return path
+        ? {
+            url: `${BASE_URL}${path}`,
+            lastModified: p.updatedAt,
+            changeFrequency: "daily" as const,
+            priority: 0.8,
+          }
+        : null;
+    })
+    .filter((e): e is NonNullable<typeof e> => e !== null);
 
-  // Собираем все URL в один массив (каждый адрес один раз).
   return [homeEntry, ...staticEntries, ...collectionEntries, ...productEntries];
 }

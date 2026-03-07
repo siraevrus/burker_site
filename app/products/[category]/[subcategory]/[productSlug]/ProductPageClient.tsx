@@ -8,7 +8,7 @@ import { useStore, getCustomsCategory } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "@/components/ProductCard/ProductCard";
 import Breadcrumbs from "@/components/Breadcrumbs/Breadcrumbs";
-import { generateProductSlug, getProductBreadcrumbItems } from "@/lib/utils";
+import { generateProductPath, getProductBreadcrumbItems } from "@/lib/utils";
 
 const CUSTOMS_HINT =
   "По таможенным правилам доставка одного типа товара не более 3 вещей в один заказ";
@@ -307,7 +307,7 @@ export default function ProductPageClient({
               </h3>
               <div className="flex gap-2 flex-wrap">
                 <Link
-                  href={`/product/${generateProductSlug(product.name)}`}
+                  href={generateProductPath(product) ?? "#"}
                   className="relative w-16 h-16 rounded-full border-2 border-black overflow-hidden"
                 >
                   <ProductImage
@@ -319,7 +319,7 @@ export default function ProductPageClient({
                 {colorVariants.slice(0, 3).map((variant) => (
                   <Link
                     key={variant.id}
-                    href={`/product/${generateProductSlug(variant.name)}`}
+                    href={generateProductPath(variant) ?? "#"}
                     className="relative w-16 h-16 rounded-full border-2 border-gray-300 overflow-hidden hover:border-black transition-colors"
                   >
                     <ProductImage

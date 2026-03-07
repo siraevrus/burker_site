@@ -6,7 +6,7 @@ import { Product } from "@/lib/types";
 import { useStore, getCustomsCategory } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductImage from "@/components/ProductImage";
-import { generateProductSlug } from "@/lib/utils";
+import { generateProductPath } from "@/lib/utils";
 
 const CUSTOMS_HINT =
   "По таможенным правилам доставка одного типа товара не более 3 вещей в один заказ";
@@ -101,7 +101,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       {/* Product Image */}
       <div className="relative w-full aspect-square overflow-hidden">
-        <Link href={`/product/${generateProductSlug(product.name)}`}>
+        <Link href={generateProductPath(product) ?? "#"}>
           <ProductImage
             src={product.images && product.images.length > 0 ? product.images[0] : "/Isabell_gold_burgundy_1.webp"}
             alt={product.name}
@@ -153,7 +153,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       {/* Product Info */}
       <div className="p-4">
-        <Link href={`/product/${generateProductSlug(product.name)}`}>
+        <Link href={generateProductPath(product) ?? "#"}>
           <h3 className="font-semibold text-sm mb-2 text-gray-900 line-clamp-2 text-center hover:text-gray-600 transition-colors">
             {product.name}
           </h3>

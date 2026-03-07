@@ -14,8 +14,8 @@ const DEFAULT_PATHS = [
   { path: "/login", label: "Вход" },
   { path: "/register", label: "Регистрация" },
   { path: "/search", label: "Поиск" },
-  { path: "/collections/watches", label: "Коллекция — Часы" },
-  { path: "/collections/jewelry", label: "Коллекция — Украшения" },
+  { path: "/products/watches", label: "Каталог — Часы" },
+  { path: "/products/jewelry", label: "Каталог — Украшения" },
 ];
 
 interface SeoRow {
