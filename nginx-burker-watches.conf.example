@@ -44,20 +44,20 @@ server {
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
     # Статика: загрузки из админки (промоблок, доказательства оплаты)
-    # public/promo — единственный путь, не зависит от сборки
+    # public/promo — не кешируем, чтобы изменения отображались сразу
     location /promo/ {
-        alias /var/www/burker-watches.ru/public/promo/;
+        alias /var/www/burker-watches.ru/.next/standalone/public/promo/;
         try_files $uri =404;
         access_log off;
-        expires 30d;
+        add_header Cache-Control "no-store, no-cache, must-revalidate";
     }
 
-    # Статика: изображения товаров
-    location /products/ {
-        alias /var/www/burker-watches.ru/public/products/;
-        try_files $uri =404;
-        access_log off;
+    # Статика: изображения товаров (только файлы с расширением)
+    # /products/watches/isabell/... — маршруты Next.js, проксируются в location /
+    location ~ ^/products/(.+\.(jpg|jpeg|png|gif|webp|avif))$ {
+        alias /var/www/burker-watches.ru/public/products/$1;
         expires 30d;
+        access_log off;
     }
 
     # Next.js (standalone)
