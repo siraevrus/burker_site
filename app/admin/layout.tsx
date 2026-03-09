@@ -42,6 +42,7 @@ const MENU_GROUPS = [
       { href: "/admin/seo", label: "SEO" },
       { href: "/admin/shipping", label: "Стоимость доставки" },
       { href: "/admin/exchange-rates", label: "Курсы валют" },
+      { href: "/admin/orange-data", label: "Orange Data" },
     ],
   },
 ];
@@ -146,7 +147,7 @@ export default function AdminLayout({
                         onClick={() => setOpenMenu(isOpen ? null : group.label)}
                         className={`inline-flex items-center gap-1 px-4 py-2 rounded-md transition-colors ${
                           isActive
-                            ? "bg-gray-600 text-white"
+                            ? "bg-[#EBEBEB] text-gray-800"
                             : "text-gray-700 hover:bg-gray-100"
                         }`}
                       >

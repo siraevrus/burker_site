@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { sendOrderPaidEmail, sendOrderNotPaidEmail, sendReceiptPdfEmail } from "@/lib/email";
 import { verifyNotificationToken } from "@/lib/tbank";
 import { notifyNewOrder } from "@/lib/telegram";
-import { sendFiscalReceipt, isOrangeDataConfigured } from "@/lib/orange-data";
+import { sendFiscalReceipt, isOrangeDataEnabled } from "@/lib/orange-data";
 import { logError } from "@/lib/ops-log";
 
 const TBANK_PASSWORD = process.env.TBANK_PASSWORD;
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Фискализация Orange Data (54-ФЗ)
-      if (isOrangeDataConfigured()) {
+      if (await isOrangeDataEnabled()) {
         try {
           const receiptItems = order.items.map((item) => ({
             name: item.productName.slice(0, 128),

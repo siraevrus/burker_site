@@ -80,11 +80,20 @@ function getOrangeProdFiles() {
 }
 
 /**
- * Проверяет, настроена ли интеграция Orange Data.
+ * Проверяет, настроена ли интеграция Orange Data (технически: файлы, ИНН, группа).
  */
 export function isOrangeDataConfigured(): boolean {
   const files = getOrangeProdFiles();
   return !!(files && ORANGEDATA_INN && ORANGEDATA_GROUP);
+}
+
+/**
+ * Проверяет, включена ли фискализация: настроена технически И не отключена в админке.
+ */
+export async function isOrangeDataEnabled(): Promise<boolean> {
+  if (!isOrangeDataConfigured()) return false;
+  const { isOrangeDataDisabled } = await import("./orange-data-settings");
+  return !(await isOrangeDataDisabled());
 }
 
 /**
@@ -138,8 +147,8 @@ export function getOrangeDataDiagnostics(): {
 export async function sendFiscalReceipt(
   params: OrangeDataReceiptParams
 ): Promise<{ success: boolean; docId?: string; error?: string }> {
-  if (!isOrangeDataConfigured()) {
-    return { success: false, error: "Orange Data не настроен" };
+  if (!(await isOrangeDataEnabled())) {
+    return { success: false, error: "Orange Data не настроен или отключён в админке" };
   }
 
   const files = getOrangeProdFiles();

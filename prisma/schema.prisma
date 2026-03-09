@@ -183,6 +183,13 @@ model ExchangeRate {
   updatedAt DateTime @updatedAt
 }
 
+// Включение/отключение фискализации Orange Data 54-ФЗ
+model OrangeDataSetting {
+  id        String   @id @default("single")
+  disabled  Boolean  @default(false) // true = фискализация отключена
+  updatedAt DateTime @updatedAt
+}
+
 // История парсинга курсов (каждое обновление — cron или ручное)
 model ExchangeRateHistory {
   id        String   @id @default(cuid())

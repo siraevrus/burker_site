@@ -1,10 +1,5 @@
-import "dotenv/config";
-import { config } from "dotenv";
-import { resolve } from "path";
+import "./load-env";
 import { sendEmailViaMailopost } from "../lib/mailopost";
-
-// Загружаем переменные окружения из .env.local
-config({ path: resolve(__dirname, "../.env.local") });
 
 async function testEmail() {
   const testEmail = "ruslan@siraev.ru";
