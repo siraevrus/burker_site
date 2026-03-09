@@ -27,20 +27,26 @@ services:
       retries: 3
       start_period: 40s
 
-  # Cron-сервис для обновления курсов валют каждые 4 часа
+  # Cron-сервис: курсы валют (каждые 4ч) + импорт товаров (каждые 8ч)
   cron:
     image: curlimages/curl:latest
     environment:
       - CRON_SECRET=${CRON_SECRET:-your-secret-key-here}
     command: >
-      sh -c 'echo "Starting exchange rate updater...";
-      while true; do
+      sh -c 'echo "Starting cron jobs...";
+      (while true; do
         echo "[$(date)] Updating exchange rates...";
         curl -s -H "X-Cron-Secret: $${CRON_SECRET}" http://app:3000/api/cron/update-rates;
         echo "";
-        echo "[$(date)] Sleeping for 4 hours...";
         sleep 14400;
-      done'
+      done) &
+      (while true; do
+        echo "[$(date)] Running product import...";
+        curl -s -H "X-Cron-Secret: $${CRON_SECRET}" "http://app:3000/api/cron/import";
+        echo "";
+        sleep 28800;
+      done) &
+      wait'
     depends_on:
       app:
         condition: service_healthy

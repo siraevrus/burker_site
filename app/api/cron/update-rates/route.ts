@@ -1,12 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { updateExchangeRates } from "@/lib/exchange-rates";
 import { fetchCbrRates } from "@/lib/cbr-rates";
 
-export async function GET(request: Request) {
-  const cronSecret = request.headers.get("X-Cron-Secret");
-  const expectedSecret = process.env.CRON_SECRET;
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  const xCronSecret = request.headers.get("x-cron-secret");
+  const querySecret = request.nextUrl.searchParams.get("secret");
+  const providedSecret =
+    authHeader?.replace(/^Bearer\s+/i, "")?.trim() ||
+    xCronSecret?.trim() ||
+    querySecret?.trim() ||
+    "";
+  const expectedSecret = process.env.CRON_SECRET || process.env.CRON_SECRET_KEY;
 
-  if (expectedSecret && cronSecret !== expectedSecret) {
+  if (expectedSecret && providedSecret !== expectedSecret) {
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 401 }
