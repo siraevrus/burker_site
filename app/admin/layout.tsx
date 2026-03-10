@@ -11,6 +11,7 @@ const MENU_GROUPS = [
       { href: "/admin/pages", label: "Страницы" },
       { href: "/admin/faq", label: "FAQ" },
       { href: "/admin/footer", label: "Подвал" },
+      { href: "/admin/social-links", label: "Социальные сети" },
     ],
   },
   {
