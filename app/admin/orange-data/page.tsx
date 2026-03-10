@@ -101,7 +101,7 @@ export default function AdminOrangeDataPage() {
           <button
             type="button"
             onClick={handleToggle}
-            disabled={updating || !data?.configured}
+            disabled={updating}
             className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
               data?.disabled ? "bg-gray-300" : "bg-gray-700"
             }`}
