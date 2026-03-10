@@ -1,5 +1,3 @@
-import type { Order } from "./types";
-
 export const FISCAL_SETTLEMENT_PLACE = "https://burker-watches.ru/";
 export const FISCAL_GROUP = "Main_2";
 export const FISCAL_TAXATION_SYSTEM_USN_INCOME = 1;
@@ -33,6 +31,20 @@ export interface FiscalReceiptItem {
   originalPriceEur?: number;
 }
 
+export interface FiscalReceiptOrderItemInput {
+  productName: string;
+  productPrice: number;
+  quantity: number;
+  commissionAmount?: number | null;
+  originalPriceEur?: number | null;
+}
+
+export interface FiscalReceiptOrderInput {
+  promoDiscount?: number | null;
+  shippingCost: number;
+  items: FiscalReceiptOrderItemInput[];
+}
+
 function toCents(amount: number): number {
   return Math.round((amount + Number.EPSILON) * 100);
 }
@@ -45,7 +57,7 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-function allocateCommissionDiscounts(order: Order): number[] {
+function allocateCommissionDiscounts(order: FiscalReceiptOrderInput): number[] {
   const commissionCentsByItem = order.items.map((item) => {
     const grossCents = toCents(item.productPrice * item.quantity);
     return clamp(toCents(item.commissionAmount ?? 0), 0, grossCents);
@@ -85,7 +97,7 @@ function allocateCommissionDiscounts(order: Order): number[] {
   return allocations;
 }
 
-export function buildFiscalReceiptItems(order: Order): FiscalReceiptItem[] {
+export function buildFiscalReceiptItems(order: FiscalReceiptOrderInput): FiscalReceiptItem[] {
   const items: FiscalReceiptItem[] = [];
   const discountAllocations = allocateCommissionDiscounts(order);
 

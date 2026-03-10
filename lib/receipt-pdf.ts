@@ -2,6 +2,7 @@
  * Генерация PDF-чека по образцу receipt.pdf (ФФД 1.2).
  */
 
+import fs from "fs";
 import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { getOrderById } from "./orders";
@@ -10,13 +11,28 @@ import { mapOrderToReceiptData } from "./receipt-data";
 const ROBOTO_TTF_URL =
   "https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf";
 
-let cachedFontBytes: ArrayBuffer | null = null;
+const LOCAL_FONT_PATHS = [
+  "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+  "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+  "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+  "/System/Library/Fonts/Supplemental/Arial Unicode MS.ttf",
+];
 
-async function getFontBytes(): Promise<ArrayBuffer> {
+let cachedFontBytes: Uint8Array | null = null;
+
+async function getFontBytes(): Promise<Uint8Array> {
   if (cachedFontBytes) return cachedFontBytes;
+
+  for (const fontPath of LOCAL_FONT_PATHS) {
+    if (fs.existsSync(fontPath)) {
+      cachedFontBytes = fs.readFileSync(fontPath);
+      return cachedFontBytes;
+    }
+  }
+
   const res = await fetch(ROBOTO_TTF_URL);
   if (!res.ok) throw new Error("Failed to fetch font");
-  cachedFontBytes = await res.arrayBuffer();
+  cachedFontBytes = new Uint8Array(await res.arrayBuffer());
   return cachedFontBytes;
 }
 
