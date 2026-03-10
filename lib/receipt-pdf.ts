@@ -2,7 +2,7 @@
  * Генерация PDF-чека по образцу receipt.pdf (ФФД 1.2).
  */
 
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { getOrderById } from "./orders";
 import { mapOrderToReceiptData } from "./receipt-data";
@@ -28,11 +28,11 @@ const BODY_SIZE = 9;
 const SMALL_SIZE = 8;
 
 function drawText(
-  page: any,
+  page: PDFPage,
   text: string,
   x: number,
   y: number,
-  font: any,
+  font: PDFFont,
   size: number
 ): void {
   page.drawText(text, { x, y, size, font, color: rgb(0, 0, 0) });
@@ -112,18 +112,14 @@ export async function generateReceiptPdf(orderId: string): Promise<Buffer> {
       writeLine(`ИНН поставщика ${data.config.supplierInn}`);
       writeLine(`Наименование поставщика ${data.config.supplierName}`);
       writeLine("признак агента по предмету расчета КОМИССИОНЕР");
-
-      if (item.commissionAmount != null && item.commissionAmount > 0) {
-        writeLine(
-          "Вознаграждение комиссионера по приобретению товара по поручению клиента"
-        );
-        writeLine(`1 шт. х ${item.commissionAmount.toFixed(2)}`);
-        writeLine("общая стоимость позиции с учетом скидок и наценок");
-        writeLine(item.commissionAmount.toFixed(2));
-        writeLine("Ставка НДС не облагается");
-        writeLine("способ расчета ПОЛНЫЙ РАСЧЕТ");
-        writeLine("признак предмета расчета АГЕНТСКОЕ ВОЗНАГРАЖДЕНИЕ");
-      }
+    } else if (item.type === "commission") {
+      writeLine(item.name.slice(0, 80));
+      writeLine(`${item.quantity} шт. х ${item.price.toFixed(2)}`);
+      writeLine("общая стоимость позиции с учетом скидок и наценок");
+      writeLine(item.amount.toFixed(2));
+      writeLine("Ставка НДС не облагается");
+      writeLine("способ расчета ПОЛНЫЙ РАСЧЕТ");
+      writeLine("признак предмета расчета АГЕНТСКОЕ ВОЗНАГРАЖДЕНИЕ");
     } else if (item.type === "shipping") {
       writeLine(`${item.name}`);
       writeLine(`${item.quantity} шт. х ${item.price.toFixed(2)}`);
@@ -131,9 +127,6 @@ export async function generateReceiptPdf(orderId: string): Promise<Buffer> {
       writeLine("Ставка НДС не облагается");
       writeLine("способ расчета ПОЛНЫЙ РАСЧЕТ");
       writeLine("признак предмета расчета УСЛУГА");
-    } else if (item.type === "discount") {
-      writeLine(`${item.name}`);
-      writeLine(`${item.amount.toFixed(2)}`);
     }
     writeEmpty();
   }

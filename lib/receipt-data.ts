@@ -3,6 +3,13 @@
  * Формат по образцу receipt.pdf (ФФД 1.2, агентская модель).
  */
 
+import {
+  buildFiscalReceiptItems,
+  FISCAL_SETTLEMENT_PLACE,
+  FISCAL_SUPPLIER_INN,
+  FISCAL_SUPPLIER_NAME,
+  type FiscalReceiptItem,
+} from "./fiscal-receipt";
 import type { Order } from "./types";
 
 export interface ReceiptConfig {
@@ -16,15 +23,7 @@ export interface ReceiptConfig {
   taxationSystem?: string;
 }
 
-export interface ReceiptItem {
-  type: "product" | "commission" | "shipping" | "discount";
-  name: string;
-  quantity: number;
-  price: number;
-  amount: number;
-  originalPriceEur?: number;
-  commissionAmount?: number;
-}
+export type ReceiptItem = FiscalReceiptItem;
 
 export interface ReceiptData {
   config: ReceiptConfig;
@@ -40,15 +39,14 @@ export interface ReceiptData {
 }
 
 function getReceiptConfig(): ReceiptConfig {
-  const siteUrl = process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://burker-watches.ru";
   return {
     sellerName: process.env.RECEIPT_SELLER_NAME || "",
     sellerAddress: process.env.RECEIPT_SELLER_ADDRESS || "",
     inn: process.env.ORANGEDATA_INN || "",
-    siteUrl,
+    siteUrl: FISCAL_SETTLEMENT_PLACE,
     senderEmail: process.env.RECEIPT_SENDER_EMAIL || process.env.ADMIN_EMAIL || "",
-    supplierInn: process.env.RECEIPT_SUPPLIER_INN || "000000000000",
-    supplierName: process.env.RECEIPT_SUPPLIER_NAME || "BURKER INTERNATIONAL BV",
+    supplierInn: FISCAL_SUPPLIER_INN,
+    supplierName: FISCAL_SUPPLIER_NAME,
     taxationSystem: "УСН ДОХОД",
   };
 }
@@ -88,42 +86,7 @@ export function mapOrderToReceiptData(order: Order): ReceiptData {
   const config = getReceiptConfig();
   const dateToUse = order.paidAt || order.createdAt;
   const eurPerRub = getEurPerRub(order);
-
-  const items: ReceiptItem[] = [];
-
-  for (const item of order.items) {
-    const amount = item.productPrice * item.quantity;
-    items.push({
-      type: "product",
-      name: item.productName,
-      quantity: item.quantity,
-      price: item.productPrice,
-      amount,
-      originalPriceEur: item.originalPriceEur ?? undefined,
-      commissionAmount: item.commissionAmount ?? undefined,
-    });
-  }
-
-  if (order.shippingCost > 0) {
-    items.push({
-      type: "shipping",
-      name: "Доставка",
-      quantity: 1,
-      price: order.shippingCost,
-      amount: order.shippingCost,
-    });
-  }
-
-  const discountAmount = order.promoDiscount ?? 0;
-  if (discountAmount > 0) {
-    items.push({
-      type: "discount",
-      name: "Скидка по промокоду",
-      quantity: 1,
-      price: -discountAmount,
-      amount: -discountAmount,
-    });
-  }
+  const items: ReceiptItem[] = buildFiscalReceiptItems(order);
 
   const cashAmount = 0;
   const electronicAmount = order.totalAmount;

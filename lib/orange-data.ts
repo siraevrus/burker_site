@@ -7,6 +7,12 @@
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
+import {
+  FISCAL_GROUP,
+  FISCAL_PAYMENT_TYPE_CASHLESS,
+  FISCAL_SETTLEMENT_PLACE,
+  FISCAL_TAXATION_SYSTEM_USN_INCOME,
+} from "./fiscal-receipt";
 
 const ORANGEDATA_INN_DEFAULT = "290124976119";
 const ORANGEDATA_KEY_NAME = "290124976119_40633";
@@ -15,16 +21,12 @@ const ORANGEDATA_API_URL =
   process.env.ORANGEDATA_API_URL || "https://api.orangedata.ru:12003/api/v2";
 const ORANGEDATA_INN =
   (process.env.ORANGEDATA_INN || "").trim() || ORANGEDATA_INN_DEFAULT;
-const ORANGEDATA_GROUP =
-  (process.env.ORANGEDATA_GROUP || "").trim() || "Main";
+const ORANGEDATA_GROUP = FISCAL_GROUP;
 
 const ORANGE_PROD = path.join(process.cwd(), "orange_prod");
 const ORANGEDATA_PRIVATE_KEY_PATH =
   (process.env.ORANGEDATA_PRIVATE_KEY_PATH || "").trim() ||
   path.join(ORANGE_PROD, "rsa_private.pem");
-const ORANGEDATA_CLIENT_CERT_PATH =
-  process.env.ORANGEDATA_CLIENT_CERT_PATH ||
-  path.join(ORANGE_PROD, `${ORANGEDATA_KEY_NAME}.pfx`);
 const ORANGEDATA_CLIENT_CERT_KEY_PATH =
   (process.env.ORANGEDATA_CLIENT_CERT_KEY_PATH || "").trim() ||
   path.join(ORANGE_PROD, `${ORANGEDATA_KEY_NAME}.key`);
@@ -43,6 +45,12 @@ export interface OrangeDataReceiptItem {
   tax?: number;
   paymentMethodType?: number;
   paymentSubjectType?: number;
+  supplierINN?: string;
+  supplierInfo?: {
+    name: string;
+    phoneNumbers?: string[];
+  };
+  agentType?: number;
 }
 
 export interface OrangeDataReceiptParams {
@@ -158,7 +166,6 @@ export async function sendFiscalReceipt(
 
   try {
     const { OrangeData, Order } = await import("node-orangedata");
-    const { OrangeDataError, OrangeDataApiError } = await import("node-orangedata/lib/errors");
 
     const agent = new OrangeData(files as Record<string, unknown>);
 
@@ -170,7 +177,8 @@ export async function sendFiscalReceipt(
       type: 1,
       ffdVersion: 4, // ФФД 1.2 (касса в ЛК Orange Data настроена на этот режим)
       customerContact: params.email,
-      taxationSystem: params.taxationSystem ?? 1,
+      taxationSystem: params.taxationSystem ?? FISCAL_TAXATION_SYSTEM_USN_INCOME,
+      settlementPlace: FISCAL_SETTLEMENT_PLACE,
     });
 
     for (const item of params.items) {
@@ -181,9 +189,12 @@ export async function sendFiscalReceipt(
         tax: item.tax ?? 6,
         paymentMethodType: item.paymentMethodType ?? 4,
         paymentSubjectType: item.paymentSubjectType ?? 1,
+        supplierINN: item.supplierINN,
+        supplierInfo: item.supplierInfo,
+        agentType: item.agentType,
       });
     }
-    order.addPayment({ type: 2, amount: params.totalAmount });
+    order.addPayment({ type: FISCAL_PAYMENT_TYPE_CASHLESS, amount: params.totalAmount });
 
     await agent.sendOrder(order);
 

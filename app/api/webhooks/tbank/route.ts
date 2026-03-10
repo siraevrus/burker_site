@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { sendOrderPaidEmail, sendOrderNotPaidEmail, sendReceiptPdfEmail } from "@/lib/email";
 import { verifyNotificationToken } from "@/lib/tbank";
 import { notifyNewOrder } from "@/lib/telegram";
+import { buildFiscalReceiptItems } from "@/lib/fiscal-receipt";
 import { sendFiscalReceipt, isOrangeDataEnabled } from "@/lib/orange-data";
 import { logError } from "@/lib/ops-log";
 
@@ -137,26 +138,17 @@ export async function POST(request: NextRequest) {
       // Фискализация Orange Data (54-ФЗ)
       if (await isOrangeDataEnabled()) {
         try {
-          const receiptItems = order.items.map((item) => ({
-            name: item.productName.slice(0, 128),
-            price: item.productPrice,
+          const receiptItems = buildFiscalReceiptItems(order).map((item) => ({
+            name: item.name,
+            price: item.price,
             quantity: item.quantity,
+            tax: item.tax,
+            paymentMethodType: item.paymentMethodType,
+            paymentSubjectType: item.paymentSubjectType,
+            supplierINN: item.supplierINN,
+            supplierInfo: item.supplierInfo,
+            agentType: item.agentType,
           }));
-          if (order.shippingCost > 0) {
-            receiptItems.push({
-              name: "Доставка",
-              price: order.shippingCost,
-              quantity: 1,
-            });
-          }
-          const discountAmount = order.promoDiscount ?? 0;
-          if (discountAmount > 0) {
-            receiptItems.push({
-              name: "Скидка по промокоду",
-              price: -discountAmount,
-              quantity: 1,
-            });
-          }
           const result = await sendFiscalReceipt({
             orderId: order.id,
             email: order.email,
