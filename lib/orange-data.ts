@@ -10,7 +10,6 @@ import path from "path";
 import {
   FISCAL_GROUP,
   FISCAL_PAYMENT_TYPE_CASHLESS,
-  FISCAL_SETTLEMENT_PLACE,
   FISCAL_TAXATION_SYSTEM_USN_INCOME,
 } from "./fiscal-receipt";
 
@@ -178,7 +177,6 @@ export async function sendFiscalReceipt(
       ffdVersion: 4, // ФФД 1.2 (касса в ЛК Orange Data настроена на этот режим)
       customerContact: params.email,
       taxationSystem: params.taxationSystem ?? FISCAL_TAXATION_SYSTEM_USN_INCOME,
-      settlementPlace: FISCAL_SETTLEMENT_PLACE,
     });
 
     for (const item of params.items) {
