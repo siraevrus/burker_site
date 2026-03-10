@@ -76,7 +76,7 @@ export async function generateReceiptPdf(orderId: string): Promise<Buffer> {
   writeLine(`Место расчётов: ${data.config.siteUrl}`);
   writeEmpty();
 
-  writeLine(`КАССОВЫЙ ЧЕК №${data.orderNumber}`, TITLE_SIZE);
+  writeLine("КАССОВЫЙ ЧЕК", TITLE_SIZE);
   writeLine(`Приход ${data.dateTime}`);
   writeLine("признак ККТ для расчетов только в Интернет: да");
   writeEmpty();
@@ -141,9 +141,6 @@ export async function generateReceiptPdf(orderId: string): Promise<Buffer> {
   writeEmpty();
 
   writeLine("версия ФФД 1.2", SMALL_SIZE);
-  if (order.fiscalReceiptId) {
-    writeLine(`ID чека: ${order.fiscalReceiptId}`, SMALL_SIZE);
-  }
   writeLine("Адрес для проверки чека: platformaofd.ru", SMALL_SIZE);
   writeLine("Сайт ФНС: https://www.nalog.gov.ru/", SMALL_SIZE);
   writeEmpty();
