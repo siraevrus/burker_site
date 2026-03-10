@@ -50,7 +50,7 @@ if [[ -n "$DIRTY" ]]; then
   while IFS= read -r line; do
     path="${line:3}"
     case "$path" in
-      public/promo/*|public/products/*|public/order-proofs/*|ecosystem.config.js|backups|backups/|backups/*|orange_prod/*) ;;
+      public/promo/*|public/products/*|public/order-proofs/*|public/yandex_*.html|ecosystem.config.js|backups|backups/|backups/*|orange_prod/*) ;;
       *) REMAINING="${REMAINING}${line}\n" ;;
     esac
   done <<< "$DIRTY"
@@ -59,7 +59,7 @@ if [[ -n "$DIRTY" ]]; then
     echo -e "$REMAINING"
     exit 1
   fi
-  log_info "Изменения только в public/promo|products|order-proofs или ecosystem.config.js — продолжаю деплой."
+  log_info "Изменения только в разрешённых локальных файлах (uploads/yandex/ecosystem/orange_prod) — продолжаю деплой."
 fi
 
 log_info "Обновление кода..."

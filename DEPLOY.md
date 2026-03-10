@@ -138,6 +138,7 @@ cd /var/www/burker-watches.ru
 
 Скрипт проверяет «грязное» дерево Git: деплой **не** блокируется, если изменения только в:
 - `public/promo/*`, `public/products/*`, `public/order-proofs/*` (загружаемые файлы),
+- `public/yandex_*.html` (файлы верификации Яндекса на сервере),
 - `ecosystem.config.js` (локальные настройки PM2/env на сервере).
 
 **Вариант 2: Использование скрипта deploy.sh**
