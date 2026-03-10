@@ -203,7 +203,7 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
               </div>
             )}
             {faq?.items && faq.items.length > 0 && (
-              <div className="max-w-2xl mx-auto divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden bg-white">
+              <div className="max-w-4xl mx-auto divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden bg-white">
                 {faq.items.map((item) => {
                   const isOpen = faqOpenId === item.id;
                   return (
