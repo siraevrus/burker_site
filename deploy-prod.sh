@@ -80,6 +80,7 @@ log_ok "Зависимости установлены"
 
 log_info "Подготовка директории БД..."
 mkdir -p "$(dirname "${DB_PATH}")"
+# Одноразовый bootstrap: если runtime-БД ещё нет, берём начальный снимок из repo-local prisma/dev.db.
 if [[ ! -f "${DB_PATH}" && -f "${PROJECT_DIR}/prisma/dev.db" ]]; then
   cp "${PROJECT_DIR}/prisma/dev.db" "${DB_PATH}"
   log_ok "Скопирована существующая БД в ${DB_PATH}"

@@ -5,7 +5,7 @@
 ## На сервере (production)
 
 Приложение в `ecosystem.config.js` запускается из `/var/www/burker-watches.ru`. Файл БД:  
-`/var/www/burker-watches.ru/prisma/dev.db`
+`/var/lib/burker-watches/dev.db`
 
 **Что сделать на сервере:**
 
@@ -17,15 +17,17 @@
 
 2. Выдать права на запись владельцу каталога и файла БД (подставьте своего пользователя вместо `root`):
    ```bash
-   sudo chown -R root:root /var/www/burker-watches.ru/prisma
-   sudo chmod 755 /var/www/burker-watches.ru/prisma
-   sudo chmod 664 /var/www/burker-watches.ru/prisma/dev.db
+   sudo mkdir -p /var/lib/burker-watches
+   sudo chown -R root:root /var/lib/burker-watches
+   sudo chmod 755 /var/lib/burker-watches
+   sudo chmod 664 /var/lib/burker-watches/dev.db
    ```
    Если приложение запускается от пользователя `www-data`:
    ```bash
-   sudo chown -R www-data:www-data /var/www/burker-watches.ru/prisma
-   sudo chmod 755 /var/www/burker-watches.ru/prisma
-   sudo chmod 664 /var/www/burker-watches.ru/prisma/dev.db
+   sudo mkdir -p /var/lib/burker-watches
+   sudo chown -R www-data:www-data /var/lib/burker-watches
+   sudo chmod 755 /var/lib/burker-watches
+   sudo chmod 664 /var/lib/burker-watches/dev.db
    ```
 
 3. После деплоя каталог мог снова стать доступным только на чтение — тогда повторить `chown`/`chmod` или настроить скрипт деплоя так, чтобы он выставлял эти права после копирования файлов.

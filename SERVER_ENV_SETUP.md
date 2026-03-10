@@ -19,7 +19,7 @@ nano .env
 
 ```env
 # Database
-DATABASE_URL="file:./prisma/dev.db"
+DATABASE_URL="file:/var/lib/burker-watches/dev.db"
 
 # CDEK API (Account и Secure password из личного кабинета СДЭК)
 CDEK_CLIENT_ID="ваш_client_id_здесь"
@@ -32,6 +32,7 @@ CRON_SECRET="ваш-секретный-ключ-здесь"
 **Важно:** 
 - Файл `.env` уже в `.gitignore`, он не попадёт в репозиторий
 - После создания/изменения `.env` **перезапустите PM2**: `pm2 restart burker-watches`
+- В production используйте отдельную SQLite БД вне каталога проекта: `/var/lib/burker-watches/dev.db`
 
 ---
 

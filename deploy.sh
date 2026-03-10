@@ -6,6 +6,7 @@
 set -e  # Остановить при ошибке
 
 cd /var/www/burker-watches.ru
+DB_PATH="${DB_PATH:-/var/lib/burker-watches/dev.db}"
 
 echo "📦 Обновление кода из git..."
 git pull origin main
@@ -17,11 +18,17 @@ echo "🗄️  Генерация Prisma Client..."
 npx prisma generate
 
 echo "🗄️  Инициализация/обновление базы данных..."
+mkdir -p "$(dirname "$DB_PATH")"
+# Одноразовый bootstrap: если runtime-БД ещё нет, берём начальный снимок из repo-local prisma/dev.db.
+if [ ! -f "$DB_PATH" ] && [ -f "prisma/dev.db" ]; then
+  cp prisma/dev.db "$DB_PATH"
+fi
+export DATABASE_URL="file:$DB_PATH"
 # Проверить размер базы данных
-DB_SIZE=$(stat -f%z prisma/dev.db 2>/dev/null || stat -c%s prisma/dev.db 2>/dev/null || echo "0")
-if [ "$DB_SIZE" = "0" ] || [ ! -f "prisma/dev.db" ]; then
+DB_SIZE=$(stat -f%z "$DB_PATH" 2>/dev/null || stat -c%s "$DB_PATH" 2>/dev/null || echo "0")
+if [ "$DB_SIZE" = "0" ] || [ ! -f "$DB_PATH" ]; then
   echo "   База данных пустая или не существует, создаём заново..."
-  rm -f prisma/dev.db
+  rm -f "$DB_PATH"
   npx prisma db push --accept-data-loss --skip-generate
 else
   echo "   База данных существует, обновляем схему..."

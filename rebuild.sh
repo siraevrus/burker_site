@@ -20,22 +20,29 @@ rm -rf node_modules
 
 echo "📦 Установка зависимостей..."
 npm install
+DB_PATH="${DB_PATH:-/var/lib/burker-watches/dev.db}"
 
 echo "🗄️  Генерация Prisma Client..."
 npx prisma generate
 
 echo "🗄️  Синхронизация базы данных..."
+mkdir -p "$(dirname "$DB_PATH")"
+# Одноразовый bootstrap: если runtime-БД ещё нет, можно взять старую repo-local базу.
 # Проверить, есть ли рабочая база в prisma/prisma/dev.db (старый путь)
-if [ -f "prisma/prisma/dev.db" ] && [ ! -s "prisma/dev.db" ]; then
+if [ -f "prisma/prisma/dev.db" ] && [ ! -s "$DB_PATH" ]; then
     echo "📦 Копирование базы данных из prisma/prisma/dev.db..."
-    cp prisma/prisma/dev.db prisma/dev.db
+    cp prisma/prisma/dev.db "$DB_PATH"
+elif [ -f "prisma/dev.db" ] && [ ! -s "$DB_PATH" ]; then
+    echo "📦 Копирование базы данных из prisma/dev.db..."
+    cp prisma/dev.db "$DB_PATH"
 fi
+export DATABASE_URL="file:$DB_PATH"
 # Применить миграции без потери данных
 npx prisma db push --skip-generate
 
 echo "✅ Проверка таблиц в базе данных..."
-sqlite3 prisma/dev.db ".tables" || echo "⚠️  Таблицы не найдены"
-sqlite3 prisma/dev.db "SELECT COUNT(*) as 'Товаров в базе:' FROM Product;" 2>/dev/null || echo "⚠️  Таблица Product пуста или не существует"
+sqlite3 "$DB_PATH" ".tables" || echo "⚠️  Таблицы не найдены"
+sqlite3 "$DB_PATH" "SELECT COUNT(*) as 'Товаров в базе:' FROM Product;" 2>/dev/null || echo "⚠️  Таблица Product пуста или не существует"
 
 echo "🏗️  Полная пересборка проекта..."
 npm run build

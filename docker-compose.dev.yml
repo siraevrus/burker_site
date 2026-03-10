@@ -7,6 +7,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=development
+      # Локальная dev SQLite внутри контейнера.
       - DATABASE_URL=file:./prisma/dev.db
       - PORT=3000
       - WATCHPACK_POLLING=true
@@ -22,6 +23,7 @@ services:
       - .:/app
       - /app/node_modules
       - /app/.next
+      # Локальная dev SQLite база.
       - ./prisma/dev.db:/app/prisma/dev.db
       - ./public/promo:/app/public/promo
     command: npm run dev

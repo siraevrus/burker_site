@@ -7,6 +7,7 @@
 set -e
 
 cd /var/www/burker-watches.ru
+DB_PATH="${DB_PATH:-/var/lib/burker-watches/dev.db}"
 
 echo "⚠️  ВНИМАНИЕ: Этот скрипт удалит все данные в базе данных!"
 echo "Создание резервной копии..."
@@ -16,8 +17,8 @@ BACKUP_DIR="/var/www/burker-watches.ru/backups"
 mkdir -p "$BACKUP_DIR"
 BACKUP_FILE="$BACKUP_DIR/dev.db.backup.$(date +%Y%m%d_%H%M%S)"
 
-if [ -f "prisma/dev.db" ]; then
-  cp prisma/dev.db "$BACKUP_FILE"
+if [ -f "$DB_PATH" ]; then
+  cp "$DB_PATH" "$BACKUP_FILE"
   echo "✅ Резервная копия создана: $BACKUP_FILE"
 else
   echo "⚠️  База данных не найдена, резервная копия не создана"
@@ -30,10 +31,11 @@ echo "🗑️  Удаление старой базы данных и мигра
 pm2 stop burker-watches || true
 
 # Удалить базу данных
-rm -f prisma/dev.db
-rm -f prisma/dev.db-journal
-rm -f prisma/dev.db-wal
-rm -f prisma/dev.db-shm
+mkdir -p "$(dirname "$DB_PATH")"
+rm -f "$DB_PATH"
+rm -f "${DB_PATH}-journal"
+rm -f "${DB_PATH}-wal"
+rm -f "${DB_PATH}-shm"
 
 # Удалить все миграции (опционально, можно оставить для истории)
 # rm -rf prisma/migrations
@@ -44,6 +46,7 @@ echo ""
 echo "🗄️  Создание новой базы данных из схемы Prisma..."
 
 # Применить схему напрямую (без миграций)
+export DATABASE_URL="file:$DB_PATH"
 npx prisma db push --accept-data-loss --skip-generate
 
 echo "✅ База данных создана"

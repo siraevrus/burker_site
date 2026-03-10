@@ -7,6 +7,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      # Docker runtime внутри контейнера, не production PM2 путь сервера.
       - DATABASE_URL=file:./prisma/dev.db
       - PORT=3000
       - MAILOPOST_API_URL=https://api.mailopost.ru/v1
@@ -16,7 +17,7 @@ services:
       - ADMIN_EMAIL=info@kondratov.online
       - CRON_SECRET=${CRON_SECRET:-your-secret-key-here}
     volumes:
-      # Монтируем базу данных и загруженные файлы
+      # Docker volume для локальной/container SQLite базы и загруженных файлов
       - ./prisma/dev.db:/app/prisma/dev.db
       - ./public/promo:/app/public/promo
     restart: unless-stopped
