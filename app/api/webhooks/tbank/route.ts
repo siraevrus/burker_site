@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { sendOrderPaidEmail, sendOrderNotPaidEmail, sendReceiptPdfEmail } from "@/lib/email";
+import { sendOrderConfirmation, sendOrderPaidEmail, sendOrderNotPaidEmail, sendReceiptPdfEmail } from "@/lib/email";
 import { verifyNotificationToken } from "@/lib/tbank";
 import { notifyNewOrder } from "@/lib/telegram";
 import { buildFiscalReceiptItems } from "@/lib/fiscal-receipt";
@@ -100,22 +100,36 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  // Письмо "Заказ оплачен" — только при CONFIRMED (AUTHORIZED игнорируем)
+  // Письма клиенту — только при CONFIRMED (AUTHORIZED игнорируем)
   if (isPaid && statusChanged && !wasPaid) {
     try {
       const orderNumber = order.orderNumber || order.id.slice(0, 8);
+      const orderItems = order.items.map((item) => ({
+        name: item.productName,
+        quantity: item.quantity,
+        price: item.productPrice * item.quantity,
+      }));
+
+      // Письмо "Спасибо за заказ! Принят в обработку"
+      try {
+        await sendOrderConfirmation(order.email, orderNumber, {
+          firstName: order.firstName,
+          totalAmount: order.totalAmount,
+          items: orderItems,
+        });
+      } catch (confirmationErr) {
+        console.error("T-Bank webhook: sendOrderConfirmation failed", confirmationErr);
+      }
+
+      // Письмо "Оплата получена"
       await sendOrderPaidEmail(
         order.email,
         orderNumber,
         order.firstName,
         order.totalAmount,
-        order.items.map((item) => ({
-          name: item.productName,
-          quantity: item.quantity,
-          price: item.productPrice * item.quantity,
-        }))
+        orderItems
       );
-      
+
       // Отправка уведомления в Telegram только после оплаты заказа
       try {
         await notifyNewOrder({

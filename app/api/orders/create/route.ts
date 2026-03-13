@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { createOrder } from "@/lib/orders";
 import { getExchangeRates } from "@/lib/exchange-rates";
-import { sendOrderConfirmation, sendAdminOrderNotification } from "@/lib/email";
+import { sendAdminOrderNotification } from "@/lib/email";
 import { calculateShipping } from "@/lib/shipping";
 import { logError, logEvent } from "@/lib/ops-log";
 import {
