@@ -58,6 +58,8 @@ uploads/
 orange_prod/*.key
 orange_prod/*.pfx
 orange_prod/*.pem
+orange_prod/*.crt
+orange_prod/*.txt
 orange_prod/rsa_2048_private_key.xml
 
 # PM2 ecosystem configs with real secrets (commit only *.example.js)

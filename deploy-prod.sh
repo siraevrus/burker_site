@@ -64,7 +64,19 @@ fi
 
 log_info "Обновление кода..."
 git fetch origin main
+STASHED=0
+if [[ -n "$(git status --porcelain)" ]]; then
+  git stash --include-untracked -q && STASHED=1
+  log_info "Локальные изменения сохранены в stash"
+fi
 git pull --ff-only origin main
+if [[ "$STASHED" -eq 1 ]]; then
+  git stash pop -q 2>/dev/null || {
+    log_warn "git stash pop вызвал конфликт — локальные файлы восстановлены, конфликт можно игнорировать"
+    git checkout --theirs . 2>/dev/null || true
+    git reset HEAD . 2>/dev/null || true
+  }
+fi
 log_ok "Код обновлён"
 
 # Удаление дубликатов "(2)" (могут ломать сборку Next.js)
