@@ -89,7 +89,7 @@ async function main() {
         discountType: "percentage",
         discountValue: 10,
         isActive: true,
-        usageLimit: null,
+        usageLimit: undefined,
         usageCount: 0,
       },
       {
@@ -105,7 +105,7 @@ async function main() {
         discountType: "fixed",
         discountValue: 500,
         isActive: true,
-        usageLimit: null,
+        usageLimit: undefined,
         usageCount: 0,
       },
     ],
