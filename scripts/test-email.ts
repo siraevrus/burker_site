@@ -1,14 +1,80 @@
 import "./load-env";
 import { sendEmailViaMailopost } from "../lib/mailopost";
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function printUsage() {
+  console.log("Использование:");
+  console.log("  tsx scripts/test-email.ts --to user@example.com --send");
+  console.log("");
+  console.log("Опции:");
+  console.log("  --to, -t    Email получателя");
+  console.log("  --send      Реально отправить письмо");
+  console.log("  --help      Показать справку");
+  console.log("");
+  console.log("По умолчанию скрипт работает в безопасном режиме и ничего не отправляет.");
+}
+
+function parseArgs(argv: string[]) {
+  let to = "";
+  let shouldSend = false;
+  let showHelp = false;
+
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+
+    if (arg === "--to" || arg === "-t") {
+      to = argv[i + 1] || "";
+      i += 1;
+      continue;
+    }
+
+    if (arg === "--send") {
+      shouldSend = true;
+      continue;
+    }
+
+    if (arg === "--help" || arg === "-h") {
+      showHelp = true;
+    }
+  }
+
+  return { to, shouldSend, showHelp };
+}
+
 async function testEmail() {
-  const testEmail = "ruslan@siraev.ru";
-  
-  console.log("Отправка тестового письма...");
-  console.log(`Получатель: ${testEmail}`);
+  const { to, shouldSend, showHelp } = parseArgs(process.argv.slice(2));
+
+  if (showHelp) {
+    printUsage();
+    return;
+  }
+
+  if (!to) {
+    console.error("Не указан получатель. Используйте --to user@example.com");
+    printUsage();
+    process.exitCode = 1;
+    return;
+  }
+
+  if (!EMAIL_RE.test(to)) {
+    console.error(`Некорректный email получателя: ${to}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  console.log("Подготовка тестового письма...");
+  console.log(`Получатель: ${to}`);
   console.log(`API Token настроен: ${process.env.MAILOPOST_API_TOKEN ? "Да" : "Нет"}`);
   console.log(`From Email: ${process.env.MAILOPOST_FROM_EMAIL || "не настроен"}`);
-  
+
+  if (!shouldSend) {
+    console.log("");
+    console.log("Безопасный режим: письмо не отправлено.");
+    console.log("Добавьте флаг --send для реальной отправки.");
+    return;
+  }
+
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <h2 style="color: #333;">Тестовое письмо от Mira Brands | Burker</h2>
@@ -22,7 +88,7 @@ async function testEmail() {
   `;
 
   const result = await sendEmailViaMailopost(
-    testEmail,
+    to,
     "Тестовое письмо от Mira Brands | Burker",
     html
   );
