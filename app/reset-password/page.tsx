@@ -7,7 +7,10 @@ import Link from "next/link";
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const email = searchParams.get("email") || "";
+  const emailFromQuery = searchParams.get("email") || "";
+
+  const [emailInput, setEmailInput] = useState(emailFromQuery);
+  const email = emailInput.trim();
 
   const [formData, setFormData] = useState({
     code: "",
@@ -79,11 +82,20 @@ function ResetPasswordForm() {
               </div>
             )}
 
-            {email && (
-              <div className="text-sm text-gray-600 mb-4">
-                Email: <strong>{email}</strong>
-              </div>
-            )}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium mb-2">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                placeholder="your@email.com"
+                required
+              />
+            </div>
 
             <div>
               <label htmlFor="code" className="block text-sm font-medium mb-2">

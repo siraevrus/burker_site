@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
               Мы отправили код для восстановления пароля на <strong>{email}</strong>
             </p>
             <Link
-              href="/reset-password"
+              href={`/reset-password?email=${encodeURIComponent(email)}`}
               className="inline-block bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors"
             >
               Ввести код
