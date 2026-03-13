@@ -263,6 +263,12 @@ function AdminOrdersPageContent() {
         );
         // Обновляем статистику после изменения статуса
         loadStats();
+        if (data.emailNotification && !data.emailNotification.sent) {
+          const errDetail = data.emailNotification.error
+            ? `\n\nОшибка: ${data.emailNotification.error}`
+            : "";
+          alert(`Статус обновлён, но email-уведомление не отправлено.${errDetail}`);
+        }
         return true;
       } else {
         const errorData = await response.json();

@@ -56,7 +56,7 @@ export async function sendEmailViaMailopost(
         (data.errors as Array<{ detail?: string }>)?.[0]?.detail ||
         (data.detail as string) ||
         `HTTP ${res.status}`;
-      console.error("[Mailopost] Ошибка отправки:", res.status, errMsg);
+      console.error("[Mailopost] Ошибка отправки:", res.status, errMsg, JSON.stringify(data));
       return { success: false, error: errMsg };
     }
 

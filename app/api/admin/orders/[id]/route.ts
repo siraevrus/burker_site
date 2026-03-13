@@ -189,7 +189,14 @@ export async function PUT(
           break;
       }
       if (!emailNotification.sent) {
-        emailNotification.error = "Email не отправлен";
+        emailNotification.error = "Email не отправлен (Mailopost вернул ошибку)";
+        logError("admin_order_email_not_sent", {
+          requestId,
+          orderId: order.id,
+          status,
+          to: order.email,
+          mailopostError: emailNotification.error,
+        });
       }
     } catch (emailError) {
       console.error("Error sending status email:", emailError);
@@ -197,6 +204,13 @@ export async function PUT(
         sent: false,
         error: emailError instanceof Error ? emailError.message : "Ошибка отправки email",
       };
+      logError("admin_order_email_exception", {
+        requestId,
+        orderId: order.id,
+        status,
+        to: order.email,
+        error: emailNotification.error,
+      });
     }
 
     logEvent("admin_order_status_updated", {
