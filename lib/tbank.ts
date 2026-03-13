@@ -87,6 +87,43 @@ function getAuthHeader(): string | undefined {
   return undefined;
 }
 
+function getInitDebugContext(body: Record<string, unknown>) {
+  const receipt = body.Receipt as
+    | {
+        Email?: string;
+        Taxation?: string;
+        Items?: Array<{ Amount?: number }>;
+        Payments?: { Electronic?: number };
+      }
+    | undefined;
+
+  return {
+    url: `${getBaseUrl()}/v2/Init`,
+    terminalKey: typeof body.TerminalKey === "string"
+      ? `${body.TerminalKey.slice(0, 4)}***${body.TerminalKey.slice(-4)}`
+      : body.TerminalKey,
+    amount: body.Amount,
+    orderId: body.OrderId,
+    description: body.Description,
+    successUrl: body.SuccessURL,
+    failUrl: body.FailURL,
+    notificationUrl: body.NotificationURL,
+    redirectDueDate: body.RedirectDueDate,
+    hasReceipt: Boolean(receipt),
+    receipt: receipt
+      ? {
+          email: receipt.Email,
+          taxation: receipt.Taxation,
+          itemsCount: Array.isArray(receipt.Items) ? receipt.Items.length : 0,
+          itemsAmountSum: Array.isArray(receipt.Items)
+            ? receipt.Items.reduce((sum, item) => sum + Number(item.Amount ?? 0), 0)
+            : 0,
+          paymentsElectronic: receipt.Payments?.Electronic,
+        }
+      : undefined,
+  };
+}
+
 /**
  * Результат Init: PaymentId для вебхука и PaymentURL для редиректа на платёжную форму.
  * PaymentURL — универсальная ссылка: карта, СБП и др. в зависимости от настроек терминала.
@@ -168,7 +205,13 @@ async function initPayment(params: CreateOneTimeLinkParams): Promise<InitResult>
         (data.Message as string) ??
         (data.ErrorMessage as string) ??
         `HTTP ${res.status}`;
-      console.error("T-Bank Init error:", res.status, errMsg);
+      console.error("T-Bank Init error:", {
+        status: res.status,
+        statusText: res.statusText,
+        error: errMsg,
+        response: data,
+        request: getInitDebugContext(body),
+      });
       throw new Error(`T-Bank Init: ${errMsg}`);
     }
 
@@ -178,6 +221,11 @@ async function initPayment(params: CreateOneTimeLinkParams): Promise<InitResult>
         (data.message as string) ??
         (data.Message as string) ??
         "Unknown error";
+      console.error("T-Bank Init unsuccessful response:", {
+        error: errMsg,
+        response: data,
+        request: getInitDebugContext(body),
+      });
       throw new Error(`T-Bank Init: ${errMsg}`);
     }
 
