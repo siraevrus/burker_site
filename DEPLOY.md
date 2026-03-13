@@ -1,11 +1,169 @@
 # Инструкция по сборке и деплою проекта Mira Brands | Burker
 
 ## Содержание
-1. [Локальная сборка и запуск](#локальная-сборка-и-запуск)
-2. [Деплой на сервер (через PM2)](#деплой-на-сервер-через-pm2)
-3. [Деплой через Docker](#деплой-через-docker)
-4. [Настройка переменных окружения](#настройка-переменных-окружения)
-5. [Проверка работоспособности](#проверка-работоспособности)
+1. [Git-стратегия и два стенда](#git-стратегия-и-два-стенда)
+2. [Test-стенд: первичная настройка](#test-стенд-первичная-настройка)
+3. [Деплой на Test-стенд](#деплой-на-test-стенд)
+4. [Локальная сборка и запуск](#локальная-сборка-и-запуск)
+5. [Деплой на сервер (через PM2)](#деплой-на-сервер-через-pm2)
+6. [Деплой через Docker](#деплой-через-docker)
+7. [Настройка переменных окружения](#настройка-переменных-окружения)
+8. [Проверка работоспособности](#проверка-работоспособности)
+
+---
+
+## Git-стратегия и два стенда
+
+### Принцип работы
+
+```
+feature/xxx  →  merge в main  →  deploy-test.sh  →  проверка  →  deploy-prod.sh
+```
+
+| Ветка | Роль |
+|-------|------|
+| `main` | Единственная ветка. Всегда содержит production-ready код. |
+| `feature/название` | Рабочая ветка для новой функции. Создаётся от `main`. |
+| `fix/название` | Рабочая ветка для исправления. Создаётся от `main`. |
+
+### Рабочий процесс
+
+```bash
+# 1. Начало работы над фичей
+git checkout main && git pull origin main
+git checkout -b feature/my-feature
+
+# 2. Разработка и коммиты
+git add .
+git commit -m "feat: описание изменения"
+
+# 3. Отправка и Pull Request на GitHub
+git push origin feature/my-feature
+# → Создать PR на GitHub: feature/my-feature → main
+
+# 4. После merge PR — деплой на тест
+ssh root@сервер "cd /var/www/test.burker-watches.ru && ./deploy-test.sh"
+
+# 5. Проверить на https://test.burker-watches.ru
+# 6. Если всё ок — деплой на прод
+ssh root@сервер "cd /var/www/burker-watches.ru && ./deploy-prod.sh"
+```
+
+### Стенды
+
+| Параметр | Production | Test |
+|----------|-----------|------|
+| Домен | `burker-watches.ru` | `test.burker-watches.ru` |
+| Порт | 3010 | 3011 |
+| PM2-процесс | `burker-watches` | `burker-watches-test` |
+| Директория | `/var/www/burker-watches.ru` | `/var/www/test.burker-watches.ru` |
+| База данных | `/var/lib/burker-watches/dev.db` | `/var/lib/burker-watches-test/dev.db` |
+| Конфиг PM2 | `ecosystem.config.js` | `ecosystem.config.test.js` |
+| T-Bank | prod-терминал | test-терминал (`rest-api-test.tinkoff.ru`) |
+| Доступ | Открытый | HTTP Basic Auth |
+
+### Важно: секреты не в git
+
+`ecosystem.config.js` и `ecosystem.config.test.js` добавлены в `.gitignore`.
+В репозитории хранятся только шаблоны:
+- `ecosystem.config.example.js` — для прода
+- `ecosystem.config.test.example.js` — для теста
+
+На сервере файлы с реальными секретами создаются вручную (см. ниже).
+
+---
+
+## Test-стенд: первичная настройка
+
+Выполняется один раз при создании тест-стенда.
+
+### 1. Создать директории на сервере
+
+```bash
+mkdir -p /var/www/test.burker-watches.ru
+mkdir -p /var/lib/burker-watches-test
+```
+
+### 2. Клонировать репозиторий
+
+```bash
+cd /var/www/test.burker-watches.ru
+git clone https://github.com/siraevrus/burker_site.git .
+```
+
+### 3. Создать ecosystem.config.test.js
+
+```bash
+cp ecosystem.config.test.example.js ecosystem.config.test.js
+nano ecosystem.config.test.js  # заполнить реальными test-значениями
+```
+
+Ключевые отличия от прода:
+- `PORT: 3011`
+- `DATABASE_URL: "file:/var/lib/burker-watches-test/dev.db"`
+- `NEXT_PUBLIC_SITE_URL: "https://test.burker-watches.ru"`
+- `TBANK_TERMINAL` и `TBANK_PASSWORD` — тестовый терминал T-Bank
+- `TELEGRAM_CHAT_ID` — отдельный чат для тестовых уведомлений
+
+### 4. Настроить nginx
+
+```bash
+cp nginx-test.burker-watches.ru.conf.example /etc/nginx/sites-available/test.burker-watches.ru
+# Отредактировать при необходимости
+sudo ln -s /etc/nginx/sites-available/test.burker-watches.ru /etc/nginx/sites-enabled/
+
+# Создать файл паролей для Basic Auth
+sudo apt install -y apache2-utils
+sudo htpasswd -c /etc/nginx/.htpasswd_test ваш_логин
+
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+### 5. Получить SSL-сертификат для поддомена
+
+```bash
+sudo certbot certonly --nginx -d test.burker-watches.ru
+sudo systemctl reload nginx
+```
+
+### 6. Первый деплой с засевом тестовых данных
+
+```bash
+cd /var/www/test.burker-watches.ru
+SEED=1 ./deploy-test.sh
+```
+
+Флаг `SEED=1` запустит `npm run db:seed:test` — создаст демо-товары, промо-коды (`TEST10`, `TEST20`, `FIXED500`) и тестовый заказ.
+
+---
+
+## Деплой на Test-стенд
+
+```bash
+ssh root@сервер
+cd /var/www/test.burker-watches.ru
+./deploy-test.sh
+```
+
+### Дополнительные флаги
+
+```bash
+# Принудительно db push (если нет файлов миграций)
+FORCE_DB_PUSH=1 ./deploy-test.sh
+
+# Пересоздать тестовые данные
+SEED=1 ./deploy-test.sh
+
+# Сбросить только данные без деплоя (на сервере, в директории теста)
+DATABASE_URL="file:/var/lib/burker-watches-test/dev.db" npm run db:seed:test
+```
+
+### Проверка
+
+После деплоя:
+- Сайт: `https://test.burker-watches.ru` (потребует логин/пароль из htpasswd)
+- Health: `curl http://127.0.0.1:3011/api/health`
+- Логи: `pm2 logs burker-watches-test`
 
 ---
 

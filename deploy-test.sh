@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+
+# Деплой на TEST стенд:
+# - деплоит ветку main в /var/www/test.burker-watches.ru
+# - использует ecosystem.config.test.js (PM2-процесс burker-watches-test, порт 3011)
+# - БД: /var/lib/burker-watches-test/dev.db
+#
+# Использование:
+#   ./deploy-test.sh
+#   FORCE_DB_PUSH=1 ./deploy-test.sh   # принудительно db push вместо migrate deploy
+#   SEED=1 ./deploy-test.sh            # засеять тестовые данные после деплоя
+
+set -Eeuo pipefail
+
+PROJECT_DIR="${PROJECT_DIR:-/var/www/test.burker-watches.ru}"
+APP_NAME="${APP_NAME:-burker-watches-test}"
+PORT="${PORT:-3011}"
+DB_PATH="${DB_PATH:-/var/lib/burker-watches-test/dev.db}"
+HEALTH_PATH="${HEALTH_PATH:-/api/health}"
+RETRIES="${RETRIES:-10}"
+ECOSYSTEM_FILE="${ECOSYSTEM_FILE:-ecosystem.config.test.js}"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+log_ok()   { echo -e "${GREEN}[OK]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_err()  { echo -e "${RED}[ERR]${NC} $1"; }
+
+on_error() {
+  log_err "Деплой прерван из-за ошибки на шаге: ${BASH_COMMAND}"
+  log_info "Последние логи PM2:"
+  pm2 logs "${APP_NAME}" --lines 40 || true
+}
+trap on_error ERR
+
+echo ""
+echo "=============================================================="
+echo " DEPLOY TEST  ${APP_NAME}  $(date '+%Y-%m-%d %H:%M:%S')"
+echo "=============================================================="
+
+cd "${PROJECT_DIR}"
+log_info "Рабочая директория: ${PROJECT_DIR}"
+
+log_info "Проверка git-статуса..."
+DIRTY=$(git status --porcelain)
+if [[ -n "$DIRTY" ]]; then
+  REMAINING=""
+  while IFS= read -r line; do
+    path="${line:3}"
+    case "$path" in
+      public/promo/*|public/products/*|public/order-proofs/*|public/yandex_*.html|ecosystem.config.js|ecosystem.config.test.js|backups|backups/|backups/*|orange_prod/*|orange_test/*) ;;
+      *) REMAINING="${REMAINING}${line}\n" ;;
+    esac
+  done <<< "$DIRTY"
+  if [[ -n "$REMAINING" ]]; then
+    log_warn "Есть локальные изменения (не только загрузки/ecosystem). Прерываю деплой."
+    echo -e "$REMAINING"
+    exit 1
+  fi
+  log_info "Изменения только в разрешённых локальных файлах — продолжаю деплой."
+fi
+
+log_info "Обновление кода (ветка main)..."
+git fetch origin main
+git pull --ff-only origin main
+log_ok "Код обновлён"
+
+find "${PROJECT_DIR}" -name "* (2)*" -type f -delete 2>/dev/null || true
+
+log_info "Установка зависимостей..."
+if [[ -f package-lock.json ]]; then
+  npm ci
+else
+  npm install
+fi
+log_ok "Зависимости установлены"
+
+log_info "Подготовка директории БД..."
+mkdir -p "$(dirname "${DB_PATH}")"
+if [[ ! -f "${DB_PATH}" && -f "${PROJECT_DIR}/prisma/dev.db" ]]; then
+  cp "${PROJECT_DIR}/prisma/dev.db" "${DB_PATH}"
+  log_ok "Скопирована существующая БД в ${DB_PATH}"
+fi
+chmod 755 "$(dirname "${DB_PATH}")" || true
+chmod 664 "${DB_PATH}" 2>/dev/null || true
+export DATABASE_URL="file:${DB_PATH}"
+log_ok "DATABASE_URL=${DATABASE_URL}"
+
+log_info "Prisma generate + migrate deploy..."
+npx prisma generate
+
+if [[ "${FORCE_DB_PUSH:-0}" == "1" ]]; then
+  log_warn "FORCE_DB_PUSH=1 -> принудительно запускаю prisma db push"
+  npx prisma db push --skip-generate
+  log_ok "Схема БД синхронизирована через db push"
+elif ls prisma/migrations/*/migration.sql >/dev/null 2>&1; then
+  log_info "Найдены миграции -> prisma migrate deploy"
+  npx prisma migrate deploy
+  log_ok "Миграции применены"
+else
+  log_warn "Миграции не найдены -> prisma db push --skip-generate"
+  npx prisma db push --skip-generate
+  log_ok "Схема БД синхронизирована через db push"
+fi
+
+# Засеять тестовые данные (только если явно запрошено или БД только что создана)
+if [[ "${SEED:-0}" == "1" ]]; then
+  log_info "Засев тестовых данных (SEED=1)..."
+  npm run db:seed:test
+  log_ok "Тестовые данные добавлены"
+fi
+
+UPLOADS_BACKUP=""
+if [[ -d ".next/standalone/public/order-proofs" ]]; then
+  UPLOADS_BACKUP=$(mktemp -d)
+  cp -r ".next/standalone/public/order-proofs" "${UPLOADS_BACKUP}/order-proofs"
+  log_info "Сохранена копия standalone/public/order-proofs (до сборки)"
+fi
+
+log_info "Сборка приложения..."
+npm run build
+log_ok "Сборка завершена"
+
+log_info "Подготовка standalone-статики (CSS/JS/public)..."
+if [[ ! -d ".next/standalone" ]]; then
+  log_err "Не найдена директория .next/standalone. Проверьте output: 'standalone' в next.config.ts"
+  exit 1
+fi
+
+mkdir -p .next/standalone/.next
+rm -rf .next/standalone/.next/static
+cp -r .next/static .next/standalone/.next/static
+
+if [[ -d "public" ]]; then
+  rm -rf .next/standalone/public
+  cp -r public .next/standalone/public
+else
+  log_warn "Папка public не найдена в проекте, пропускаю копирование"
+fi
+
+if [[ -n "${UPLOADS_BACKUP}" && -d "${UPLOADS_BACKUP}/order-proofs" ]]; then
+  mkdir -p ".next/standalone/public/order-proofs"
+  cp -r "${UPLOADS_BACKUP}/order-proofs/." ".next/standalone/public/order-proofs/" 2>/dev/null || true
+  rm -rf "${UPLOADS_BACKUP}"
+  log_ok "Восстановлен standalone/public/order-proofs"
+fi
+
+log_ok "Standalone-статика подготовлена"
+
+log_info "Перезапуск PM2 (${APP_NAME})..."
+if pm2 describe "${APP_NAME}" >/dev/null 2>&1; then
+  pm2 restart "${APP_NAME}"
+else
+  pm2 start "${ECOSYSTEM_FILE}" --only "${APP_NAME}"
+fi
+pm2 save
+log_ok "PM2 перезапущен"
+
+log_info "Health-check ${HEALTH_PATH}..."
+success=0
+for ((i=1; i<=RETRIES; i++)); do
+  code="$(curl -sS -o /tmp/burker-test-health.json -w "%{http_code}" "http://127.0.0.1:${PORT}${HEALTH_PATH}" || true)"
+  if [[ "${code}" == "200" ]]; then
+    success=1
+    break
+  fi
+  sleep 2
+done
+
+if [[ "${success}" -ne 1 ]]; then
+  log_err "Health-check не прошёл"
+  cat /tmp/burker-test-health.json 2>/dev/null || true
+  exit 1
+fi
+
+log_ok "Health-check OK"
+cat /tmp/burker-test-health.json || true
+
+echo ""
+echo "=============================================================="
+echo -e "${GREEN} DEPLOY TEST УСПЕШЕН${NC}"
+echo " app: ${APP_NAME}"
+echo " db : ${DB_PATH}"
+echo " url: http://127.0.0.1:${PORT}${HEALTH_PATH}"
+echo " web: https://test.burker-watches.ru"
+echo "=============================================================="

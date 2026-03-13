@@ -1,3 +1,6 @@
+// PM2 конфиг для PRODUCTION стенда.
+// Скопируйте в ecosystem.config.js и заполните реальными значениями.
+// ecosystem.config.js добавлен в .gitignore и НЕ коммитится в git.
 module.exports = {
   apps: [
     {
@@ -10,22 +13,35 @@ module.exports = {
         PORT: 3010,
         PATH: "/root/.nvm/versions/node/v24.13.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
         DATABASE_URL: "file:/var/lib/burker-watches/dev.db",
-        ADMIN_USERNAME: "admin",
-        ADMIN_PASSWORD: "admin123",
-        ADMIN_JWT_SECRET: "h2VCZGvF/Kp7DQNgT7+4Q3xgBfwZ",
-        CRON_SECRET: "ПОДСТАВЬТЕ_ВАШ_СЕКРЕТ_ДЛЯ_CRON",
-        ADMIN_EMAIL: "info@kondratov.online",
+
+        ADMIN_USERNAME: "",
+        ADMIN_PASSWORD: "",
+        ADMIN_JWT_SECRET: "",
+        CRON_SECRET: "",
+        ADMIN_EMAIL: "",
+
         NEXT_PUBLIC_SITE_URL: "https://burker-watches.ru",
-        MAILOPOST_API_TOKEN: "0e214eeceb83783a7ed4dc025a0175b",
+
+        MAILOPOST_API_TOKEN: "",
         MAILOPOST_FROM_EMAIL: "noreply@burker-watches.ru",
         MAILOPOST_FROM_NAME: "Mira Brands | Burker",
+
         SMTP_HOST: "smtp.msndr.net",
         SMTP_PORT: 465,
         SMTP_SECURE: true,
-        SMTP_USER: "info@kondratov.online",
-        SMTP_PASSWORD: "0e214eeceb83783a7ed4dc025a0175b1",
-        TELEGRAM_BOT_TOKEN: "8788264025:AAFgPKWEroi0rvGDulpJGcNmTckz7kgBCFU",
-        TELEGRAM_CHAT_ID: "-5199924376",
+        SMTP_USER: "",
+        SMTP_PASSWORD: "",
+
+        TELEGRAM_BOT_TOKEN: "",
+        TELEGRAM_CHAT_ID: "",
+
+        // T-Bank EACQ (production terminal)
+        TBANK_TERMINAL: "",
+        TBANK_PASSWORD: "",
+
+        // Orange Data fiscal (production certs in orange_prod/)
+        // ORANGEDATA_INN: ""
+        // ORANGEDATA_KEY_FILE: "orange_prod/..."
       },
       error_file: "/root/.pm2/logs/burker-watches-error.log",
       out_file: "/root/.pm2/logs/burker-watches-out.log",

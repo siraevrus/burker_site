@@ -13,8 +13,10 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:test": "tsx prisma/seed-test.ts",
     "db:studio": "prisma studio",
     "test:tbank": "tsx scripts/test-tbank.ts",
+    "test:webhook": "tsx scripts/test-tbank-webhook.ts",
     "check:orangedata": "tsx scripts/check-orangedata.ts",
     "check:cron": "tsx scripts/check-cron-feeds.ts"
   },
