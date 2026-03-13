@@ -6,8 +6,8 @@
  * - Товары из lib/data (те же, что в основном seed)
  * - Промо-баннер
  * - Верхняя строка-бегущая строка
- * - Промо-коды TEST10 и TEST20
- * - Настройки обменного курса (евро)
+ * - Промо-коды TEST10, TEST20, FIXED500
+ * - Настройки обменного курса
  * - Тестовый заказ (для проверки страниц заказа и PDF-чека)
  */
 
@@ -20,7 +20,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Seeding TEST database...");
 
-  // Очистка существующих данных
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.promoCodeUsage.deleteMany();
@@ -30,7 +29,6 @@ async function main() {
   await prisma.topBanner.deleteMany();
   await prisma.exchangeRate.deleteMany();
 
-  // Товары
   for (const product of products) {
     await prisma.product.create({
       data: {
@@ -58,7 +56,6 @@ async function main() {
   }
   console.log(`  ✓ ${products.length} товаров добавлено`);
 
-  // Промо-баннер
   await prisma.promoBanner.create({
     data: {
       image: "/Isabell_gold_burgundy_1.webp",
@@ -70,7 +67,6 @@ async function main() {
   });
   console.log("  ✓ Промо-баннер создан");
 
-  // Верхняя строка
   await prisma.topBanner.upsert({
     where: { id: "single" },
     update: { text: "[ТЕСТ-СТЕНД] Это тестовая версия сайта" },
@@ -81,73 +77,78 @@ async function main() {
   });
   console.log("  ✓ Верхняя строка создана");
 
-  // Промо-коды
+  const now = new Date();
+  const yearLater = new Date(now);
+  yearLater.setFullYear(yearLater.getFullYear() + 1);
+
   await prisma.promoCode.createMany({
     data: [
       {
         code: "TEST10",
-        discountType: "percentage",
-        discountValue: 10,
+        discountType: "percent",
+        discount: 10,
         isActive: true,
-        usageLimit: undefined,
-        usageCount: 0,
+        usageLimit: 9999,
+        validFrom: now,
+        validUntil: yearLater,
       },
       {
         code: "TEST20",
-        discountType: "percentage",
-        discountValue: 20,
+        discountType: "percent",
+        discount: 20,
         isActive: true,
         usageLimit: 100,
-        usageCount: 0,
+        validFrom: now,
+        validUntil: yearLater,
       },
       {
         code: "FIXED500",
         discountType: "fixed",
-        discountValue: 500,
+        discount: 500,
         isActive: true,
-        usageLimit: undefined,
-        usageCount: 0,
+        usageLimit: 9999,
+        validFrom: now,
+        validUntil: yearLater,
       },
     ],
   });
   console.log("  ✓ Промо-коды: TEST10, TEST20, FIXED500");
 
-  // Курс обмена
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
   await prisma.exchangeRate.upsert({
-    where: { currency: "EUR" },
-    update: { rate: 100.0, date: today },
-    create: { currency: "EUR", rate: 100.0, date: today },
+    where: { id: "current" },
+    update: { eurRate: 0.87, rubRate: 80.0 },
+    create: { id: "current", eurRate: 0.87, rubRate: 80.0 },
   });
-  console.log("  ✓ Курс EUR/RUB: 100.00 (демо)");
+  console.log("  ✓ Курсы: EUR=0.87, RUB=80.0 (демо)");
 
-  // Тестовый заказ
   const firstProduct = products[0];
   const testOrder = await prisma.order.create({
     data: {
       orderNumber: "TEST-00001",
-      status: "paid",
-      customerName: "Тест Тестов",
-      customerEmail: "test@example.com",
-      customerPhone: "+7 (999) 000-00-00",
-      deliveryMethod: "cdek_courier",
-      deliveryAddress: "г. Москва, ул. Тестовая, д. 1, кв. 1",
-      deliveryCost: 350,
-      subtotal: firstProduct.price * 100,
-      total: firstProduct.price * 100 + 350,
-      paymentMethod: "tbank_eacq",
-      paymentId: "TEST_PAYMENT_ID_001",
-      isPaid: true,
+      status: "accepted",
+      paymentStatus: "paid",
+      email: "test@example.com",
+      firstName: "Тест",
+      lastName: "Тестов",
+      middleName: "Тестович",
+      phone: "+7 (999) 000-00-00",
+      cdekAddress: "г. Москва, ПВЗ Тестовый, ул. Примерная, д. 1",
+      inn: "123456789012",
+      passportSeries: "1234",
+      passportNumber: "567890",
+      passportIssueDate: "2020-01-01",
+      passportIssuedBy: "ТЕСТ УФМС",
+      totalAmount: firstProduct.price + 350,
+      shippingCost: 350,
       paidAt: new Date(),
       items: {
         create: [
           {
             productId: firstProduct.id,
             productName: firstProduct.name,
-            productImage: firstProduct.images?.[0] ?? "",
+            productPrice: firstProduct.price,
+            selectedColor: "black",
             quantity: 1,
-            price: firstProduct.price * 100,
           },
         ],
       },
