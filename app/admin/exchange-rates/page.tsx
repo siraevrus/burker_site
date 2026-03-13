@@ -18,12 +18,24 @@ interface HistoryItem {
   createdAt: string;
 }
 
+interface ImportHistoryItem {
+  id: string;
+  type: string;
+  added: number;
+  updated: number;
+  errors: number;
+  total: number;
+  createdAt: string;
+}
+
 export default function AdminExchangeRatesPage() {
   const [data, setData] = useState<RatesData | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [importHistory, setImportHistory] = useState<ImportHistoryItem[]>([]);
+  const [loadingImportHistory, setLoadingImportHistory] = useState(true);
 
   const loadHistory = async () => {
     try {
@@ -39,6 +51,23 @@ export default function AdminExchangeRatesPage() {
       setHistory([]);
     } finally {
       setLoadingHistory(false);
+    }
+  };
+
+  const loadImportHistory = async () => {
+    try {
+      const res = await fetch("/api/admin/import/history?limit=20", { credentials: "include" });
+      if (res.ok) {
+        const json = await res.json();
+        setImportHistory(json.history ?? []);
+      } else {
+        setImportHistory([]);
+      }
+    } catch (e) {
+      console.error(e);
+      setImportHistory([]);
+    } finally {
+      setLoadingImportHistory(false);
     }
   };
 
@@ -62,6 +91,7 @@ export default function AdminExchangeRatesPage() {
   useEffect(() => {
     loadRates();
     loadHistory();
+    loadImportHistory();
   }, []);
 
   const handleUpdate = async () => {
@@ -112,6 +142,13 @@ export default function AdminExchangeRatesPage() {
 
   const sourceLabel = (s: string) => (s === "cbr" ? "ЦБ РФ" : s === "default" ? "по умолчанию" : s);
 
+  const importTypeLabel = (t: string) => {
+    if (t === "automatic") return "Авто (cron)";
+    if (t === "manual") return "Вручную";
+    if (t === "file") return "Файл";
+    return t;
+  };
+
   return (
     <div className="p-6 max-w-4xl">
       <div className="flex items-center justify-between mb-6">
@@ -156,11 +193,11 @@ export default function AdminExchangeRatesPage() {
 
       {/* История парсинга курсов */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mt-8">
-        <h2 className="text-xl font-bold px-4 py-3 border-b border-gray-200 bg-gray-50">История парсинга</h2>
+        <h2 className="text-xl font-bold px-4 py-3 border-b border-gray-200 bg-gray-50">История обновления курсов</h2>
         {loadingHistory ? (
           <div className="px-4 py-8 text-center text-gray-500">Загрузка истории…</div>
         ) : history.length === 0 ? (
-          <div className="px-4 py-8 text-center text-gray-500">История парсинга пуста</div>
+          <div className="px-4 py-8 text-center text-gray-500">История пуста</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -179,6 +216,49 @@ export default function AdminExchangeRatesPage() {
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.rubRate.toFixed(2)}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.rubPerEur.toFixed(2)}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{sourceLabel(item.source)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* История парсинга товаров */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mt-8">
+        <h2 className="text-xl font-bold px-4 py-3 border-b border-gray-200 bg-gray-50">История парсинга</h2>
+        {loadingImportHistory ? (
+          <div className="px-4 py-8 text-center text-gray-500">Загрузка истории…</div>
+        ) : importHistory.length === 0 ? (
+          <div className="px-4 py-8 text-center text-gray-500">История парсинга пуста</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата и время</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Тип</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Всего</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Добавлено</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Обновлено</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ошибки</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {importHistory.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{formatDate(item.createdAt)}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{importTypeLabel(item.type)}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.total}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-green-600 font-medium">{item.added > 0 ? `+${item.added}` : item.added}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-blue-600 font-medium">{item.updated}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm">
+                      {item.errors > 0 ? (
+                        <span className="text-red-600 font-medium">{item.errors}</span>
+                      ) : (
+                        <span className="text-gray-400">0</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
