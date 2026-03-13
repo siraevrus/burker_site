@@ -66,18 +66,16 @@ export async function POST(request: NextRequest) {
     }
     const filename = `product-${timestamp}-${randomStr}.${ext}`;
 
-    // Путь к папке public/products
-    const publicDir = join(process.cwd(), "public", "products");
-    
-    // Создаем папку, если её нет
-    if (!existsSync(publicDir)) {
-      mkdirSync(publicDir, { recursive: true });
+    const cwd = process.cwd();
+    const dirs = [
+      join(cwd, "public", "products"),
+      join(cwd, ".next", "standalone", "public", "products"),
+    ];
+
+    for (const dir of dirs) {
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      await writeFile(join(dir, filename), buffer);
     }
-
-    const filepath = join(publicDir, filename);
-
-    // Сохраняем файл
-    await writeFile(filepath, buffer);
 
     // Возвращаем путь к файлу
     return NextResponse.json({

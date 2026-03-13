@@ -54,13 +54,16 @@ export async function POST(request: NextRequest) {
     const extension = file.name.split(".").pop() || "jpg";
     const filename = `proof-${orderId}-${timestamp}.${extension}`;
 
-    // Загрузка только в public/promo (nginx отдаёт статику напрямую из этой папки)
-    const targetDir = join(process.cwd(), "public", "promo");
-    if (!existsSync(targetDir)) {
-      mkdirSync(targetDir, { recursive: true });
+    const cwd = process.cwd();
+    const dirs = [
+      join(cwd, "public", "promo"),
+      join(cwd, ".next", "standalone", "public", "promo"),
+    ];
+
+    for (const dir of dirs) {
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      await writeFile(join(dir, filename), buffer);
     }
-    const filepath = join(targetDir, filename);
-    await writeFile(filepath, buffer);
 
     return NextResponse.json({
       success: true,
