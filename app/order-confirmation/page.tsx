@@ -208,14 +208,32 @@ function OrderConfirmationContent() {
             <p className="text-sm text-amber-800 mb-3">
               {order.paymentLink
                 ? "Заказ ожидает оплаты. Нажмите кнопку ниже, чтобы перейти к оплате в платёжной форме банка."
-                : "Ссылка на оплату не была сформирована. Вы можете перейти на страницу оплаты и попробовать снова или связаться с нами."}
+                : "Ссылка на оплату пока не была сформирована. Обновите страницу через несколько секунд или свяжитесь с нами, если проблема не исчезает."}
             </p>
-            <Link
-              href={token ? `/order/${order.id}/pay?token=${encodeURIComponent(token)}` : `/order/${order.id}/pay`}
-              className="inline-block bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
-            >
-              {order.paymentLink ? "Оплатить заказ" : "Страница оплаты"}
-            </Link>
+            {order.paymentLink ? (
+              <Link
+                href={token ? `/order/${order.id}/pay?token=${encodeURIComponent(token)}` : `/order/${order.id}/pay`}
+                className="inline-block bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
+              >
+                Оплатить заказ
+              </Link>
+            ) : (
+              <div className="flex gap-3 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="inline-block bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
+                >
+                  Обновить страницу
+                </button>
+                <Link
+                  href="/contact"
+                  className="inline-block border border-amber-300 text-amber-900 px-6 py-2 rounded-md hover:bg-amber-100 text-sm font-medium"
+                >
+                  Связаться с нами
+                </Link>
+              </div>
+            )}
           </div>
         )}
         {order.paymentStatus === "paid" && (
