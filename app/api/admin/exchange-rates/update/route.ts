@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-api";
 import { updateExchangeRates } from "@/lib/exchange-rates";
 import { fetchCbrRates } from "@/lib/cbr-rates";
+import { notifyRatesUpdated } from "@/lib/telegram";
 
 // Дефолты при недоступности ЦБ: 80 ₽/USD, 95 ₽/EUR
 const DEFAULT_RUB_RATE = 80;
@@ -32,6 +33,18 @@ export async function POST(request: NextRequest) {
     }
 
     await updateExchangeRates(eurRate, rubRate);
+
+    // Отправка уведомления в Telegram
+    try {
+      await notifyRatesUpdated({
+        eurRate,
+        rubRate,
+        source: source === "cbr" ? "ЦБ РФ" : "по умолчанию",
+      });
+    } catch (telegramError) {
+      console.error("Failed to send Telegram notification:", telegramError);
+      // Не прерываем выполнение при ошибке отправки в Telegram
+    }
 
     return NextResponse.json({
       success: true,

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateExchangeRates } from "@/lib/exchange-rates";
 import { fetchCbrRates } from "@/lib/cbr-rates";
+import { notifyRatesUpdated } from "@/lib/telegram";
+
+// Дефолты при недоступности ЦБ: 80 ₽/USD, 95 ₽/EUR
+const DEFAULT_RUB_RATE = 80;
+const DEFAULT_EUR_RATE = 80 / 95;
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -21,18 +26,45 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { eurRate, rubRate } = await fetchCbrRates();
+    let eurRate: number;
+    let rubRate: number;
+    let source: string;
+
+    try {
+      const cbr = await fetchCbrRates();
+      eurRate = cbr.eurRate;
+      rubRate = cbr.rubRate;
+      source = "cbr";
+    } catch (cbrError) {
+      console.warn("CBR fetch failed, using defaults:", cbrError);
+      eurRate = DEFAULT_EUR_RATE;
+      rubRate = DEFAULT_RUB_RATE;
+      source = "default";
+    }
+
     await updateExchangeRates(eurRate, rubRate);
 
     const dateReq = new Date().toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\./g, "/");
 
     console.log(
-      `Exchange rates updated (CBR): EUR=${eurRate.toFixed(4)}, RUB=${rubRate.toFixed(4)}`
+      `Exchange rates updated (${source === "cbr" ? "CBR" : "default"}): EUR=${eurRate.toFixed(4)}, RUB=${rubRate.toFixed(4)}`
     );
+
+    // Отправка уведомления в Telegram
+    try {
+      await notifyRatesUpdated({
+        eurRate,
+        rubRate,
+        source: source === "cbr" ? "ЦБ РФ" : "по умолчанию",
+      });
+    } catch (telegramError) {
+      console.error("Failed to send Telegram notification:", telegramError);
+      // Не прерываем выполнение при ошибке отправки в Telegram
+    }
 
     return NextResponse.json({
       success: true,
-      source: "cbr",
+      source,
       dateReq,
       rates: { eurRate, rubRate },
       updatedAt: new Date().toISOString(),
