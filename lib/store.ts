@@ -5,6 +5,30 @@ import { CartItem, Collection, Color, User } from "./types";
 /** По таможенным правилам — не более 3 вещей одной категории в один заказ (часы, браслеты, ожерелье, серьги, кольца) */
 export const MAX_QUANTITY_PER_CATEGORY = 3;
 
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+
+function syncCartToServer(cart: CartItem[]) {
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    fetch("/api/cart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: cart.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          images: item.images,
+          selectedColor: item.selectedColor,
+          quantity: item.quantity,
+          collection: item.collection,
+          subcategory: item.subcategory,
+        })),
+      }),
+    }).catch(() => {});
+  }, 500);
+}
+
 /** Категория для таможенного лимита: часы — одна категория, украшения — по subcategory */
 export function getCustomsCategory(item: { collection: string; subcategory?: string | null }): string {
   if (item.collection === "Украшения") {
@@ -69,27 +93,30 @@ export const useStore = create<Store>()(
 
     if (existingItem) {
       const newQty = Math.min(existingItem.quantity + canAdd, MAX_QUANTITY_PER_CATEGORY);
-      set({
-        cart: get().cart.map((cartItem) =>
-          cartItem.id === item.id && cartItem.selectedColor === item.selectedColor
-            ? { ...cartItem, quantity: newQty }
-            : cartItem
-        ),
-      });
+      const newCart = get().cart.map((cartItem) =>
+        cartItem.id === item.id && cartItem.selectedColor === item.selectedColor
+          ? { ...cartItem, quantity: newQty }
+          : cartItem
+      );
+      set({ cart: newCart });
+      if (get().user) syncCartToServer(newCart);
     } else {
-      set({ cart: [...get().cart, { ...item, quantity: canAdd }] });
+      const newCart = [...get().cart, { ...item, quantity: canAdd }];
+      set({ cart: newCart });
+      if (get().user) syncCartToServer(newCart);
     }
   },
   removeFromCart: (id, selectedColor) => {
+    let newCart: CartItem[];
     if (selectedColor !== undefined) {
-      set({
-        cart: get().cart.filter(
-          (item) => !(item.id === id && item.selectedColor === selectedColor)
-        ),
-      });
+      newCart = get().cart.filter(
+        (item) => !(item.id === id && item.selectedColor === selectedColor)
+      );
     } else {
-      set({ cart: get().cart.filter((item) => item.id !== id) });
+      newCart = get().cart.filter((item) => item.id !== id);
     }
+    set({ cart: newCart });
+    if (get().user) syncCartToServer(newCart);
   },
   updateQuantity: (id, quantity, selectedColor) => {
     const cart = get().cart;
@@ -112,15 +139,15 @@ export const useStore = create<Store>()(
     const cappedQty = Math.min(quantity, MAX_QUANTITY_PER_CATEGORY - otherCategoryQty);
     if (cappedQty <= 0) return;
 
-    set({
-      cart: cart.map((item) => {
-        const match =
-          selectedColor !== undefined
-            ? item.id === id && item.selectedColor === selectedColor
-            : item.id === id;
-        return match ? { ...item, quantity: cappedQty } : item;
-      }),
+    const newCart = cart.map((item) => {
+      const match =
+        selectedColor !== undefined
+          ? item.id === id && item.selectedColor === selectedColor
+          : item.id === id;
+      return match ? { ...item, quantity: cappedQty } : item;
     });
+    set({ cart: newCart });
+    if (get().user) syncCartToServer(newCart);
   },
   setCollectionFilter: (collection) => {
     set({ filters: { ...get().filters, collection } });
@@ -142,6 +169,7 @@ export const useStore = create<Store>()(
   },
   clearCart: () => {
     set({ cart: [] });
+    if (get().user) syncCartToServer([]);
   },
   loadUser: async () => {
     try {
@@ -149,6 +177,8 @@ export const useStore = create<Store>()(
       const data = await response.json();
       if (data.user) {
         set({ user: data.user });
+        const cart = get().cart;
+        if (cart.length > 0) syncCartToServer(cart);
       } else {
         set({ user: null });
       }

@@ -23,6 +23,11 @@ export async function GET(
             createdAt: "desc",
           },
         },
+        cartItems: {
+          orderBy: {
+            updatedAt: "desc",
+          },
+        },
       },
     });
 

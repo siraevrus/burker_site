@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface OrderItem {
   id: string;
@@ -33,6 +34,18 @@ interface Order {
   promoDiscount?: number | null;
 }
 
+interface CartItem {
+  id: string;
+  productId: string;
+  productName: string;
+  productPrice: number;
+  productImage: string | null;
+  selectedColor: string;
+  quantity: number;
+  collection: string | null;
+  updatedAt: string;
+}
+
 interface User {
   id: string;
   email: string;
@@ -45,6 +58,7 @@ interface User {
   deviceInfo: string | null;
   createdAt: string;
   orders: Order[];
+  cartItems: CartItem[];
 }
 
 const statusLabels: Record<string, string> = {
@@ -216,6 +230,58 @@ export default function AdminUserDetailPage({
           <p className="text-2xl font-bold text-green-600">{totalSpent.toFixed(0)} ₽</p>
         </div>
       </div>
+
+      {user.cartItems && user.cartItems.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-bold">
+              Корзина
+              <span className="ml-2 text-sm font-normal text-gray-500">
+                ({user.cartItems.reduce((s, i) => s + i.quantity, 0)} шт. на{" "}
+                {user.cartItems.reduce((s, i) => s + i.productPrice * i.quantity, 0).toFixed(0)} ₽)
+              </span>
+            </h2>
+          </div>
+          <div className="divide-y divide-gray-200">
+            {user.cartItems.map((item) => (
+              <div key={item.id} className="px-6 py-3 flex items-center gap-4">
+                {item.productImage ? (
+                  <Image
+                    src={item.productImage}
+                    alt={item.productName}
+                    width={48}
+                    height={48}
+                    className="w-12 h-12 object-cover rounded"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
+                    нет
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm text-gray-900 truncate">{item.productName}</p>
+                  <p className="text-xs text-gray-500">
+                    Цвет: {item.selectedColor}
+                    {item.collection && <span className="ml-2">Коллекция: {item.collection}</span>}
+                  </p>
+                </div>
+                <div className="text-sm text-gray-600">{item.quantity} шт.</div>
+                <div className="text-sm font-medium text-gray-900 w-24 text-right">
+                  {(item.productPrice * item.quantity).toFixed(0)} ₽
+                </div>
+                <div className="text-xs text-gray-400 w-28 text-right">
+                  {new Date(item.updatedAt).toLocaleString("ru-RU", {
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
