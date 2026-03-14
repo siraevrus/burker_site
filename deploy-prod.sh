@@ -62,6 +62,22 @@ if [[ -n "$DIRTY" ]]; then
   log_info "Изменения только в разрешённых локальных файлах (uploads/yandex/ecosystem/orange_prod) — продолжаю деплой."
 fi
 
+# Сохраняем proof-изображения ДО git stash (stash --include-untracked может их забрать,
+# а stash pop при конфликте — потерять)
+PROMO_PROOFS_BACKUP=""
+if ls public/promo/proof-* >/dev/null 2>&1; then
+  PROMO_PROOFS_BACKUP=$(mktemp -d)
+  cp public/promo/proof-* "${PROMO_PROOFS_BACKUP}/"
+  log_info "Сохранены proof-изображения из public/promo/ (до git stash)"
+fi
+if ls .next/standalone/public/promo/proof-* >/dev/null 2>&1; then
+  if [[ -z "${PROMO_PROOFS_BACKUP}" ]]; then
+    PROMO_PROOFS_BACKUP=$(mktemp -d)
+  fi
+  cp -n .next/standalone/public/promo/proof-* "${PROMO_PROOFS_BACKUP}/" 2>/dev/null || true
+  log_info "Сохранены proof-изображения из standalone/public/promo/ (до git stash)"
+fi
+
 log_info "Обновление кода..."
 git fetch origin main
 STASHED=0
@@ -129,22 +145,6 @@ if [[ -d ".next/standalone/public/order-proofs" ]]; then
   UPLOADS_BACKUP=$(mktemp -d)
   cp -r ".next/standalone/public/order-proofs" "${UPLOADS_BACKUP}/order-proofs"
   log_info "Сохранена копия standalone/public/order-proofs (до сборки)"
-fi
-
-# Сохраняем proof-изображения из promo/ (загруженные через upload-proof)
-PROMO_PROOFS_BACKUP=""
-if ls .next/standalone/public/promo/proof-* >/dev/null 2>&1; then
-  PROMO_PROOFS_BACKUP=$(mktemp -d)
-  cp .next/standalone/public/promo/proof-* "${PROMO_PROOFS_BACKUP}/"
-  log_info "Сохранены proof-изображения из standalone/public/promo/ (до сборки)"
-fi
-# Также сохраняем proof-файлы из public/promo (на случай если cwd = корень проекта)
-if ls public/promo/proof-* >/dev/null 2>&1; then
-  if [[ -z "${PROMO_PROOFS_BACKUP}" ]]; then
-    PROMO_PROOFS_BACKUP=$(mktemp -d)
-  fi
-  cp -n public/promo/proof-* "${PROMO_PROOFS_BACKUP}/" 2>/dev/null || true
-  log_info "Сохранены proof-изображения из public/promo/ (до сборки)"
 fi
 
 log_info "Сборка приложения..."
