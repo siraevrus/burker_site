@@ -11,6 +11,7 @@ interface User {
   phone: string | null;
   emailVerified: boolean;
   createdAt: Date;
+  type: "registered" | "guest";
   _count: {
     orders: number;
   };
@@ -28,15 +29,16 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
 
   useEffect(() => {
     setLoading(true);
     const timeoutId = setTimeout(() => {
       loadUsers();
-    }, searchQuery ? 300 : 0); // Debounce для поиска
+    }, searchQuery ? 300 : 0);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, orderStatusFilter]);
+  }, [searchQuery, orderStatusFilter, typeFilter]);
 
   const loadUsers = async () => {
     try {
@@ -46,6 +48,9 @@ export default function AdminUsersPage() {
       }
       if (orderStatusFilter) {
         params.append("orderStatus", orderStatusFilter);
+      }
+      if (typeFilter) {
+        params.append("type", typeFilter);
       }
       
       const response = await fetch(`/api/admin/users?${params.toString()}`);
@@ -62,6 +67,14 @@ export default function AdminUsersPage() {
 
   const getTotalSpent = (userOrders: User["orders"]) => {
     return userOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+  };
+
+  const handleRowClick = (user: User) => {
+    if (user.type === "guest") {
+      window.location.href = `/admin/users/guest?email=${encodeURIComponent(user.email)}`;
+    } else {
+      window.location.href = `/admin/users/${user.id}`;
+    }
   };
 
   if (loading) {
@@ -81,9 +94,8 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Поиск и фильтры */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">
               Поиск (имя, фамилия, отчество, телефон, email)
@@ -106,11 +118,25 @@ export default function AdminUsersPage() {
               className="w-full border border-gray-300 rounded-md px-3 py-2"
             >
               <option value="">Все статусы</option>
-              <option value="pending">В обработке</option>
-              <option value="confirmed">Подтвержден</option>
-              <option value="shipped">Отправлен</option>
+              <option value="accepted">Заказ принят</option>
+              <option value="purchased">Выкуплен</option>
+              <option value="in_transit_de">В пути на склад</option>
+              <option value="in_transit_ru">В пути в РФ</option>
               <option value="delivered">Доставлен</option>
-              <option value="cancelled">Отменен</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Тип пользователя
+            </label>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
+            >
+              <option value="">Все</option>
+              <option value="registered">Зарегистрированные</option>
+              <option value="guest">Гостевые</option>
             </select>
           </div>
         </div>
@@ -130,6 +156,9 @@ export default function AdminUsersPage() {
                 Телефон
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Тип
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Email подтвержден
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -139,7 +168,7 @@ export default function AdminUsersPage() {
                 Потрачено
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Дата регистрации
+                Дата
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Действия
@@ -151,7 +180,7 @@ export default function AdminUsersPage() {
               <tr
                 key={user.id}
                 className="hover:bg-gray-50 cursor-pointer"
-                onClick={() => window.location.href = `/admin/users/${user.id}`}
+                onClick={() => handleRowClick(user)}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
@@ -169,14 +198,29 @@ export default function AdminUsersPage() {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {user.emailVerified ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      ✓ Да
+                  {user.type === "registered" ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Зарегистрированный
                     </span>
                   ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                      ✗ Нет
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                      Гостевой
                     </span>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {user.type === "registered" ? (
+                    user.emailVerified ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Да
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        Нет
+                      </span>
+                    )
+                  ) : (
+                    <span className="text-sm text-gray-400">—</span>
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -199,12 +243,23 @@ export default function AdminUsersPage() {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <Link
-                    href={`/admin/users/${user.id}`}
-                    className="text-blue-600 hover:text-blue-900"
-                  >
-                    Подробнее
-                  </Link>
+                  {user.type === "guest" ? (
+                    <Link
+                      href={`/admin/users/guest?email=${encodeURIComponent(user.email)}`}
+                      className="text-blue-600 hover:text-blue-900"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Подробнее
+                    </Link>
+                  ) : (
+                    <Link
+                      href={`/admin/users/${user.id}`}
+                      className="text-blue-600 hover:text-blue-900"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Подробнее
+                    </Link>
+                  )}
                 </td>
               </tr>
             ))}
