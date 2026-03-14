@@ -122,6 +122,21 @@ if [[ -d ".next/standalone/public/order-proofs" ]]; then
   log_info "Сохранена копия standalone/public/order-proofs (до сборки)"
 fi
 
+# Сохраняем proof-изображения из promo/ (загруженные через upload-proof)
+PROMO_PROOFS_BACKUP=""
+if ls .next/standalone/public/promo/proof-* >/dev/null 2>&1; then
+  PROMO_PROOFS_BACKUP=$(mktemp -d)
+  cp .next/standalone/public/promo/proof-* "${PROMO_PROOFS_BACKUP}/"
+  log_info "Сохранены proof-изображения из standalone/public/promo/ (до сборки)"
+fi
+if ls public/promo/proof-* >/dev/null 2>&1; then
+  if [[ -z "${PROMO_PROOFS_BACKUP}" ]]; then
+    PROMO_PROOFS_BACKUP=$(mktemp -d)
+  fi
+  cp -n public/promo/proof-* "${PROMO_PROOFS_BACKUP}/" 2>/dev/null || true
+  log_info "Сохранены proof-изображения из public/promo/ (до сборки)"
+fi
+
 log_info "Сборка приложения..."
 npm run build
 log_ok "Сборка завершена"
@@ -148,6 +163,16 @@ if [[ -n "${UPLOADS_BACKUP}" && -d "${UPLOADS_BACKUP}/order-proofs" ]]; then
   cp -r "${UPLOADS_BACKUP}/order-proofs/." ".next/standalone/public/order-proofs/" 2>/dev/null || true
   rm -rf "${UPLOADS_BACKUP}"
   log_ok "Восстановлен standalone/public/order-proofs"
+fi
+
+# Восстанавливаем proof-изображения в promo/
+if [[ -n "${PROMO_PROOFS_BACKUP}" ]] && ls "${PROMO_PROOFS_BACKUP}"/proof-* >/dev/null 2>&1; then
+  mkdir -p ".next/standalone/public/promo"
+  cp -n "${PROMO_PROOFS_BACKUP}"/proof-* ".next/standalone/public/promo/" 2>/dev/null || true
+  mkdir -p "public/promo"
+  cp -n "${PROMO_PROOFS_BACKUP}"/proof-* "public/promo/" 2>/dev/null || true
+  rm -rf "${PROMO_PROOFS_BACKUP}"
+  log_ok "Восстановлены proof-изображения в promo/"
 fi
 
 log_ok "Standalone-статика подготовлена"
