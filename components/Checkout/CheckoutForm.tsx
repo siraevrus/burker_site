@@ -452,20 +452,6 @@ export default function CheckoutForm({ user, rates = null, productSellingPriceEu
         </div>
 
         <div>
-          <label htmlFor="firstName" className="block text-sm font-medium mb-2">
-            Имя *
-          </label>
-          <input
-            id="firstName"
-            type="text"
-            value={formData.firstName}
-            onChange={(e) => setFormData({ ...formData, firstName: lettersOnly(e.target.value) })}
-            className="w-full border border-gray-300 rounded-md px-3 py-2"
-            required
-          />
-        </div>
-
-        <div>
           <label htmlFor="lastName" className="block text-sm font-medium mb-2">
             Фамилия *
           </label>
@@ -474,6 +460,20 @@ export default function CheckoutForm({ user, rates = null, productSellingPriceEu
             type="text"
             value={formData.lastName}
             onChange={(e) => setFormData({ ...formData, lastName: lettersOnly(e.target.value) })}
+            className="w-full border border-gray-300 rounded-md px-3 py-2"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="firstName" className="block text-sm font-medium mb-2">
+            Имя *
+          </label>
+          <input
+            id="firstName"
+            type="text"
+            value={formData.firstName}
+            onChange={(e) => setFormData({ ...formData, firstName: lettersOnly(e.target.value) })}
             className="w-full border border-gray-300 rounded-md px-3 py-2"
             required
           />

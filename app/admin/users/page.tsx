@@ -26,7 +26,6 @@ interface User {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState("");
 
@@ -63,22 +62,6 @@ export default function AdminUsersPage() {
 
   const getTotalSpent = (userOrders: User["orders"]) => {
     return userOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-  };
-
-  const statusLabels: Record<string, string> = {
-    pending: "В обработке",
-    confirmed: "Подтвержден",
-    shipped: "Отправлен",
-    delivered: "Доставлен",
-    cancelled: "Отменен",
-  };
-
-  const statusColors: Record<string, string> = {
-    pending: "bg-yellow-100 text-yellow-800",
-    confirmed: "bg-blue-100 text-blue-800",
-    shipped: "bg-purple-100 text-purple-800",
-    delivered: "bg-green-100 text-green-800",
-    cancelled: "bg-red-100 text-red-800",
   };
 
   if (loading) {
@@ -165,7 +148,11 @@ export default function AdminUsersPage() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50">
+              <tr
+                key={user.id}
+                className="hover:bg-gray-50 cursor-pointer"
+                onClick={() => window.location.href = `/admin/users/${user.id}`}
+              >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
                     {user.email}
@@ -212,12 +199,12 @@ export default function AdminUsersPage() {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                    onClick={() => setSelectedUser(user)}
+                  <Link
+                    href={`/admin/users/${user.id}`}
                     className="text-blue-600 hover:text-blue-900"
                   >
                     Подробнее
-                  </button>
+                  </Link>
                 </td>
               </tr>
             ))}
@@ -225,101 +212,6 @@ export default function AdminUsersPage() {
         </table>
       </div>
 
-      {/* Модальное окно с деталями пользователя */}
-      {selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">Детали пользователя</h2>
-                <button
-                  onClick={() => setSelectedUser(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                  <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-medium">{selectedUser.email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Имя</p>
-                  <p className="font-medium">
-                    {selectedUser.firstName || "—"} {selectedUser.lastName || ""}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Телефон</p>
-                  <p className="font-medium">{selectedUser.phone || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Email подтвержден</p>
-                  <p className="font-medium">
-                    {selectedUser.emailVerified ? "Да" : "Нет"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Дата регистрации</p>
-                  <p className="font-medium">
-                    {new Date(selectedUser.createdAt).toLocaleString("ru-RU")}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Всего заказов</p>
-                  <p className="font-medium">{selectedUser._count.orders}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Всего потрачено</p>
-                  <p className="font-medium text-green-600">
-                    {getTotalSpent(selectedUser.orders).toFixed(0)} ₽
-                  </p>
-                </div>
-              </div>
-
-              <h3 className="text-xl font-bold mb-4">Заказы</h3>
-              {selectedUser.orders.length === 0 ? (
-                <p className="text-gray-500">Заказов нет</p>
-              ) : (
-                <div className="space-y-3">
-                  {selectedUser.orders.map((order) => (
-                    <Link
-                      key={order.id}
-                      href={`/admin/orders?orderId=${order.id}`}
-                      className="block border border-gray-200 rounded-lg p-4 hover:bg-gray-50 hover:border-gray-300 transition-colors cursor-pointer"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium">
-                            Заказ #{order.orderNumber || order.id.slice(0, 8)}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {new Date(order.createdAt).toLocaleString("ru-RU")}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-lg">
-                            {order.totalAmount.toFixed(0)} ₽
-                          </p>
-                          <span
-                            className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                              statusColors[order.status] || statusColors.pending
-                            }`}
-                          >
-                            {statusLabels[order.status] || order.status}
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
