@@ -362,10 +362,12 @@ function OrderConfirmationContent() {
               <span className="text-gray-600">Кем выдан паспорт:</span>
               <span className="font-medium text-right">{order.passportIssuedBy}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Статус:</span>
-              <span className="font-medium">{statusLabels[order.status] || order.status}</span>
-            </div>
+            {order.paymentStatus === "paid" && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Статус:</span>
+                <span className="font-medium">{statusLabels[order.status] || order.status}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-gray-600">Оплата (СБП):</span>
               <span className="font-medium">

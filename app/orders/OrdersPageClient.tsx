@@ -120,14 +120,18 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-4 flex-wrap">
-                    <span className="text-sm text-gray-600">Статус</span>
-                    <span
-                      className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                        statusColors[order.status] || statusColors.accepted
-                      }`}
-                    >
-                      {statusLabels[order.status] || order.status}
-                    </span>
+                    {order.paymentStatus === "paid" && (
+                      <>
+                        <span className="text-sm text-gray-600">Статус</span>
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                            statusColors[order.status] || statusColors.accepted
+                          }`}
+                        >
+                          {statusLabels[order.status] || order.status}
+                        </span>
+                      </>
+                    )}
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
                         order.paymentStatus === "paid"
@@ -391,28 +395,30 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                       <span>Итого:</span>
                       <span>{order.totalAmount.toFixed(0)} ₽</span>
                     </div>
-                    <div className="mt-4">
-                      <a
-                        href={`/api/orders/${order.id}/receipt`}
-                        download={`check-${order.orderNumber || order.id}.pdf`}
-                        className="inline-flex items-center gap-2 text-sm border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                    {order.paymentStatus === "paid" && (
+                      <div className="mt-4">
+                        <a
+                          href={`/api/orders/${order.id}/receipt`}
+                          download={`check-${order.orderNumber || order.id}.pdf`}
+                          className="inline-flex items-center gap-2 text-sm border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                        Скачать чек (PDF)
-                      </a>
-                    </div>
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                          Скачать чек (PDF)
+                        </a>
+                      </div>
+                    )}
                     {(() => {
                       const rates = getRatesForOrder(order);
                       let totalComm = 0;
