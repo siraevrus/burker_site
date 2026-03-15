@@ -19,8 +19,8 @@ function esc(s: string): string {
 const EMAIL_FOOTER = `<p style="color: #999; font-size: 12px;"><a href="${SITE_URL}" style="color: #999; text-decoration: none;">Mira Brands | Burker</a></p>`;
 
 /**
- * Отправка кода верификации на email
- * В режиме разработки код выводится в консоль и доступен через API
+ * Отправка кода верификации на email через Mailopost API.
+ * В режиме разработки (NODE_ENV !== production) код дополнительно выводится в консоль.
  */
 export async function sendVerificationCode(
   email: string,

@@ -147,7 +147,7 @@ export default function EmailVerificationForm() {
         return;
       }
 
-      alert("Код отправлен повторно. Проверьте консоль сервера.");
+      alert("Код отправлен повторно. Проверьте почту.");
       setResending(false);
     } catch (error) {
       console.error("Resend error:", error);
@@ -173,11 +173,8 @@ export default function EmailVerificationForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-2">Подтверждение email</h2>
-        <p className="text-gray-600 mb-2">
+        <p className="text-gray-600 mb-4">
           Мы отправили код подтверждения на <strong>{email}</strong>
-        </p>
-        <p className="text-xs text-gray-500 mb-4">
-          В режиме разработки проверьте консоль сервера для получения кода
         </p>
       </div>
 

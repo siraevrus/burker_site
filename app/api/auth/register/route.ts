@@ -71,7 +71,14 @@ export async function POST(request: NextRequest) {
     });
 
     // Отправка email с кодом
-    await sendVerificationCode(user.email, code);
+    const sent = await sendVerificationCode(user.email, code);
+    if (!sent) {
+      console.error("[Register] Не удалось отправить код верификации на", user.email);
+      return NextResponse.json(
+        { error: "Не удалось отправить письмо с кодом. Попробуйте позже или обратитесь в поддержку." },
+        { status: 500 }
+      );
+    }
 
     await notifyNewRegistration({ email: user.email, firstName: user.firstName });
 

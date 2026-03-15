@@ -51,7 +51,14 @@ export async function POST(request: NextRequest) {
     });
 
     // Отправка email
-    await sendVerificationCode(user.email, code);
+    const sent = await sendVerificationCode(user.email, code);
+    if (!sent) {
+      console.error("[Resend] Не удалось отправить код верификации на", user.email);
+      return NextResponse.json(
+        { error: "Не удалось отправить письмо с кодом. Попробуйте позже или обратитесь в поддержку." },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
