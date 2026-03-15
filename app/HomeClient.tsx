@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import ProductCard from "@/components/ProductCard/ProductCard";
 import PromoBannerGallery from "@/components/PromoBanner/PromoBanner";
 import { Product } from "@/lib/types";
 import { motion } from "framer-motion";
+import { generateProductPath } from "@/lib/utils";
 
 interface HomeClientProps {
   products: Product[];
@@ -81,17 +83,24 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
               className="overflow-x-auto pb-4 scrollbar-hide mx-12"
             >
               <div className="flex gap-6">
-                {bestsellers.map((product, index) => (
-                  <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1, duration: 0.3 }}
-                    className="flex-shrink-0 w-64"
-                  >
-                    <ProductCard product={product} />
-                  </motion.div>
-                ))}
+                {bestsellers.map((product, index) => {
+                  const productPath = generateProductPath(product);
+                  return (
+                    <Link
+                      key={product.id}
+                      href={productPath ?? "#"}
+                      className="flex-shrink-0 w-64 block"
+                    >
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1, duration: 0.3 }}
+                      >
+                        <ProductCard product={product} disableInternalLink />
+                      </motion.div>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
             <button

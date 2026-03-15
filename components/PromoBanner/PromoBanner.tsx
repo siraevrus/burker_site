@@ -71,7 +71,7 @@ export default function PromoBannerGallery() {
     setTimeout(() => setIsPaused(false), 10000);
   };
 
-  const imgClass = "w-full h-[450px] object-cover block";
+  const imgClass = "w-full h-[600px] object-cover block";
   const renderDesktopImg = () => {
     if (desktopImage.startsWith("data:image")) {
       return <img src={desktopImage} alt={currentBanner.title || "Promo banner"} className={imgClass} />;
@@ -94,7 +94,7 @@ export default function PromoBannerGallery() {
   return (
     <section
       className="relative overflow-hidden bg-gradient-to-r from-pink-100 to-red-100"
-      style={{ height: 450 }}
+      style={{ height: 600 }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
