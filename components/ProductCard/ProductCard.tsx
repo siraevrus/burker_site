@@ -86,99 +86,101 @@ export default function ProductCard({ product }: ProductCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Discount badge */}
-      {discountPercentage > 0 && (
-        <motion.div
-          className="absolute top-3 right-3 text-white text-xs font-bold px-3 py-1.5 z-10"
-          style={{ backgroundColor: "#A13D42" }}
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          -{discountPercentage}%
-        </motion.div>
-      )}
+      <Link
+        href={generateProductPath(product) ?? "#"}
+        className="block"
+        aria-label={`Перейти на страницу товара: ${product.name}`}
+      >
+        {/* Discount badge */}
+        {discountPercentage > 0 && (
+          <motion.div
+            className="absolute top-3 right-3 text-white text-xs font-bold px-3 py-1.5 z-10"
+            style={{ backgroundColor: "#A13D42" }}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            -{discountPercentage}%
+          </motion.div>
+        )}
 
-      {/* Product Image */}
-      <div className="relative w-full aspect-square overflow-hidden">
-        <Link href={generateProductPath(product) ?? "#"}>
+        {/* Product Image */}
+        <div className="relative w-full aspect-square overflow-hidden">
           <ProductImage
             src={product.images && product.images.length > 0 ? product.images[0] : "/Isabell_gold_burgundy_1.webp"}
             alt={product.name}
             className="group-hover:scale-110 transition-transform duration-500"
           />
-        </Link>
-        {/* Cart icon button - bottom right */}
-        <div className="absolute bottom-3 right-3 flex flex-col items-end gap-1">
-          {showCustomsHint && (
-            <p className="text-amber-700 text-xs bg-amber-50 border border-amber-200 rounded px-2 py-1.5 shadow max-w-[220px] text-right z-10">
-              {CUSTOMS_HINT}
-            </p>
-          )}
-          {product.soldOut ? (
-            <button
-              disabled
-              className="bg-gray-400 text-white p-2 cursor-not-allowed opacity-60"
-              style={{ borderRadius: "0" }}
-              aria-label="Товар распродан"
-            >
-              <span className="text-xs font-medium">Товар распродан</span>
-            </button>
-          ) : (
-            <motion.button
-              onClick={handleAddToCart}
-              className="bg-black text-white p-2 hover:bg-gray-800 transition-colors duration-300"
-              style={{ borderRadius: "0" }}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              aria-label="Добавить в корзину"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-            </motion.button>
-          )}
         </div>
-      </div>
 
-      {/* Product Info */}
-      <div className="p-4">
-        <Link href={generateProductPath(product) ?? "#"}>
+        {/* Product Info */}
+        <div className="p-4">
           <h3 className="font-semibold text-sm mb-2 text-gray-900 line-clamp-2 text-center hover:text-gray-600 transition-colors">
             {product.name}
           </h3>
-        </Link>
         
-        {/* Price */}
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <span
-            style={{
-              fontFamily: '"Open Sans", sans-serif',
-              fontSize: "11.5px",
-              fontWeight: 600,
-              lineHeight: "18px",
-              color: "rgb(162, 60, 66)",
-            }}
-          >
-            {product.price.toFixed(0)} ₽
-          </span>
-          {product.originalPrice > product.price && (
-            <span className="text-xs text-gray-500 line-through">
-              {product.originalPrice.toFixed(0)} ₽
+          {/* Price */}
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <span
+              style={{
+                fontFamily: '"Open Sans", sans-serif',
+                fontSize: "11.5px",
+                fontWeight: 600,
+                lineHeight: "18px",
+                color: "rgb(162, 60, 66)",
+              }}
+            >
+              {product.price.toFixed(0)} ₽
             </span>
-          )}
+            {product.originalPrice > product.price && (
+              <span className="text-xs text-gray-500 line-through">
+                {product.originalPrice.toFixed(0)} ₽
+              </span>
+            )}
+          </div>
         </div>
+      </Link>
 
+      {/* Cart icon button - positioned outside Link, overlays the image */}
+      <div className="absolute bottom-3 right-3 flex flex-col items-end gap-1 z-10">
+        {showCustomsHint && (
+          <p className="text-amber-700 text-xs bg-amber-50 border border-amber-200 rounded px-2 py-1.5 shadow max-w-[220px] text-right z-10">
+            {CUSTOMS_HINT}
+          </p>
+        )}
+        {product.soldOut ? (
+          <div
+            className="bg-gray-400 text-white p-2 cursor-not-allowed opacity-60"
+            style={{ borderRadius: "0" }}
+            aria-label="Товар распродан"
+          >
+            <span className="text-xs font-medium">Товар распродан</span>
+          </div>
+        ) : (
+          <motion.button
+            type="button"
+            onClick={handleAddToCart}
+            className="bg-black text-white p-2 hover:bg-gray-800 transition-colors duration-300"
+            style={{ borderRadius: "0" }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            aria-label="Добавить в корзину"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
+          </motion.button>
+        )}
       </div>
     </motion.div>
     </>
