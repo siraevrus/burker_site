@@ -50,7 +50,7 @@ if [[ -n "$DIRTY" ]]; then
   while IFS= read -r line; do
     path="${line:3}"
     case "$path" in
-      public/promo/*|public/products/*|public/order-proofs/*|public/yandex_*.html|ecosystem.config.js|backups|backups/|backups/*|orange_prod/*) ;;
+      public/promo/*|public/products/*|public/order-proofs/*|uploads/*|uploads/promo/*|public/yandex_*.html|ecosystem.config.js|backups|backups/|backups/*|orange_prod/*) ;;
       *) REMAINING="${REMAINING}${line}\n" ;;
     esac
   done <<< "$DIRTY"
@@ -59,7 +59,15 @@ if [[ -n "$DIRTY" ]]; then
     echo -e "$REMAINING"
     exit 1
   fi
-  log_info "Изменения только в разрешённых локальных файлах (uploads/yandex/ecosystem/orange_prod) — продолжаю деплой."
+  log_info "Изменения только в разрешённых локальных файлах (загрузки/uploads/yandex/ecosystem/orange_prod) — продолжаю деплой."
+fi
+
+# Сохраняем uploads/promo (промо-баннеры из /api/promo-images) — git stash может их потерять
+PROMO_UPLOADS_BACKUP=""
+if [[ -d "uploads/promo" ]] && ls uploads/promo/* >/dev/null 2>&1; then
+  PROMO_UPLOADS_BACKUP=$(mktemp -d)
+  cp -r uploads/promo/* "${PROMO_UPLOADS_BACKUP}/"
+  log_info "Сохранена копия uploads/promo/ (до git stash)"
 fi
 
 # Сохраняем proof-изображения ДО git stash (stash --include-untracked может их забрать,
@@ -215,6 +223,14 @@ if [[ -n "${PROMO_PROOFS_BACKUP}" ]] && ls "${PROMO_PROOFS_BACKUP}"/proof-* >/de
   cp -n "${PROMO_PROOFS_BACKUP}"/proof-* "public/promo/" 2>/dev/null || true
   rm -rf "${PROMO_PROOFS_BACKUP}"
   log_ok "Восстановлены proof-изображения в promo/"
+fi
+
+# Восстанавливаем uploads/promo (промо-баннеры из /api/promo-images)
+if [[ -n "${PROMO_UPLOADS_BACKUP}" ]] && ls "${PROMO_UPLOADS_BACKUP}"/* >/dev/null 2>&1; then
+  mkdir -p "uploads/promo"
+  cp -n "${PROMO_UPLOADS_BACKUP}"/* "uploads/promo/" 2>/dev/null || true
+  rm -rf "${PROMO_UPLOADS_BACKUP}"
+  log_ok "Восстановлены промо-изображения в uploads/promo/"
 fi
 
 if [[ ! -d ".next/standalone/.next/static" ]]; then

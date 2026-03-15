@@ -53,7 +53,7 @@ if [[ -n "$DIRTY" ]]; then
   while IFS= read -r line; do
     path="${line:3}"
     case "$path" in
-      public/promo/*|public/products/*|public/order-proofs/*|public/yandex_*.html|ecosystem.config.js|ecosystem.config.test.js|backups|backups/|backups/*|orange_prod/*|orange_test/*) ;;
+      public/promo/*|public/products/*|public/order-proofs/*|uploads/*|uploads/promo/*|public/yandex_*.html|ecosystem.config.js|ecosystem.config.test.js|backups|backups/|backups/*|orange_prod/*|orange_test/*) ;;
       *) REMAINING="${REMAINING}${line}\n" ;;
     esac
   done <<< "$DIRTY"
@@ -63,6 +63,14 @@ if [[ -n "$DIRTY" ]]; then
     exit 1
   fi
   log_info "Изменения только в разрешённых локальных файлах — продолжаю деплой."
+fi
+
+# Сохраняем uploads/promo (промо-баннеры из /api/promo-images)
+PROMO_UPLOADS_BACKUP=""
+if [[ -d "uploads/promo" ]] && ls uploads/promo/* >/dev/null 2>&1; then
+  PROMO_UPLOADS_BACKUP=$(mktemp -d)
+  cp -r uploads/promo/* "${PROMO_UPLOADS_BACKUP}/"
+  log_info "Сохранена копия uploads/promo/ (до сборки)"
 fi
 
 # Сохраняем proof-изображения ДО git pull
@@ -197,6 +205,14 @@ if [[ -n "${PROMO_PROOFS_BACKUP}" ]] && ls "${PROMO_PROOFS_BACKUP}"/proof-* >/de
   cp -n "${PROMO_PROOFS_BACKUP}"/proof-* "public/promo/" 2>/dev/null || true
   rm -rf "${PROMO_PROOFS_BACKUP}"
   log_ok "Восстановлены proof-изображения в promo/"
+fi
+
+# Восстанавливаем uploads/promo (промо-баннеры из /api/promo-images)
+if [[ -n "${PROMO_UPLOADS_BACKUP}" ]] && ls "${PROMO_UPLOADS_BACKUP}"/* >/dev/null 2>&1; then
+  mkdir -p "uploads/promo"
+  cp -n "${PROMO_UPLOADS_BACKUP}"/* "uploads/promo/" 2>/dev/null || true
+  rm -rf "${PROMO_UPLOADS_BACKUP}"
+  log_ok "Восстановлены промо-изображения в uploads/promo/"
 fi
 
 log_ok "Standalone-статика подготовлена"
