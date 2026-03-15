@@ -67,9 +67,12 @@ export async function POST(request: NextRequest) {
     const filename = `product-${timestamp}-${randomStr}.${ext}`;
 
     const cwd = process.cwd();
+    const projectRoot = cwd.includes(".next/standalone")
+      ? join(cwd, "..", "..")
+      : cwd;
     const dirs = [
-      join(cwd, "public", "products"),
-      join(cwd, ".next", "standalone", "public", "products"),
+      join(projectRoot, "public", "products"),
+      join(projectRoot, ".next", "standalone", "public", "products"),
     ];
 
     for (const dir of dirs) {

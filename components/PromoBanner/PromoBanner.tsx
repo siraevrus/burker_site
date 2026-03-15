@@ -71,9 +71,29 @@ export default function PromoBannerGallery() {
     setTimeout(() => setIsPaused(false), 10000);
   };
 
+  const imgClass = "w-full h-auto block";
+  const renderDesktopImg = () => {
+    if (desktopImage.startsWith("data:image")) {
+      return <img src={desktopImage} alt={currentBanner.title || "Promo banner"} className={imgClass} />;
+    }
+    if (desktopImage.startsWith("/api/promo-images/") || desktopImage.startsWith("/api/products/") || desktopImage.startsWith("/promo/") || desktopImage.startsWith("/products/") || desktopImage.startsWith("http")) {
+      return <img src={desktopImage} alt={currentBanner.title || "Promo banner"} className={imgClass} />;
+    }
+    return <img src={desktopImage} alt={currentBanner.title || "Promo banner"} className={imgClass} onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }} />;
+  };
+  const renderMobileImg = () => {
+    if (mobileImage.startsWith("data:image")) {
+      return <img src={mobileImage} alt={currentBanner.title || "Promo banner"} className={imgClass} />;
+    }
+    if (mobileImage.startsWith("/api/promo-images/") || mobileImage.startsWith("/api/products/") || mobileImage.startsWith("/promo/") || mobileImage.startsWith("/products/") || mobileImage.startsWith("http")) {
+      return <img src={mobileImage} alt={currentBanner.title || "Promo banner"} className={imgClass} />;
+    }
+    return <img src={mobileImage} alt={currentBanner.title || "Promo banner"} className={imgClass} onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }} />;
+  };
+
   return (
     <section
-      className="relative h-[500px] overflow-hidden"
+      className="relative overflow-hidden bg-gradient-to-r from-pink-100 to-red-100"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -84,143 +104,29 @@ export default function PromoBannerGallery() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="relative w-full h-full"
+          className="relative w-full"
         >
           {currentBanner.productLink ? (
-            <Link href={currentBanner.productLink}>
-              <div className="relative w-full h-full bg-gradient-to-r from-pink-100 to-red-100 flex items-center justify-center">
-                {/* Десктоп: основное изображение */}
-                <div className="hidden md:block absolute inset-0 w-full h-full">
-                  {desktopImage.startsWith("data:image") ? (
-                    <img
-                      src={desktopImage}
-                      alt={currentBanner.title || "Promo banner"}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  ) : desktopImage.startsWith("/api/promo-images/") || desktopImage.startsWith("/api/products/") || desktopImage.startsWith("/promo/") || desktopImage.startsWith("/products/") ? (
-                    <img
-                      src={desktopImage}
-                      alt={currentBanner.title || "Promo banner"}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  ) : desktopImage.startsWith("http") ? (
-                    <img
-                      src={desktopImage}
-                      alt={currentBanner.title || "Promo banner"}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  ) : (
-                    <img
-                      src={desktopImage}
-                      alt={currentBanner.title || "Promo banner"}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }}
-                    />
+            <Link href={currentBanner.productLink} className="block relative">
+              <div className="hidden md:block w-full">{renderDesktopImg()}</div>
+              <div className="md:hidden w-full">{renderMobileImg()}</div>
+              {(currentBanner.title || currentBanner.subtitle) && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-black bg-opacity-20">
+                  {currentBanner.title && (
+                    <h2 className="text-5xl md:text-6xl font-bold mb-4 text-white">
+                      {currentBanner.title}
+                    </h2>
+                  )}
+                  {currentBanner.subtitle && (
+                    <p className="text-xl text-white">{currentBanner.subtitle}</p>
                   )}
                 </div>
-                {/* Мобильная версия: imageMobile или основное изображение */}
-                <div className="md:hidden absolute inset-0 w-full h-full">
-                  {mobileImage.startsWith("data:image") ? (
-                    <img
-                      src={mobileImage}
-                      alt={currentBanner.title || "Promo banner"}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  ) : mobileImage.startsWith("/api/promo-images/") || mobileImage.startsWith("/api/products/") || mobileImage.startsWith("/promo/") || mobileImage.startsWith("/products/") ? (
-                    <img
-                      src={mobileImage}
-                      alt={currentBanner.title || "Promo banner"}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  ) : mobileImage.startsWith("http") ? (
-                    <img
-                      src={mobileImage}
-                      alt={currentBanner.title || "Promo banner"}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  ) : (
-                    <img
-                      src={mobileImage}
-                      alt={currentBanner.title || "Promo banner"}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }}
-                    />
-                  )}
-                </div>
-                {(currentBanner.title || currentBanner.subtitle) && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-black bg-opacity-20">
-                    {currentBanner.title && (
-                      <h2 className="text-5xl md:text-6xl font-bold mb-4 text-white">
-                        {currentBanner.title}
-                      </h2>
-                    )}
-                    {currentBanner.subtitle && (
-                      <p className="text-xl text-white">{currentBanner.subtitle}</p>
-                    )}
-                  </div>
-                )}
-              </div>
+              )}
             </Link>
           ) : (
-            <div className="relative w-full h-full bg-gradient-to-r from-pink-100 to-red-100 flex items-center justify-center">
-              {/* Десктоп */}
-              <div className="hidden md:block absolute inset-0 w-full h-full">
-                {desktopImage.startsWith("data:image") ? (
-                  <img
-                    src={desktopImage}
-                    alt={currentBanner.title || "Promo banner"}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                ) : desktopImage.startsWith("/api/promo-images/") || desktopImage.startsWith("/api/products/") || desktopImage.startsWith("/promo/") || desktopImage.startsWith("/products/") ? (
-                  <img
-                    src={desktopImage}
-                    alt={currentBanner.title || "Promo banner"}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                ) : desktopImage.startsWith("http") ? (
-                  <img
-                    src={desktopImage}
-                    alt={currentBanner.title || "Promo banner"}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src={desktopImage}
-                    alt={currentBanner.title || "Promo banner"}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }}
-                  />
-                )}
-              </div>
-              {/* Мобильная версия */}
-              <div className="md:hidden absolute inset-0 w-full h-full">
-                {mobileImage.startsWith("data:image") ? (
-                  <img
-                    src={mobileImage}
-                    alt={currentBanner.title || "Promo banner"}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                ) : mobileImage.startsWith("/api/promo-images/") || mobileImage.startsWith("/api/products/") || mobileImage.startsWith("/promo/") || mobileImage.startsWith("/products/") ? (
-                  <img
-                    src={mobileImage}
-                    alt={currentBanner.title || "Promo banner"}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                ) : mobileImage.startsWith("http") ? (
-                  <img
-                    src={mobileImage}
-                    alt={currentBanner.title || "Promo banner"}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src={mobileImage}
-                    alt={currentBanner.title || "Promo banner"}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }}
-                  />
-                )}
-              </div>
+            <div className="relative w-full">
+              <div className="hidden md:block w-full">{renderDesktopImg()}</div>
+              <div className="md:hidden w-full">{renderMobileImg()}</div>
               {(currentBanner.title || currentBanner.subtitle) && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-black bg-opacity-20">
                   {currentBanner.title && (

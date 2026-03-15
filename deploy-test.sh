@@ -137,6 +137,20 @@ if [[ -d ".next/standalone/public/order-proofs" ]]; then
   log_info "Сохранена копия standalone/public/order-proofs (до сборки)"
 fi
 
+# Сохраняем загруженные изображения товаров (из обоих мест)
+PRODUCTS_BACKUP=""
+if [[ -d "public/products" ]] || [[ -d ".next/standalone/public/products" ]]; then
+  PRODUCTS_BACKUP=$(mktemp -d)
+  mkdir -p "${PRODUCTS_BACKUP}/products"
+  if [[ -d "public/products" ]]; then
+    cp -n public/products/* "${PRODUCTS_BACKUP}/products/" 2>/dev/null || true
+  fi
+  if [[ -d ".next/standalone/public/products" ]]; then
+    cp -n .next/standalone/public/products/* "${PRODUCTS_BACKUP}/products/" 2>/dev/null || true
+  fi
+  log_info "Сохранена копия изображений товаров (до сборки)"
+fi
+
 log_info "Сборка приложения..."
 npm run build
 log_ok "Сборка завершена"
@@ -163,6 +177,16 @@ if [[ -n "${UPLOADS_BACKUP}" && -d "${UPLOADS_BACKUP}/order-proofs" ]]; then
   cp -r "${UPLOADS_BACKUP}/order-proofs/." ".next/standalone/public/order-proofs/" 2>/dev/null || true
   rm -rf "${UPLOADS_BACKUP}"
   log_ok "Восстановлен standalone/public/order-proofs"
+fi
+
+# Восстанавливаем изображения товаров в оба места
+if [[ -n "${PRODUCTS_BACKUP}" && -d "${PRODUCTS_BACKUP}/products" ]]; then
+  mkdir -p "public/products"
+  cp -n "${PRODUCTS_BACKUP}/products/"* "public/products/" 2>/dev/null || true
+  mkdir -p ".next/standalone/public/products"
+  cp -n "${PRODUCTS_BACKUP}/products/"* ".next/standalone/public/products/" 2>/dev/null || true
+  rm -rf "${PRODUCTS_BACKUP}"
+  log_ok "Восстановлены изображения товаров в public/products и standalone"
 fi
 
 # Восстанавливаем proof-изображения в promo/
