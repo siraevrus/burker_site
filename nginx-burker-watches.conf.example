@@ -60,6 +60,13 @@ server {
         access_log off;
     }
 
+    # Страница обслуживания при 502/503/504 (во время деплоя)
+    error_page 502 503 504 /maintenance.html;
+    location = /maintenance.html {
+        root /var/www/burker-watches.ru/public;
+        internal;
+    }
+
     # Next.js (standalone)
     location / {
         proxy_pass http://localhost:3010;

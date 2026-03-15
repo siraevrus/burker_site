@@ -83,24 +83,27 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
               className="overflow-x-auto pb-4 scrollbar-hide mx-12"
             >
               <div className="flex gap-6">
-                {bestsellers.map((product, index) => {
-                  const productPath = generateProductPath(product);
-                  return (
-                    <Link
-                      key={product.id}
-                      href={productPath ?? "#"}
-                      className="flex-shrink-0 w-64 block"
-                    >
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1, duration: 0.3 }}
+                {bestsellers
+                  .filter((p) => generateProductPath(p))
+                  .map((product, index) => {
+                    const productPath = generateProductPath(product)!;
+                    return (
+                      <Link
+                        key={product.id}
+                        href={productPath}
+                        className="flex-shrink-0 w-64 block cursor-pointer hover:opacity-95 transition-opacity"
                       >
-                        <ProductCard product={product} disableInternalLink />
-                      </motion.div>
-                    </Link>
-                  );
-                })}
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1, duration: 0.3 }}
+                          className="h-full"
+                        >
+                          <ProductCard product={product} disableInternalLink />
+                        </motion.div>
+                      </Link>
+                    );
+                  })}
               </div>
             </div>
             <button
