@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin-api";
+import { getProductByAdminId } from "@/lib/products";
 
 function serializeSpecifications(value: unknown): string | null | undefined {
   if (value === undefined) return undefined;
@@ -61,14 +62,21 @@ export async function PUT(
       );
     }
 
+    // Цены в БД хранятся в EUR; originalPriceEur — редактируемое поле
+    const rawOriginalEur = parseFloat(body.originalPriceEur);
+    const existing = await prisma.product.findUnique({ where: { id }, select: { originalPrice: true } });
+    const originalPriceEur = !isNaN(rawOriginalEur) ? rawOriginalEur : (existing?.originalPrice ?? 0);
+    const discount = Math.max(0, Math.min(100, parseInt(body.discount) || 0));
+    const priceEur = originalPriceEur > 0 ? originalPriceEur * (1 - discount / 100) : 0;
+
     const updateData: any = {
       name: body.name,
       collection: body.collection,
       subcategory: body.subcategory || null,
       bestseller: body.bestseller || false,
-      price: parseFloat(body.price) || 0,
-      originalPrice: parseFloat(body.originalPrice) || 0,
-      discount: parseInt(body.discount) || 0,
+      price: priceEur,
+      originalPrice: originalPriceEur,
+      discount,
       inStock: Boolean(body.inStock),
       disabled: Boolean(body.disabled),
       description: body.description || null,
@@ -89,12 +97,14 @@ export async function PUT(
       updateData.bodyId = body.bodyId;
     }
 
-    const updatedProduct = await prisma.product.update({
+    await prisma.product.update({
       where: { id },
       data: updateData,
     });
 
-    return NextResponse.json(updatedProduct);
+    // Возвращаем товар с пересчитанными ценами в ₽ (по текущему курсу)
+    const productWithRates = await getProductByAdminId(id);
+    return NextResponse.json(productWithRates ?? { id });
   } catch (error: any) {
     console.error("Error updating product:", error);
     return NextResponse.json(

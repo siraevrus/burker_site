@@ -24,8 +24,8 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
     collection: product.collection,
     subcategory: product.subcategory || "",
     bestseller: product.bestseller || false,
-    price: product.price,
-    originalPrice: product.originalPrice,
+    originalPriceEur: product.originalPriceEur ?? 0,
+    discount: product.discount ?? 0,
     inStock: product.inStock,
     disabled: product.disabled || false,
     description: product.description || "",
@@ -33,6 +33,12 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
   });
   const [images, setImages] = useState<string[]>(product.images || []);
   const [uploading, setUploading] = useState(false);
+  const [saved, setSaved] = useState(false);
+  // Цены в ₽ — пересчитываются после сохранения по курсу
+  const [pricesRub, setPricesRub] = useState({
+    price: product.price,
+    originalPrice: product.originalPrice,
+  });
 
   const handleDeleteImage = (index: number) => {
     if (confirm("Удалить это изображение?")) {
@@ -94,7 +100,16 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
       });
 
       if (response.ok) {
-        router.push("/admin");
+        const updatedProduct = await response.json();
+        if (updatedProduct?.price != null && updatedProduct?.originalPrice != null) {
+          setPricesRub({
+            price: updatedProduct.price,
+            originalPrice: updatedProduct.originalPrice,
+          });
+        }
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+        router.refresh();
       } else {
         alert("Ошибка при сохранении товара");
       }
@@ -108,6 +123,11 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Редактирование товара</h1>
       
+      {saved && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-green-800 font-medium">
+          Сохранено. Цены в ₽ пересчитаны по текущему курсу.
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Левая колонка - основная информация */}
@@ -157,48 +177,49 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
               </label>
             </div>
             
-            <div className="p-3 bg-gray-50 border border-gray-200 rounded-md space-y-1.5">
-              <p className="text-sm font-medium text-gray-700">Оригинальная цена в евро</p>
-              <p className="text-lg font-semibold text-gray-900">
-                {product.originalPriceEur != null && product.originalPriceEur > 0
-                  ? `${product.originalPriceEur.toFixed(2)} €`
-                  : "—"}
+            <div>
+              <label className="block text-sm font-medium mb-2">Оригинальная цена в евро (€)</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.originalPriceEur}
+                onChange={(e) => setFormData({ ...formData, originalPriceEur: parseFloat(e.target.value) || 0 })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Цена до скидки в евро. После сохранения пересчитаются Цена (₽) и Оригинальная цена (₽).
               </p>
-              {product.discount > 0 && (
-                <>
-                  <p className="text-sm font-medium text-gray-700 mt-2">Цена со скидкой</p>
-                  <p className="text-lg font-semibold text-green-700">
-                    {formData.price.toFixed(0)} ₽
-                    <span className="text-sm font-normal text-gray-500 ml-1">
-                      (скидка {product.discount}%)
-                    </span>
-                  </p>
-                </>
-              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Цена (₽)</label>
+              <label className="block text-sm font-medium mb-2">Скидка (%)</label>
               <input
                 type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                min="0"
+                max="100"
+                value={formData.discount}
+                onChange={(e) => setFormData({ ...formData, discount: parseInt(e.target.value) || 0 })}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
-                required
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Цена со скидкой в € = Оригинальная цена € × (1 − скидка / 100)
+              </p>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">Оригинальная цена (₽)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.originalPrice}
-                onChange={(e) => setFormData({ ...formData, originalPrice: parseFloat(e.target.value) })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-                required
-              />
+
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded-md space-y-1.5">
+              <p className="text-sm font-medium text-gray-700">Цена (₽)</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {pricesRub.price > 0 ? `${Math.round(pricesRub.price).toLocaleString("ru-RU")} ₽` : "—"}
+              </p>
+              <p className="text-sm font-medium text-gray-700 mt-2">Оригинальная цена (₽)</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {pricesRub.originalPrice > 0 ? `${Math.round(pricesRub.originalPrice).toLocaleString("ru-RU")} ₽` : "—"}
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                Рассчитываются автоматически по текущему курсу после сохранения
+              </p>
             </div>
             
             <div className="flex items-center gap-2">
@@ -362,7 +383,7 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
                 <p><strong>Подкатегория (subcategory):</strong> {product.subcategory || "—"}</p>
                 <p><strong>Вариант:</strong> {product.variant || "—"}</p>
                 <p><strong>Бестселлер:</strong> {product.bestseller ? "✓ Да" : "✗ Нет"}</p>
-                <p><strong>Скидка:</strong> {product.discount}%</p>
+                <p><strong>Скидка:</strong> {formData.discount}%</p>
                 <p><strong>Цвета:</strong> {product.colors?.join(", ") || "—"}</p>
               </div>
             </div>
