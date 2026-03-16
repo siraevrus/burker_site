@@ -42,6 +42,9 @@ next-env.d.ts
 
 /lib/generated/prisma
 
+# database backups (cron)
+backups/
+
 # database
 *.db
 *.db-journal

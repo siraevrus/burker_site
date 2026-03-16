@@ -125,8 +125,9 @@ export function transformJsonProduct(jsonProduct: any): ProductData {
   // Сохраняем оригинальную subcategory из JSON
   const subcategory = jsonProduct.subcategory || null;
 
-  // Флаг бестселлера: 1 = true, 0 = false
-  const bestseller = jsonProduct.bestseller === 1 || jsonProduct.bestseller === true;
+  // Флаг бестселлера: 1 = true, 0 = false. Поддержка bestseller и Bestseller (разный регистр в источниках)
+  const bestsellerVal = jsonProduct.bestseller ?? jsonProduct.Bestseller;
+  const bestseller = bestsellerVal === 1 || bestsellerVal === true;
 
   // Цвета: извлечь name из объектов, где available === true. Если поле не заполнено, null или пусто — не учитываем
   let colorNames: string[] = [];

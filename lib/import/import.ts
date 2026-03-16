@@ -52,11 +52,14 @@ export async function importProducts(jsonData: any[]): Promise<ImportResult> {
 
       if (existingProduct) {
         // Обновление существующего товара (фото не трогаем — остаются локальные пути после скрипта загрузки)
+        // bestseller обновляем только если в JSON есть поле — иначе сохраняем значение из админки
+        const hasBestsellerInJson =
+          "bestseller" in jsonProduct || "Bestseller" in jsonProduct;
         const updateData: any = {
           name: productData.name,
           collection: productData.collection,
           subcategory: productData.subcategory,
-          bestseller: productData.bestseller,
+          ...(hasBestsellerInJson && { bestseller: productData.bestseller }),
           price: productData.price,
           originalPrice: productData.originalPrice,
           discount: productData.discount,

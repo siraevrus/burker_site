@@ -4,7 +4,8 @@ import { saveImportHistory } from "@/lib/import/history";
 import { logError, logEvent } from "@/lib/ops-log";
 import { requireAdmin } from "@/lib/admin-api";
 
-const API_URL = "https://parcing.burker-watches.ru/api_json.php";
+const API_BASE = "https://parcing.burker-watches.ru";
+const API_JSON_PATH = "/api_json.php";
 
 /**
  * API endpoint для автоматического импорта товаров с внешнего сервера
@@ -38,13 +39,21 @@ export async function GET(request: NextRequest) {
       ? "automatic"
       : "manual";
 
-    // Запрос JSON с внешнего сервера
-    const response = await fetch(API_URL, {
+    const apiKey = process.env.API_JSON_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "API_JSON_KEY не задан в переменных окружения" },
+        { status: 500 }
+      );
+    }
+
+    // Запрос JSON с внешнего сервера (compact=1 — уменьшает размер ответа)
+    const response = await fetch(`${API_BASE}${API_JSON_PATH}?compact=1`, {
       method: "GET",
       headers: {
-        "Accept": "application/json",
+        Accept: "application/json",
+        "X-API-KEY": apiKey,
       },
-      // Таймаут 30 секунд
       signal: AbortSignal.timeout(30000),
     });
 

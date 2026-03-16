@@ -196,8 +196,8 @@ export default function ProductCard({ product, disableInternalLink }: ProductCar
         </Link>
       )}
 
-      {/* Cart icon button - positioned outside Link, overlays the image */}
-      <div className="absolute bottom-3 right-3 flex flex-col items-end gap-1 z-10">
+      {/* Cart icon button - positioned outside Link, overlays the image. pointer-events-none on container so card link receives clicks; pointer-events-auto on children for button interaction */}
+      <div className="absolute bottom-3 right-3 flex flex-col items-end gap-1 z-10 pointer-events-none [&>*]:pointer-events-auto">
         {showCustomsHint && (
           <p className="text-amber-700 text-xs bg-amber-50 border border-amber-200 rounded px-2 py-1.5 shadow max-w-[220px] text-right z-10">
             {CUSTOMS_HINT}
