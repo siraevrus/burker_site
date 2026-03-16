@@ -127,6 +127,23 @@ export async function notifyRatesUpdated(data: {
   return sendTelegramMessage(text, { parseMode: "HTML" });
 }
 
+/** Уведомление о новом сообщении с формы обратной связи */
+export async function notifyFeedback(data: {
+  name: string;
+  contact: string;
+  comment: string;
+}): Promise<boolean> {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://burker-watches.ru";
+  const adminLink = `${siteUrl.replace(/\/+$/, "")}/admin/feedback`;
+  const text =
+    `📩 <b>Форма обратной связи</b>\n\n` +
+    `Имя: ${escapeHtml(data.name)}\n` +
+    `Контакт: ${escapeHtml(data.contact)}\n\n` +
+    `Комментарий:\n${escapeHtml(data.comment)}\n\n` +
+    `<a href="${adminLink.replace(/&/g, "&amp;")}">Открыть заявки в админке</a>`;
+  return sendTelegramMessage(text, { parseMode: "HTML" });
+}
+
 /** Уведомление о результатах парсинга/импорта товаров */
 export async function notifyImportResult(data: {
   added: number;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendFeedbackNotificationToAdmin } from "@/lib/email";
+import { notifyFeedback } from "@/lib/telegram";
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,12 +41,18 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Уведомление администратору (не блокируем ответ при ошибке отправки)
+    // Уведомление администратору (email + Telegram, не блокируем ответ при ошибке)
     sendFeedbackNotificationToAdmin({
       name: created.name,
       contact: created.contact,
       comment: created.comment,
     }).catch((err) => console.error("Feedback notification to admin:", err));
+
+    notifyFeedback({
+      name: created.name,
+      contact: created.contact,
+      comment: created.comment,
+    }).catch((err) => console.error("Feedback Telegram notification:", err));
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
