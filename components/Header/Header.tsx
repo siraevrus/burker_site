@@ -7,6 +7,12 @@ import { useStore } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product } from "@/lib/types";
 
+interface MenuItem {
+  label: string;
+  slug: string;
+  href: string;
+}
+
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isWatchesOpen, setIsWatchesOpen] = useState(false);
@@ -17,13 +23,14 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [topBannerText, setTopBannerText] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
+  const [menuWatches, setMenuWatches] = useState<MenuItem[]>([]);
+  const [menuJewelry, setMenuJewelry] = useState<MenuItem[]>([]);
   const cartItemsCount = useStore((state) => state.getCartItemsCount());
   const user = useStore((state) => state.user);
   const loadUser = useStore((state) => state.loadUser);
   const logout = useStore((state) => state.logout);
 
   useEffect(() => {
-    // Загружаем товары из БД
     const loadProducts = async () => {
       try {
         const response = await fetch("/api/products");
@@ -35,7 +42,20 @@ export default function Header() {
         console.error("Error loading products:", error);
       }
     };
+    const loadMenu = async () => {
+      try {
+        const response = await fetch("/api/menu");
+        if (response.ok) {
+          const data = await response.json();
+          setMenuWatches(data.watches || []);
+          setMenuJewelry(data.jewelry || []);
+        }
+      } catch (error) {
+        console.error("Error loading menu:", error);
+      }
+    };
     loadProducts();
+    loadMenu();
     
     // Загружаем данные пользователя
     loadUser();
@@ -80,17 +100,8 @@ export default function Header() {
     }
   }, []);
 
-  const collections = [
-    "Diana",
-    "Sophie",
-    "Olivia",
-    "Macy",
-    "Isabell",
-    "Julia",
-    "Ruby",
-  ];
-
   const hasSaleProducts = products.some((p) => p.discount > 0);
+  const watchesFeatured = menuWatches.slice(0, 4);
 
   return (
     <header
@@ -146,7 +157,7 @@ export default function Header() {
                   >
                     <div className="container mx-auto">
                       <div className="grid grid-cols-[250px_1fr] gap-8">
-                      {/* Левое меню - подменю */}
+                      {/* Левое меню - подкатегории из БД */}
                       <div className="text-xl">
                         <Link
                           href="/products/watches"
@@ -155,54 +166,26 @@ export default function Header() {
                         >
                           Все часы
                         </Link>
-                        {collections.map((collection) => (
+                        {menuWatches.map((item) => (
                           <Link
-                            key={collection}
-                            href={`/products/watches/${collection.toLowerCase()}`}
-                            className="block py-2 hover:text-gray-600 transition-colors"
+                            key={item.slug}
+                            href={item.href}
+                            className={`block py-2 hover:text-gray-600 transition-colors ${item.label.includes("Petite") ? "text-sm text-gray-500" : ""}`}
                             onClick={() => setIsWatchesOpen(false)}
                           >
-                            {collection}
+                            {item.label}
                           </Link>
                         ))}
-                        <Link
-                          href="/products/watches/olivia-petite"
-                          className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
-                          onClick={() => setIsWatchesOpen(false)}
-                        >
-                          Olivia Petite
-                        </Link>
-                        <Link
-                          href="/products/watches/macy-petite"
-                          className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
-                          onClick={() => setIsWatchesOpen(false)}
-                        >
-                          Macy Petite
-                        </Link>
-                        <Link
-                          href="/products/watches/isabell-petite"
-                          className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
-                          onClick={() => setIsWatchesOpen(false)}
-                        >
-                          Isabell Petite
-                        </Link>
-                        <Link
-                          href="/products/watches/ruby-petite"
-                          className="block py-2 hover:text-gray-600 transition-colors text-sm text-gray-500"
-                          onClick={() => setIsWatchesOpen(false)}
-                        >
-                          Ruby Petite
-                        </Link>
                       </div>
 
-                      {/* Правый блок - 4 ссылки на коллекции с первым товаром */}
+                      {/* Правый блок - до 4 коллекций с первым товаром */}
                       <div className="grid grid-cols-4 gap-3">
-                        {["Diana", "Isabell", "Julia", "Macy"].map((collectionName) => {
-                          const firstProduct = products.find((p) => p.collection === collectionName);
+                        {watchesFeatured.map((item) => {
+                          const firstProduct = products.find((p) => p.subcategory === item.label);
                           return (
                             <Link
-                              key={collectionName}
-                              href={`/products/watches/${collectionName.toLowerCase()}`}
+                              key={item.slug}
+                              href={item.href}
                               className="group"
                               onClick={() => setIsWatchesOpen(false)}
                             >
@@ -215,12 +198,12 @@ export default function Header() {
                                   />
                                 ) : (
                                   <span className="text-2xl font-semibold text-gray-700 group-hover:text-black transition-colors">
-                                    {collectionName}
+                                    {item.label}
                                   </span>
                                 )}
                               </div>
                               <p className="text-xs font-medium group-hover:text-gray-600 transition-colors">
-                                {collectionName.toUpperCase()}
+                                {item.label.toUpperCase()}
                               </p>
                             </Link>
                           );
@@ -250,7 +233,7 @@ export default function Header() {
                   >
                     <div className="container mx-auto">
                       <div className="grid grid-cols-[250px_1fr] gap-8">
-                      {/* Левое меню - подменю */}
+                      {/* Левое меню - подкатегории из БД */}
                       <div className="text-xl">
                         <Link
                           href="/products/jewelry"
@@ -259,51 +242,28 @@ export default function Header() {
                         >
                           Все украшения
                         </Link>
-                        <Link
-                          href="/products/jewelry/bracelets"
-                          className="block py-2 hover:text-gray-600 transition-colors"
-                          onClick={() => setIsJewelryOpen(false)}
-                        >
-                          Браслеты
-                        </Link>
-                        <Link
-                          href="/products/jewelry/necklaces"
-                          className="block py-2 hover:text-gray-600 transition-colors"
-                          onClick={() => setIsJewelryOpen(false)}
-                        >
-                          Ожерелье
-                        </Link>
-                        <Link
-                          href="/products/jewelry/earrings"
-                          className="block py-2 hover:text-gray-600 transition-colors"
-                          onClick={() => setIsJewelryOpen(false)}
-                        >
-                          Серьги
-                        </Link>
-                        <Link
-                          href="/products/jewelry/rings"
-                          className="block py-2 hover:text-gray-600 transition-colors"
-                          onClick={() => setIsJewelryOpen(false)}
-                        >
-                          Кольца
-                        </Link>
+                        {menuJewelry.map((item) => (
+                          <Link
+                            key={item.slug}
+                            href={item.href}
+                            className="block py-2 hover:text-gray-600 transition-colors"
+                            onClick={() => setIsJewelryOpen(false)}
+                          >
+                            {item.label}
+                          </Link>
+                        ))}
                       </div>
 
-                      {/* Правый блок - 4 категории с первым товаром */}
+                      {/* Правый блок - категории с первым товаром */}
                       <div className="grid grid-cols-4 gap-3">
-                        {[
-                          { slug: "bracelets", label: "Браслеты" },
-                          { slug: "necklaces", label: "Ожерелье" },
-                          { slug: "earrings", label: "Серьги" },
-                          { slug: "rings", label: "Кольца" },
-                        ].map(({ slug, label }) => {
+                        {menuJewelry.map((item) => {
                           const firstProduct = products.find(
-                            (p) => p.collection === "Украшения" && p.subcategory === label
+                            (p) => p.collection === "Украшения" && p.subcategory === item.label
                           );
                           return (
                             <Link
-                              key={slug}
-                              href={`/products/jewelry/${slug}`}
+                              key={item.slug}
+                              href={item.href}
                               className="group"
                               onClick={() => setIsJewelryOpen(false)}
                             >
@@ -316,12 +276,12 @@ export default function Header() {
                                   />
                                 ) : (
                                   <span className="text-2xl font-semibold text-gray-700 group-hover:text-black transition-colors">
-                                    {label}
+                                    {item.label}
                                   </span>
                                 )}
                               </div>
                               <p className="text-xs font-medium group-hover:text-gray-600 transition-colors">
-                                {label.toUpperCase()}
+                                {item.label.toUpperCase()}
                               </p>
                             </Link>
                           );
@@ -491,14 +451,14 @@ export default function Header() {
                   >
                     Все часы
                   </Link>
-                  {collections.map((collection) => (
+                  {menuWatches.map((item) => (
                     <Link
-                      key={collection}
-                      href={`/products/watches/${collection.toLowerCase()}`}
+                      key={item.slug}
+                      href={item.href}
                       className="block py-2 hover:text-gray-600"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      {collection}
+                      {item.label}
                     </Link>
                   ))}
                 </div>
@@ -520,34 +480,16 @@ export default function Header() {
                   >
                     Все украшения
                   </Link>
-                  <Link
-                    href="/products/jewelry/bracelets"
-                    className="block py-2 hover:text-gray-600"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Браслеты
-                  </Link>
-                  <Link
-                    href="/products/jewelry/necklaces"
-                    className="block py-2 hover:text-gray-600"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Ожерелье
-                  </Link>
-                  <Link
-                    href="/products/jewelry/earrings"
-                    className="block py-2 hover:text-gray-600"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Серьги
-                  </Link>
-                  <Link
-                    href="/products/jewelry/rings"
-                    className="block py-2 hover:text-gray-600"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Кольца
-                  </Link>
+                  {menuJewelry.map((item) => (
+                    <Link
+                      key={item.slug}
+                      href={item.href}
+                      className="block py-2 hover:text-gray-600"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
                 </div>
               )}
             </div>
