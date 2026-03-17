@@ -12,7 +12,7 @@ export const revalidate = 86400; // 24 часа
 
 /** Категории и подкатегории для URL /products/[category] и /products/[category]/[subcategory] */
 const CATEGORY_PAGES = [
-  { url: "watches", subcategories: ["diana", "sophie", "olivia", "macy", "isabell", "julia", "ruby", "olivia-petite", "macy-petite", "isabell-petite", "ruby-petite"] },
+  { url: "watches", subcategories: ["diana", "diana-petite", "sophie", "olivia", "macy", "isabell", "julia", "ruby", "olivia-petite", "macy-petite", "isabell-petite", "ruby-petite"] },
   { url: "jewelry", subcategories: ["bracelets", "necklaces", "earrings", "rings"] },
 ];
 

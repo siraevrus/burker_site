@@ -5,6 +5,7 @@ import { SUBcategoryToSlug } from "@/lib/utils";
 /** Порядок подкатегорий — новые из БД добавляются в конец */
 const WATCHES_ORDER = [
   "Diana",
+  "Diana Petite",
   "Sophie",
   "Olivia",
   "Macy",

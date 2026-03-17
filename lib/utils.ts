@@ -13,6 +13,7 @@ export function getCategorySlug(collection: string): "watches" | "jewelry" {
 /** Маппинг subcategory → slug для URL (экспортируем для использования в products) */
 export const SUBcategoryToSlug: Record<string, string> = {
   Diana: "diana",
+  "Diana Petite": "diana-petite",
   Sophie: "sophie",
   Olivia: "olivia",
   Macy: "macy",
