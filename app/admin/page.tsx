@@ -57,6 +57,42 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
 
+  // Фильтры
+  const [filterCollection, setFilterCollection] = useState<string>("");
+  const [filterSubcategory, setFilterSubcategory] = useState<string>("");
+  const [filterDiscountMin, setFilterDiscountMin] = useState<string>("");
+  const [filterDiscountMax, setFilterDiscountMax] = useState<string>("");
+  const [filterPriceMin, setFilterPriceMin] = useState<string>("");
+  const [filterPriceMax, setFilterPriceMax] = useState<string>("");
+  const [filterBestseller, setFilterBestseller] = useState<string>(""); // "" | "yes" | "no"
+
+  const filteredProducts = productList.filter((p) => {
+    if (filterCollection && p.collection !== filterCollection) return false;
+    if (filterSubcategory && (p.subcategory || "") !== filterSubcategory) return false;
+    const discMin = filterDiscountMin === "" ? -Infinity : parseInt(filterDiscountMin, 10);
+    const discMax = filterDiscountMax === "" ? Infinity : parseInt(filterDiscountMax, 10);
+    if (p.discount < discMin || p.discount > discMax) return false;
+    const priceMin = filterPriceMin === "" ? -Infinity : parseFloat(filterPriceMin) || -Infinity;
+    const priceMax = filterPriceMax === "" ? Infinity : parseFloat(filterPriceMax) || Infinity;
+    if (p.price < priceMin || p.price > priceMax) return false;
+    if (filterBestseller === "yes" && !p.bestseller) return false;
+    if (filterBestseller === "no" && p.bestseller) return false;
+    return true;
+  });
+
+  const uniqueCollections = [...new Set(productList.map((p) => p.collection))].sort();
+  const uniqueSubcategories = [...new Set(productList.map((p) => p.subcategory || "").filter(Boolean))].sort();
+
+  const clearFilters = () => {
+    setFilterCollection("");
+    setFilterSubcategory("");
+    setFilterDiscountMin("");
+    setFilterDiscountMax("");
+    setFilterPriceMin("");
+    setFilterPriceMax("");
+    setFilterBestseller("");
+  };
+
   const handleDelete = async (id: string) => {
     if (confirm("Вы уверены, что хотите удалить этот товар?")) {
       try {
@@ -146,10 +182,10 @@ export default function AdminPage() {
   };
 
   const handleSelectAll = () => {
-    if (selectedProducts.size === productList.length && productList.length > 0) {
+    if (selectedProducts.size === filteredProducts.length && filteredProducts.length > 0) {
       setSelectedProducts(new Set());
     } else {
-      setSelectedProducts(new Set(productList.map((p) => p.id)));
+      setSelectedProducts(new Set(filteredProducts.map((p) => p.id)));
     }
   };
 
@@ -222,6 +258,108 @@ export default function AdminPage() {
         />
       )}
 
+      {/* Фильтры */}
+      {!isLoading && productList.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-gray-200">
+          <div className="flex flex-wrap items-end gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Категория</label>
+              <select
+                value={filterCollection}
+                onChange={(e) => setFilterCollection(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm min-w-[140px]"
+              >
+                <option value="">Все</option>
+                {uniqueCollections.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Подкатегория</label>
+              <select
+                value={filterSubcategory}
+                onChange={(e) => setFilterSubcategory(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm min-w-[140px]"
+              >
+                <option value="">Все</option>
+                {uniqueSubcategories.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Скидка %</label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  placeholder="мин"
+                  min={0}
+                  value={filterDiscountMin}
+                  onChange={(e) => setFilterDiscountMin(e.target.value)}
+                  className="w-16 px-2 py-2 border border-gray-300 rounded-md text-sm"
+                />
+                <span className="self-center text-gray-400">—</span>
+                <input
+                  type="number"
+                  placeholder="макс"
+                  min={0}
+                  value={filterDiscountMax}
+                  onChange={(e) => setFilterDiscountMax(e.target.value)}
+                  className="w-16 px-2 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Цена ₽</label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  placeholder="мин"
+                  min={0}
+                  step={100}
+                  value={filterPriceMin}
+                  onChange={(e) => setFilterPriceMin(e.target.value)}
+                  className="w-24 px-2 py-2 border border-gray-300 rounded-md text-sm"
+                />
+                <span className="self-center text-gray-400">—</span>
+                <input
+                  type="number"
+                  placeholder="макс"
+                  min={0}
+                  step={100}
+                  value={filterPriceMax}
+                  onChange={(e) => setFilterPriceMax(e.target.value)}
+                  className="w-24 px-2 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Бестселлер</label>
+              <select
+                value={filterBestseller}
+                onChange={(e) => setFilterBestseller(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm min-w-[100px]"
+              >
+                <option value="">Все</option>
+                <option value="yes">Да</option>
+                <option value="no">Нет</option>
+              </select>
+            </div>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Сбросить
+            </button>
+            <div className="ml-auto text-sm text-gray-500 self-center">
+              Показано: {filteredProducts.length} из {productList.length}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Список товаров */}
       {isLoading ? (
         <div className="text-center py-8">Загрузка товаров...</div>
@@ -246,7 +384,7 @@ export default function AdminPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
                 <input
                   type="checkbox"
-                  checked={selectedProducts.size === productList.length && productList.length > 0}
+                  checked={selectedProducts.size === filteredProducts.length && filteredProducts.length > 0}
                   onChange={handleSelectAll}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   title="Выделить все"
@@ -285,7 +423,7 @@ export default function AdminPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {productList.map((product) => (
+            {filteredProducts.map((product) => (
               <tr key={product.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
