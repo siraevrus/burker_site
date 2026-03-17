@@ -234,6 +234,21 @@ function BannerForm({
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingMobile, setIsUploadingMobile] = useState(false);
 
+  useEffect(() => {
+    setFormData(
+      banner || {
+        id: "",
+        image: "",
+        imageMobile: "",
+        productLink: "",
+        title: "",
+        subtitle: "",
+      }
+    );
+    setImagePreview("");
+    setImageMobilePreview("");
+  }, [banner?.id, isNew]);
+
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -266,7 +281,7 @@ function BannerForm({
         }
 
         const data = await response.json();
-        setFormData({ ...formData, image: data.filename });
+        setFormData((prev) => ({ ...prev, image: data.filename }));
       } catch (error) {
         console.error("Error uploading file:", error);
         alert(error instanceof Error ? error.message : "Ошибка загрузки файла. Попробуйте еще раз.");
@@ -301,7 +316,7 @@ function BannerForm({
           throw new Error(serverError);
         }
         const data = await response.json();
-        setFormData({ ...formData, imageMobile: data.filename });
+        setFormData((prev) => ({ ...prev, imageMobile: data.filename }));
       } catch (error) {
         console.error("Error uploading mobile image:", error);
         alert(error instanceof Error ? error.message : "Ошибка загрузки файла. Попробуйте еще раз.");
