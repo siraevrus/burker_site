@@ -56,8 +56,12 @@ export async function GET() {
       }),
     ]);
 
-    const watchSubSet = new Set(watchSubs.map((p) => p.subcategory).filter(Boolean));
-    const jewelrySubSet = new Set(jewelrySubs.map((p) => p.subcategory).filter(Boolean));
+    const watchSubSet = new Set(
+      watchSubs.map((p) => p.subcategory).filter((s): s is string => Boolean(s))
+    );
+    const jewelrySubSet = new Set(
+      jewelrySubs.map((p) => p.subcategory).filter((s): s is string => Boolean(s))
+    );
 
     const watches: MenuItem[] = [];
     const addedWatches = new Set<string>();
