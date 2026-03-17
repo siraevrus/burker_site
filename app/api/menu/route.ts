@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { SUBcategoryToSlug } from "@/lib/utils";
 
-/** Порядок подкатегорий для часов (основные, затем Petite) */
+/** Порядок подкатегорий — новые из БД добавляются в конец */
 const WATCHES_ORDER = [
   "Diana",
   "Sophie",
@@ -16,8 +16,6 @@ const WATCHES_ORDER = [
   "Isabell Petite",
   "Ruby Petite",
 ];
-
-/** Порядок подкатегорий для украшений */
 const JEWELRY_ORDER = ["Браслеты", "Ожерелье", "Серьги", "Кольца"];
 
 export interface MenuItem {
@@ -64,7 +62,7 @@ export async function GET() {
     );
 
     const watches: MenuItem[] = [];
-    const addedWatches = new Set<string>();
+    const added = new Set<string>();
     for (const sub of WATCHES_ORDER) {
       if (watchSubSet.has(sub) && SUBcategoryToSlug[sub]) {
         watches.push({
@@ -72,11 +70,11 @@ export async function GET() {
           slug: SUBcategoryToSlug[sub],
           href: `/products/watches/${SUBcategoryToSlug[sub]}`,
         });
-        addedWatches.add(sub);
+        added.add(sub);
       }
     }
     for (const sub of watchSubSet) {
-      if (!addedWatches.has(sub) && SUBcategoryToSlug[sub]) {
+      if (!added.has(sub) && SUBcategoryToSlug[sub]) {
         watches.push({
           label: sub,
           slug: SUBcategoryToSlug[sub],
@@ -86,7 +84,7 @@ export async function GET() {
     }
 
     const jewelry: MenuItem[] = [];
-    const addedJewelry = new Set<string>();
+    const addedJ = new Set<string>();
     for (const sub of JEWELRY_ORDER) {
       if (jewelrySubSet.has(sub) && SUBcategoryToSlug[sub]) {
         jewelry.push({
@@ -94,11 +92,11 @@ export async function GET() {
           slug: SUBcategoryToSlug[sub],
           href: `/products/jewelry/${SUBcategoryToSlug[sub]}`,
         });
-        addedJewelry.add(sub);
+        addedJ.add(sub);
       }
     }
     for (const sub of jewelrySubSet) {
-      if (!addedJewelry.has(sub) && SUBcategoryToSlug[sub]) {
+      if (!addedJ.has(sub) && SUBcategoryToSlug[sub]) {
         jewelry.push({
           label: sub,
           slug: SUBcategoryToSlug[sub],
