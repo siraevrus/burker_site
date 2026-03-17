@@ -61,13 +61,21 @@ export async function POST(request: NextRequest) {
     // Безопасное имя файла: только timestamp и случайная строка
     const filename = `promo-${timestamp}-${randomStr}.${extension}`;
     
-    // Сохраняем в uploads/promo (вне public, чтобы не попадало в сборку)
-    const targetDir = join(process.cwd(), "uploads", "promo");
-    if (!existsSync(targetDir)) {
-      mkdirSync(targetDir, { recursive: true });
+    // Корень проекта (при standalone cwd может быть .next/standalone)
+    const cwd = process.cwd();
+    const projectRoot = cwd.includes(".next/standalone")
+      ? join(cwd, "..", "..")
+      : cwd;
+
+    // Сохраняем в uploads/promo — в корень проекта и в standalone (для надёжности при деплое)
+    const dirs = [
+      join(projectRoot, "uploads", "promo"),
+      join(projectRoot, ".next", "standalone", "uploads", "promo"),
+    ];
+    for (const dir of dirs) {
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      await writeFile(join(dir, filename), buffer);
     }
-    const filepath = join(targetDir, filename);
-    await writeFile(filepath, buffer);
 
     // Возвращаем путь через API route
     return NextResponse.json({

@@ -208,11 +208,14 @@ if [[ -n "${PROMO_PROOFS_BACKUP}" ]] && ls "${PROMO_PROOFS_BACKUP}"/proof-* >/de
 fi
 
 # Восстанавливаем uploads/promo (промо-баннеры из /api/promo-images)
+# В оба места: корень проекта и standalone (API ищет в обоих)
 if [[ -n "${PROMO_UPLOADS_BACKUP}" ]] && ls "${PROMO_UPLOADS_BACKUP}"/* >/dev/null 2>&1; then
   mkdir -p "uploads/promo"
   cp -n "${PROMO_UPLOADS_BACKUP}"/* "uploads/promo/" 2>/dev/null || true
+  mkdir -p ".next/standalone/uploads/promo"
+  cp -n "${PROMO_UPLOADS_BACKUP}"/* ".next/standalone/uploads/promo/" 2>/dev/null || true
   rm -rf "${PROMO_UPLOADS_BACKUP}"
-  log_ok "Восстановлены промо-изображения в uploads/promo/"
+  log_ok "Восстановлены промо-изображения в uploads/promo/ и standalone/"
 fi
 
 log_ok "Standalone-статика подготовлена"

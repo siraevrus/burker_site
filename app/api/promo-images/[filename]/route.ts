@@ -3,6 +3,12 @@ import { readFile } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 
+/** Корень проекта: при standalone cwd может быть .next/standalone */
+function getProjectRoot() {
+  const cwd = process.cwd();
+  return cwd.includes(".next/standalone") ? join(cwd, "..", "..") : cwd;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ filename: string }> }
@@ -15,17 +21,20 @@ export async function GET(
       return NextResponse.json({ error: "Invalid filename" }, { status: 400 });
     }
 
-    // Сначала проверяем в uploads/promo (новое расположение)
-    let filePath = join(process.cwd(), "uploads", "promo", filename);
-    
-    // Если файл не найден, проверяем в public/promo (старое расположение для обратной совместимости)
-    if (!existsSync(filePath)) {
-      const oldPath = join(process.cwd(), "public", "promo", filename);
-      if (existsSync(oldPath)) {
-        filePath = oldPath;
-      } else {
-        return NextResponse.json({ error: "File not found" }, { status: 404 });
-      }
+    const root = getProjectRoot();
+
+    // Ищем файл в порядке приоритета:
+    // 1) uploads/promo (основное)
+    // 2) .next/standalone/uploads/promo (резерв при деплое)
+    // 3) public/promo (старое расположение)
+    const candidates = [
+      join(root, "uploads", "promo", filename),
+      join(root, ".next", "standalone", "uploads", "promo", filename),
+      join(root, "public", "promo", filename),
+    ];
+    let filePath = candidates.find((p) => existsSync(p));
+    if (!filePath) {
+      return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
 
     // Читаем файл
