@@ -41,7 +41,12 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
   useEffect(() => {
     fetch("/api/faq")
       .then((res) => (res.ok ? res.json() : null))
-      .then((data: FaqData | null) => data && setFaq(data))
+      .then((data: FaqData | null) => {
+        if (data) {
+          setFaq(data);
+          if (data.items?.[0]?.id) setFaqOpenId(data.items[0].id);
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -59,6 +64,38 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
       <h1 className="sr-only">Женские часы и украшения Буркер | Официальный магазин Мира Брендс</h1>
       {/* Promo Banner Gallery */}
       <PromoBannerGallery />
+
+      {/* Преимущества — под hero */}
+      <div
+        className="container mx-auto px-4 flex flex-wrap justify-center items-center gap-x-8 gap-y-4"
+        style={{
+          marginTop: "28px",
+          marginBottom: "32px",
+          fontFamily: 'Geist, "Geist Fallback", -apple-system, sans-serif',
+          fontSize: "15px",
+          fontWeight: 500,
+          color: "#4a4a4a",
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5 flex-shrink-0 text-[#6b6b6b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Оригинальные модели</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5 flex-shrink-0 text-[#6b6b6b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Проверка перед отправкой</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5 flex-shrink-0 text-[#6b6b6b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Доставка до СДЭК</span>
+        </div>
+      </div>
 
       {/* Бестселлеры */}
       <section className="py-16">
@@ -191,75 +228,97 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
         </div>
       </section>
 
-      {/* Вопрос-Ответ */}
+      {/* FAQ — Частые вопросы */}
       {(faq?.items?.length ?? 0) > 0 && (
-        <section className="py-16" style={{ backgroundColor: "#FCFAF8" }}>
-          <div className="container mx-auto px-4">
-            {faq?.title && (
-              <h2
-                className="mb-4 text-center uppercase"
-                style={{
-                  fontFamily: 'Geist, "Geist Fallback", -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                  fontSize: "20px",
-                  fontWeight: 400,
-                  lineHeight: "28px",
-                  color: "rgb(23, 23, 23)",
-                }}
-              >
-                {faq.title}
-              </h2>
-            )}
-            {faq?.title && (
-              <div className="flex justify-center mb-6">
-                <div style={{ width: 35, height: 3, backgroundColor: "#CAC8C6" }} />
-              </div>
-            )}
-            {faq?.items && faq.items.length > 0 && (
-              <div className="max-w-4xl mx-auto divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden bg-white">
-                {faq.items.map((item) => {
-                  const isOpen = faqOpenId === item.id;
-                  return (
-                    <div key={item.id}>
-                      <button
-                        type="button"
-                        onClick={() => setFaqOpenId(isOpen ? null : item.id)}
-                        className="w-full flex items-center justify-between px-4 py-4 text-left hover:bg-gray-50 transition-colors"
+        <section
+          className="py-20 md:py-28"
+          style={{ backgroundColor: "#F5F0E8" }}
+        >
+          <div className="container mx-auto px-4 flex flex-col items-center">
+            <h2
+              className="text-center text-3xl md:text-4xl font-normal text-[#1a1a1a] tracking-tight"
+              style={{ fontFamily: 'Geist, "Geist Fallback", -apple-system, sans-serif' }}
+            >
+              Частые вопросы
+            </h2>
+            <p
+              className="mt-3 text-center text-base md:text-lg text-[#6b6b6b] font-normal max-w-xl"
+              style={{
+                fontFamily: 'Geist, "Geist Fallback", -apple-system, sans-serif',
+                lineHeight: 1.5,
+              }}
+            >
+              Всё, что важно знать о заказе, сроках доставки и стоимости
+            </p>
+            <div
+              className="w-full max-w-[1100px] mt-12 md:mt-16 bg-white rounded-[26px] overflow-hidden"
+              style={{
+                border: "1px solid rgba(0,0,0,0.06)",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+              }}
+            >
+              {faq.items.map((item, index) => {
+                const isOpen = faqOpenId === item.id;
+                const nextItem = faq.items[index + 1];
+                const nextClosed = nextItem && faqOpenId !== nextItem.id;
+                const showDivider = !isOpen && nextClosed;
+                return (
+                  <div key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => setFaqOpenId(isOpen ? null : item.id)}
+                      className={`w-full flex items-center justify-between text-left transition-colors ${
+                        isOpen ? "bg-[#faf8f5]" : "bg-white hover:bg-[#fcfcfb]"
+                      }`}
+                      style={{
+                        padding: "28px 38px",
+                        fontFamily: 'Geist, "Geist Fallback", -apple-system, sans-serif',
+                        fontSize: "17px",
+                        fontWeight: isOpen ? 600 : 500,
+                        color: isOpen ? "#1a1a1a" : "#333",
+                      }}
+                    >
+                      <span className="pr-4">{item.question}</span>
+                      <svg
+                        className={`w-5 h-5 flex-shrink-0 text-[#888] transition-transform duration-200 ${
+                          isOpen ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    <div
+                      className={`overflow-hidden transition-all duration-200 ease-out ${
+                        isOpen ? "max-h-[500px]" : "max-h-0"
+                      }`}
+                    >
+                      <div
+                        className="whitespace-pre-wrap"
                         style={{
-                          fontFamily: 'Geist, "Geist Fallback", -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                          padding: "0 38px 28px",
+                          fontFamily: 'Geist, "Geist Fallback", -apple-system, sans-serif',
                           fontSize: "15px",
-                          fontWeight: 500,
-                          color: "rgb(23, 23, 23)",
+                          fontWeight: 400,
+                          lineHeight: 1.65,
+                          color: "#5c5c5c",
                         }}
                       >
-                        {item.question}
-                        <svg
-                          className={`w-5 h-5 text-gray-500 flex-shrink-0 ml-2 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-                      <div
-                        className={`overflow-hidden transition-all duration-200 ${isOpen ? "max-h-96" : "max-h-0"}`}
-                      >
-                        <div
-                          className="px-4 pb-4 pt-0 text-gray-600 whitespace-pre-wrap"
-                          style={{
-                            fontFamily: 'Geist, "Geist Fallback", -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                            fontSize: "14px",
-                            lineHeight: "1.6",
-                          }}
-                        >
-                          {item.answer}
-                        </div>
+                        {item.answer}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                    {showDivider && (
+                      <div
+                        className="mx-[38px] h-px"
+                        style={{ backgroundColor: "rgba(0,0,0,0.05)" }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </section>
       )}

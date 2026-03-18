@@ -114,26 +114,41 @@ export default function Header() {
     >
       {/* Top banner */}
       <div
-        className="text-center py-2 text-sm transition-all duration-300"
+        className="flex items-center justify-center text-center transition-all duration-300"
         style={{
-          backgroundColor: isScrolled ? "rgba(252, 250, 248, 0.85)" : "#FCFAF8",
+          height: "32px",
+          backgroundColor: "#D2C8BA",
+          fontSize: "13px",
+          letterSpacing: "0.3px",
+          color: "rgba(0,0,0,0.75)",
+          borderBottom: "1px solid rgba(0,0,0,0.06)",
         }}
       >
         <div className="container mx-auto px-4">
-          <p className="text-gray-900">{topBannerText}</p>
+          <p className="m-0">{topBannerText}</p>
         </div>
       </div>
 
       {/* Main header */}
-      <div className="container mx-auto px-4 py-4 relative">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="text-2xl font-bold" style={{ marginLeft: "20px" }}>
+      <div
+        className="container mx-auto px-4 relative"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr",
+          alignItems: "center",
+          minHeight: "72px",
+          borderBottom: "1px solid rgba(0,0,0,0.08)",
+        }}
+      >
+        {/* Left: Logo */}
+        <div className="flex items-center justify-start">
+          <Link href="/" className="text-2xl font-bold">
             Мира Брендс | Буркер
           </Link>
+        </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
+        {/* Center: Menu — строго по центру страницы */}
+        <nav className="hidden md:flex items-center gap-6 justify-self-center">
             {hasSaleProducts && (
               <Link href="/sale" className="hover:text-gray-600 inline-flex items-center py-1 min-h-[2.25rem]">
                 СКИДКИ
@@ -293,10 +308,10 @@ export default function Header() {
                 )}
               </AnimatePresence>
             </div>
-          </nav>
+        </nav>
 
-          {/* Right side icons */}
-          <div className="flex items-center gap-4" style={{ marginRight: "20px" }}>
+        {/* Right: поиск, корзина, вход */}
+        <div className="flex items-center justify-end gap-4 justify-self-end">
             {/* Поиск */}
             <button
               className="inline-flex items-center justify-center p-1"
@@ -421,11 +436,10 @@ export default function Header() {
               </svg>
             </button>
           </div>
-        </div>
 
-        {/* Mobile menu */}
+        {/* Mobile menu — на всю ширину под grid */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 pb-4">
+          <div className="md:hidden mt-4 pb-4 col-span-full">
             {hasSaleProducts && (
               <Link
                 href="/sale"
