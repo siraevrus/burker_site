@@ -84,3 +84,81 @@ html {
   line-height: 39.19px !important;
   color: rgb(0, 0, 0) !important;
 }
+
+/* Page content from admin editor — matches TinyMCE content_style for WYSIWYG */
+.page-content {
+  font-family: "Open Sans", sans-serif;
+  font-size: 14pt;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.page-content h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin: 1em 0 0.5em;
+  color: inherit;
+}
+
+.page-content h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin: 1em 0 0.5em;
+  color: inherit;
+}
+
+.page-content h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin: 0.75em 0 0.5em;
+  color: inherit;
+}
+
+.page-content h4,
+.page-content h5,
+.page-content h6 {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin: 0.5em 0;
+  color: inherit;
+}
+
+.page-content p {
+  margin: 0.5em 0;
+}
+
+.page-content ul,
+.page-content ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.page-content ul {
+  list-style-type: disc;
+}
+
+.page-content ul ul {
+  list-style-type: circle;
+}
+
+.page-content ol {
+  list-style-type: decimal;
+}
+
+.page-content a {
+  color: #A13D42;
+  text-decoration: underline;
+}
+
+.page-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5em 0;
+}
+
+.page-content th,
+.page-content td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5em 0.75em;
+  text-align: left;
+}

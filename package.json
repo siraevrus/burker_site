@@ -14,6 +14,7 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:test": "tsx prisma/seed-test.ts",
+    "db:seed:pages": "tsx scripts/seed-pages.ts",
     "db:studio": "prisma studio",
     "test:tbank": "tsx scripts/test-tbank.ts",
     "test:webhook": "tsx scripts/test-tbank-webhook.ts",

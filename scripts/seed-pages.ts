@@ -1,67 +1,13 @@
+/**
+ * Добавляет страницы (privacy, и т.д.) в БД, если их ещё нет.
+ * Не затрагивает товары и другие данные.
+ */
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
-import { products } from "../lib/data";
 
 const prisma = new PrismaClient();
 
-async function main() {
-  console.log("🌱 Seeding database...");
-
-  // Очистка существующих данных
-  await prisma.product.deleteMany();
-  await prisma.promoBanner.deleteMany();
-  await prisma.topBanner.deleteMany();
-
-  // Добавление товаров
-  for (const product of products) {
-    await prisma.product.create({
-      data: {
-        id: product.id,
-        name: product.name,
-        collection: product.collection,
-        price: product.price,
-        originalPrice: product.originalPrice,
-        discount: product.discount,
-        colors: JSON.stringify(product.colors),
-        images: JSON.stringify(product.images),
-        inStock: product.inStock,
-        variant: product.variant,
-        rating: product.rating,
-        reviewsCount: product.reviewsCount,
-        description: product.description,
-        specifications: product.specifications
-          ? JSON.stringify(product.specifications)
-          : null,
-        relatedProducts: product.relatedProducts
-          ? JSON.stringify(product.relatedProducts)
-          : null,
-      },
-    });
-  }
-
-  // Добавление начального промоблока
-  await prisma.promoBanner.create({
-    data: {
-      image: "/Isabell_gold_burgundy_1.webp",
-      productLink: "/sale",
-      title: "VALENTINE'S SALE",
-      subtitle: "ЧАСЫ • УКРАШЕНИЯ",
-      order: 0,
-    },
-  });
-
-  // Добавление начального текста верхней строки
-  await prisma.topBanner.upsert({
-    where: { id: "single" },
-    update: {},
-    create: {
-      id: "single",
-      text: "",
-    },
-  });
-
-  // Страница «Политика конфиденциальности» (/privacy)
-  const privacyContent = `
+const PRIVACY_CONTENT = `
 <h2>1. Общие положения</h2>
 <p>Настоящая Политика конфиденциальности определяет порядок обработки и защиты персональных данных пользователей интернет-магазина Мира Брендс | Буркер (далее — «Сайт»).</p>
 <p>Использование Сайта означает безоговорочное согласие пользователя с настоящей Политикой и указанными в ней условиями обработки его персональной информации.</p>
@@ -110,21 +56,26 @@ async function main() {
 <p>Мы оставляем за собой право вносить изменения в настоящую Политику конфиденциальности. Актуальная версия всегда доступна на данной странице.</p>
 <p><strong>Дата последнего обновления:</strong> ${new Date().toLocaleDateString("ru-RU", { year: "numeric", month: "long", day: "numeric" })}</p>
 `;
-  await prisma.page.upsert({
-    where: { slug: "privacy" },
-    update: {},
-    create: {
-      title: "Политика конфиденциальности",
-      slug: "privacy",
-      content: privacyContent.trim(),
-      category: "policies",
-      published: true,
-      seoTitle: "Политика конфиденциальности",
-      seoDescription: "Политика конфиденциальности Мира Брендс | Буркер",
-    },
-  });
 
-  console.log("✅ Database seeded successfully!");
+async function main() {
+  const existing = await prisma.page.findUnique({ where: { slug: "privacy" } });
+  if (existing) {
+    console.log("Страница /privacy уже существует, пропускаем.");
+  } else {
+    await prisma.page.create({
+      data: {
+        title: "Политика конфиденциальности",
+        slug: "privacy",
+        content: PRIVACY_CONTENT.trim(),
+        category: "policies",
+        published: true,
+        seoTitle: "Политика конфиденциальности",
+        seoDescription: "Политика конфиденциальности Мира Брендс | Буркер",
+      },
+    });
+    console.log("Страница /privacy создана.");
+  }
+  console.log("Готово.");
 }
 
 main()
@@ -132,6 +83,4 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .finally(() => prisma.$disconnect());

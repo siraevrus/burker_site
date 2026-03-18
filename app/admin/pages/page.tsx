@@ -387,11 +387,18 @@ function PageForm({
                   "anchor", "searchreplace", "visualblocks", "code", "fullscreen",
                   "insertdatetime", "media", "table", "code", "help", "wordcount"
                 ],
-                toolbar: "undo redo | blocks | " +
+                toolbar: "undo redo | blocks | fontfamily fontsize | " +
                   "bold italic forecolor | alignleft aligncenter " +
                   "alignright alignjustify | bullist numlist outdent indent | " +
                   "removeformat | link image | code | help",
-                content_style: "body { font-family: Arial, sans-serif; font-size: 14px; }",
+                font_family_formats: "Open Sans=Open Sans, sans-serif; Arial=Arial, Helvetica, sans-serif; Georgia=Georgia, serif; Times New Roman=Times New Roman, serif",
+                font_size_formats: "12pt 14pt 16pt 18pt 24pt 36pt",
+                content_style: "body { font-family: Open Sans, sans-serif; font-size: 14pt; line-height: 1.6; color: #374151; } " +
+                  "h1 { font-size: 2em; font-weight: 700; margin: 1em 0 0.5em; } " +
+                  "h2 { font-size: 1.5em; font-weight: 600; margin: 1em 0 0.5em; } " +
+                  "h3 { font-size: 1.25em; font-weight: 600; margin: 0.75em 0 0.5em; } " +
+                  "h4, h5, h6 { font-size: 1.1em; font-weight: 600; margin: 0.5em 0; } " +
+                  "p { margin: 0.5em 0; }",
                 branding: false,
                 promotion: false,
                 resize: true,

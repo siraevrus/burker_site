@@ -212,6 +212,16 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                 onSubmit={formData.onSubmit}
               />
             )}
+            <p className="text-sm text-gray-600 mt-4 pt-4 border-t border-[#e5e6ea]">
+              Оформляя заказ, вы принимаете{" "}
+              <Link href="/oferta" target="_blank" className="text-[#A13D42] hover:underline">
+                Условия оферты
+              </Link>{" "}
+              и даете{" "}
+              <Link href="/coscent" target="_blank" className="text-[#A13D42] hover:underline">
+                Согласие на обработку персональных данных
+              </Link>
+            </p>
           </div>
         </div>
       </div>

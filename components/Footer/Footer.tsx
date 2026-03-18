@@ -204,6 +204,12 @@ export default function Footer() {
                 {newsletterLoading ? "..." : "Подписаться"}
               </button>
             </form>
+            <p className="text-xs text-gray-500 mt-3">
+              Подписываясь на рассылку, вы даете{" "}
+              <Link href="/coscent" target="_blank" className="text-[#A13D42] hover:underline">
+                Согласие на обработку персональных данных
+              </Link>
+            </p>
           </div>
         </div>
 
