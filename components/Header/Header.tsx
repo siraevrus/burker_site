@@ -112,37 +112,45 @@ export default function Header() {
         backgroundColor: isScrolled ? "rgba(252, 250, 248, 0.85)" : "#FCFAF8",
       }}
     >
-      {/* Top banner */}
+      {/* Info bar — верхняя строка */}
       <div
-        className="flex items-center justify-center text-center transition-all duration-300"
+        className="flex items-center justify-center text-center min-h-[36px] py-2 overflow-visible"
         style={{
-          height: "32px",
-          backgroundColor: "#D2C8BA",
+          backgroundColor: "#E8E2DA",
           fontSize: "13px",
-          letterSpacing: "0.3px",
-          color: "rgba(0,0,0,0.75)",
-          borderBottom: "1px solid rgba(0,0,0,0.06)",
+          letterSpacing: "0.2px",
+          lineHeight: 1.4,
+          color: "rgba(0,0,0,0.8)",
+          borderBottom: "1px solid rgba(0,0,0,0.05)",
         }}
       >
         <div className="container mx-auto px-4">
-          <p className="m-0">{topBannerText}</p>
+          <p className="m-0 block opacity-100 visible">
+            <span className="hidden md:inline">
+              {topBannerText || "Оригинальные часы из Европы • Доставка 25–30 дней • От 1700 ₽"}
+            </span>
+            <span className="md:hidden">
+              {topBannerText
+                ? (topBannerText.includes("•") ? topBannerText.split("•").slice(0, 2).join(" •").trim() : topBannerText)
+                : "Оригинальные часы из Европы • Доставка 25–30 дней"}
+            </span>
+          </p>
         </div>
       </div>
 
       {/* Main header */}
       <div
-        className="container mx-auto px-4 relative"
+        className="container mx-auto px-4 relative flex md:grid md:grid-cols-[1fr_1fr_1fr] items-center justify-between md:justify-stretch min-h-[48px] md:min-h-[72px] py-2 md:py-0 gap-2"
         style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
-          alignItems: "center",
-          minHeight: "72px",
           borderBottom: "1px solid rgba(0,0,0,0.08)",
         }}
       >
-        {/* Left: Logo */}
-        <div className="flex items-center justify-start">
-          <Link href="/" className="text-2xl font-bold">
+        {/* Left: Logo — компактно на mobile */}
+        <div className="flex items-center justify-start min-w-0 flex-shrink-0 md:flex-shrink">
+          <Link
+            href="/"
+            className="text-[15px] leading-[1.2] md:text-2xl md:leading-normal font-bold"
+          >
             Мира Брендс | Буркер
           </Link>
         </div>
@@ -310,8 +318,8 @@ export default function Header() {
             </div>
         </nav>
 
-        {/* Right: поиск, корзина, вход */}
-        <div className="flex items-center justify-end gap-4 justify-self-end">
+        {/* Right: поиск, корзина, вход — компактно на mobile */}
+        <div className="flex items-center justify-end gap-2 md:gap-4 justify-self-end">
             {/* Поиск */}
             <button
               className="inline-flex items-center justify-center p-1"
@@ -319,7 +327,7 @@ export default function Header() {
               onClick={() => setIsSearchOpen(!isSearchOpen)}
             >
               <svg
-                className="w-6 h-6"
+                className="w-5 h-5 md:w-6 md:h-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -334,9 +342,9 @@ export default function Header() {
             </button>
             
             {/* Корзина */}
-            <Link href="/cart" className="relative" aria-label="Корзина">
+            <Link href="/cart" className="relative flex items-center" aria-label="Корзина">
               <svg
-                className="w-6 h-6"
+                className="w-5 h-5 md:w-6 md:h-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -417,12 +425,12 @@ export default function Header() {
               </div>
             )}
             <button
-              className="md:hidden"
+              className="md:hidden flex items-center p-1"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label="Меню"
             >
               <svg
-                className="w-6 h-6"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

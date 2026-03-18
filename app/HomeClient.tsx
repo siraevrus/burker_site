@@ -67,41 +67,41 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
 
       {/* Преимущества — под hero */}
       <div
-        className="container mx-auto px-4 flex flex-wrap justify-center items-center gap-x-8 gap-y-4"
+        className="container mx-auto px-4 mt-6 mb-5 md:mt-7 md:mb-8"
         style={{
-          marginTop: "28px",
-          marginBottom: "32px",
           fontFamily: 'Geist, "Geist Fallback", -apple-system, sans-serif',
           fontSize: "15px",
           fontWeight: 500,
-          color: "#4a4a4a",
+          color: "#2B2B2B",
         }}
       >
-        <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 flex-shrink-0 text-[#6b6b6b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-          <span>Оригинальные модели</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 flex-shrink-0 text-[#6b6b6b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-          <span>Проверка перед отправкой</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 flex-shrink-0 text-[#6b6b6b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-          <span>Доставка до СДЭК</span>
+        <div className="flex flex-col md:flex-row md:flex-wrap md:justify-center md:items-center gap-3 md:gap-x-10 md:gap-y-2">
+          <div className="flex items-center gap-2.5">
+            <svg className="w-5 h-5 flex-shrink-0 text-[#333]" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span>Оригинальные модели</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <svg className="w-5 h-5 flex-shrink-0 text-[#333]" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span>Проверка перед отправкой</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <svg className="w-5 h-5 flex-shrink-0 text-[#333]" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span>Доставка до СДЭК</span>
+          </div>
         </div>
       </div>
 
       {/* Бестселлеры */}
-      <section className="py-16">
+      <section className="pt-4 md:pt-8 pb-12 md:pb-16">
         <div className="container mx-auto px-4 relative">
-          <h2 className="text-xl mb-4 text-center uppercase">Бестселлеры</h2>
-          <div className="flex justify-center mb-8">
+          <h2 className="text-xl mb-3 md:mb-4 text-center uppercase">Бестселлеры</h2>
+          <div className="flex justify-center mb-6 md:mb-8">
             <div style={{ width: 35, height: 3, backgroundColor: "#CAC8C6" }} />
           </div>
           <div className="relative flex items-center">

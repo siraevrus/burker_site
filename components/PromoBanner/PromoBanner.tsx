@@ -71,30 +71,30 @@ export default function PromoBannerGallery() {
     setTimeout(() => setIsPaused(false), 10000);
   };
 
-  const imgClass = "w-full h-[600px] object-cover block";
+  const desktopImgClass = "w-full h-[520px] object-cover object-center block";
+  const mobileImgClass = "w-full h-[280px] object-cover object-center block";
   const renderDesktopImg = () => {
     if (desktopImage.startsWith("data:image")) {
-      return <img src={desktopImage} alt={currentBanner.title || "Promo banner"} className={imgClass} />;
+      return <img src={desktopImage} alt={currentBanner.title || "Promo banner"} className={desktopImgClass} />;
     }
     if (desktopImage.startsWith("/api/promo-images/") || desktopImage.startsWith("/api/products/") || desktopImage.startsWith("/promo/") || desktopImage.startsWith("/products/") || desktopImage.startsWith("http")) {
-      return <img src={desktopImage} alt={currentBanner.title || "Promo banner"} className={imgClass} />;
+      return <img src={desktopImage} alt={currentBanner.title || "Promo banner"} className={desktopImgClass} />;
     }
-    return <img src={desktopImage} alt={currentBanner.title || "Promo banner"} className={imgClass} onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }} />;
+    return <img src={desktopImage} alt={currentBanner.title || "Promo banner"} className={desktopImgClass} onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }} />;
   };
   const renderMobileImg = () => {
     if (mobileImage.startsWith("data:image")) {
-      return <img src={mobileImage} alt={currentBanner.title || "Promo banner"} className={imgClass} />;
+      return <img src={mobileImage} alt={currentBanner.title || "Promo banner"} className={mobileImgClass} />;
     }
     if (mobileImage.startsWith("/api/promo-images/") || mobileImage.startsWith("/api/products/") || mobileImage.startsWith("/promo/") || mobileImage.startsWith("/products/") || mobileImage.startsWith("http")) {
-      return <img src={mobileImage} alt={currentBanner.title || "Promo banner"} className={imgClass} />;
+      return <img src={mobileImage} alt={currentBanner.title || "Promo banner"} className={mobileImgClass} />;
     }
-    return <img src={mobileImage} alt={currentBanner.title || "Promo banner"} className={imgClass} onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }} />;
+    return <img src={mobileImage} alt={currentBanner.title || "Promo banner"} className={mobileImgClass} onError={(e) => { e.currentTarget.src = "/api/promo-images/placeholder"; }} />;
   };
 
   return (
     <section
-      className="relative overflow-hidden bg-gradient-to-r from-pink-100 to-red-100"
-      style={{ height: 600 }}
+      className="relative overflow-hidden bg-gradient-to-r from-pink-100 to-red-100 h-[280px] md:h-[520px]"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
