@@ -7,7 +7,7 @@ import ProfilePageClient from "./ProfilePageClient";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getMetadataForPath("/profile", {
-    title: "Профиль | Mira Brands | Burker",
+    title: "Профиль | Мира Брендс | Буркер",
     description: "Личный кабинет — смена пароля",
   });
 }

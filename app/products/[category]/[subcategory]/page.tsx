@@ -19,12 +19,12 @@ export async function generateMetadata({
   const { category, subcategory } = await params;
   const subcategoryName = SUBcategorySlugToName[subcategory.toLowerCase()];
   if (!subcategoryName || (category !== "watches" && category !== "jewelry")) {
-    return { title: "Товары | Mira Brands | Burker" };
+    return { title: "Товары | Мира Брендс | Буркер" };
   }
   const title = getCollectionLabel(subcategory);
   return {
-    title: `${title} | Mira Brands | Burker`,
-    description: `Коллекция ${title} — часы и украшения Mira Brands | Burker`,
+    title: `${title} | Мира Брендс | Буркер`,
+    description: `Коллекция ${title} — часы и украшения Мира Брендс | Буркер`,
     alternates: { canonical: getCanonicalUrl(`/products/${category}/${subcategory}`) },
   };
 }

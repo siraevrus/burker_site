@@ -15,8 +15,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await prisma.page.findFirst({
     where: { slug, published: true },
   });
-  if (!page) return { title: "Mira Brands | Burker" };
-  const title = `${page.seoTitle?.trim() || page.title} | Mira Brands | Burker`;
+  if (!page) return { title: "Мира Брендс | Буркер" };
+  const title = `${page.seoTitle?.trim() || page.title} | Мира Брендс | Буркер`;
   const description = page.seoDescription?.trim() || page.title;
   const url = `${baseUrl}/${slug}`;
   return {
@@ -27,10 +27,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "website",
       locale: "ru_RU",
       url,
-      siteName: "Mira Brands | Burker",
+      siteName: "Мира Брендс | Буркер",
       title,
       description,
-      images: [{ url: `${baseUrl}/og.png`, width: 1200, height: 630, alt: "Mira Brands | Burker" }],
+      images: [{ url: `${baseUrl}/og.png`, width: 1200, height: 630, alt: "Мира Брендс | Буркер" }],
     },
     twitter: {
       card: "summary_large_image",

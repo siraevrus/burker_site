@@ -5,8 +5,8 @@ import SalePageClient from "./SalePageClient";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getMetadataForPath("/sale", {
-    title: "Распродажа | Mira Brands | Burker",
-    description: "Товары со скидкой — Mira Brands | Burker",
+    title: "Распродажа | Мира Брендс | Буркер",
+    description: "Товары со скидкой — Мира Брендс | Буркер",
   });
 }
 

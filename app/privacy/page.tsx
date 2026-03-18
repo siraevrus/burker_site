@@ -3,8 +3,8 @@ import { getMetadataForPath } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getMetadataForPath("/privacy", {
-    title: "Политика конфиденциальности | Mira Brands | Burker",
-    description: "Политика конфиденциальности Mira Brands | Burker",
+    title: "Политика конфиденциальности | Мира Брендс | Буркер",
+    description: "Политика конфиденциальности Мира Брендс | Буркер",
   });
 }
 
@@ -17,7 +17,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-2xl font-semibold mb-4">1. Общие положения</h2>
           <p className="text-gray-700">
-            Настоящая Политика конфиденциальности определяет порядок обработки и защиты персональных данных пользователей интернет-магазина Mira Brands | Burker (далее — «Сайт»).
+            Настоящая Политика конфиденциальности определяет порядок обработки и защиты персональных данных пользователей интернет-магазина Мира Брендс | Буркер (далее — «Сайт»).
           </p>
           <p className="text-gray-700">
             Использование Сайта означает безоговорочное согласие пользователя с настоящей Политикой и указанными в ней условиями обработки его персональной информации.

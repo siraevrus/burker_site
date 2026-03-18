@@ -77,19 +77,19 @@ async function testEmail() {
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #333;">Тестовое письмо от Mira Brands | Burker</h2>
+      <h2 style="color: #333;">Тестовое письмо от Мира Брендс | Буркер</h2>
       <p>Здравствуйте!</p>
       <p>Это тестовое письмо для проверки работы Mailopost API.</p>
       <p>Если вы получили это письмо, значит интеграция работает корректно! ✅</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-      <p style="color: #999; font-size: 12px;"><a href="${process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://burker-watches.ru"}" style="color: #999; text-decoration: none;">Mira Brands | Burker</a></p>
+      <p style="color: #999; font-size: 12px;"><a href="${process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://burker-watches.ru"}" style="color: #999; text-decoration: none;">Мира Брендс | Буркер</a></p>
       <p style="color: #999; font-size: 12px;">Время отправки: ${new Date().toLocaleString('ru-RU')}</p>
     </div>
   `;
 
   const result = await sendEmailViaMailopost(
     to,
-    "Тестовое письмо от Mira Brands | Burker",
+    "Тестовое письмо от Мира Брендс | Буркер",
     html
   );
 

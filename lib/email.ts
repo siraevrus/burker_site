@@ -15,8 +15,8 @@ function esc(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-/** Подпись в письмах: Mira Brands | Burker со ссылкой на сайт */
-const EMAIL_FOOTER = `<p style="color: #999; font-size: 12px;"><a href="${SITE_URL}" style="color: #999; text-decoration: none;">Mira Brands | Burker</a></p>`;
+/** Подпись в письмах: Мира Брендс | Буркер со ссылкой на сайт */
+const EMAIL_FOOTER = `<p style="color: #999; font-size: 12px;"><a href="${SITE_URL}" style="color: #999; text-decoration: none;">Мира Брендс | Буркер</a></p>`;
 
 /**
  * Отправка кода верификации на email через Mailopost API.
@@ -115,7 +115,7 @@ export async function sendOrderConfirmation(
 
   const result = await sendEmailViaMailopost(
     email,
-    `Заказ #${orderNumber} принят — Mira Brands | Burker`,
+    `Заказ #${orderNumber} принят — Мира Брендс | Буркер`,
     html
   );
 
@@ -202,7 +202,7 @@ export async function sendFeedbackNotificationToAdmin(data: {
   `;
   const result = await sendEmailViaMailopost(
     ADMIN_EMAIL,
-    "Новое сообщение с формы обратной связи — Mira Brands | Burker",
+    "Новое сообщение с формы обратной связи — Мира Брендс | Буркер",
     html
   );
   return result.success;

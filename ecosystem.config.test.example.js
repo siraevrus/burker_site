@@ -24,7 +24,7 @@ module.exports = {
 
         MAILOPOST_API_TOKEN: "",
         MAILOPOST_FROM_EMAIL: "noreply@burker-watches.ru",
-        MAILOPOST_FROM_NAME: "[TEST] Mira Brands | Burker",
+        MAILOPOST_FROM_NAME: "[TEST] Мира Брендс | Буркер",
 
         SMTP_HOST: "smtp.msndr.net",
         SMTP_PORT: 465,

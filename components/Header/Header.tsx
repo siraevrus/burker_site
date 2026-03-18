@@ -129,7 +129,7 @@ export default function Header() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="text-2xl font-bold" style={{ marginLeft: "20px" }}>
-            Mira Brands | Burker
+            Мира Брендс | Буркер
           </Link>
 
           {/* Desktop Navigation */}

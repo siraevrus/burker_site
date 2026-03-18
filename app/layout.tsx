@@ -27,37 +27,37 @@ const baseUrl = CANONICAL_SITE_URL.replace(/\/+$/, "");
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Mira Brands | Burker",
+  name: "Мира Брендс | Буркер",
   url: baseUrl,
   logo: `${baseUrl}/og.png`,
-  description: "Элегантные женские часы и украшения от Mira Brands | Burker",
+  description: "Элегантные женские часы и украшения от Мира Брендс | Буркер",
 };
 
 export const metadata: Metadata = {
-  title: "Mira Brands | Burker | Официальный магазин",
-  description: "Элегантные женские часы и украшения от Mira Brands | Burker",
+  title: "Мира Брендс | Буркер | Официальный магазин",
+  description: "Элегантные женские часы и украшения от Мира Брендс | Буркер",
   metadataBase: new URL(baseUrl),
   alternates: { canonical: baseUrl },
   openGraph: {
     type: "website",
     locale: "ru_RU",
     url: baseUrl,
-    siteName: "Mira Brands | Burker",
-    title: "Mira Brands | Burker | Официальный магазин",
-    description: "Элегантные женские часы и украшения от Mira Brands | Burker",
+    siteName: "Мира Брендс | Буркер",
+    title: "Мира Брендс | Буркер | Официальный магазин",
+    description: "Элегантные женские часы и украшения от Мира Брендс | Буркер",
     images: [
       {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "Mira Brands | Burker",
+        alt: "Мира Брендс | Буркер",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mira Brands | Burker | Официальный магазин",
-    description: "Элегантные женские часы и украшения от Mira Brands | Burker",
+    title: "Мира Брендс | Буркер | Официальный магазин",
+    description: "Элегантные женские часы и украшения от Мира Брендс | Буркер",
     images: ["/og.png"],
   },
   verification: {

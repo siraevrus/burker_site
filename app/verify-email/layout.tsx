@@ -3,8 +3,8 @@ import { getMetadataForPath } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getMetadataForPath("/verify-email", {
-    title: "Подтверждение email | Mira Brands | Burker",
-    description: "Подтверждение email в интернет-магазине Mira Brands | Burker",
+    title: "Подтверждение email | Мира Брендс | Буркер",
+    description: "Подтверждение email в интернет-магазине Мира Брендс | Буркер",
   });
 }
 

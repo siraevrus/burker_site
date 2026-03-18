@@ -3,8 +3,8 @@ import { getMetadataForPath } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getMetadataForPath("/cart", {
-    title: "Корзина | Mira Brands | Burker",
-    description: "Корзина покупок в интернет-магазине Mira Brands | Burker",
+    title: "Корзина | Мира Брендс | Буркер",
+    description: "Корзина покупок в интернет-магазине Мира Брендс | Буркер",
   });
 }
 

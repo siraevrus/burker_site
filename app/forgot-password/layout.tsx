@@ -3,8 +3,8 @@ import { getMetadataForPath } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getMetadataForPath("/forgot-password", {
-    title: "Восстановление пароля | Mira Brands | Burker",
-    description: "Восстановление пароля в интернет-магазине Mira Brands | Burker",
+    title: "Восстановление пароля | Мира Брендс | Буркер",
+    description: "Восстановление пароля в интернет-магазине Мира Брендс | Буркер",
   });
 }
 

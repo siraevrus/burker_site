@@ -6,8 +6,8 @@ import CheckoutPageClient from "./CheckoutPageClient";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getMetadataForPath("/checkout", {
-    title: "Оформление заказа | Mira Brands | Burker",
-    description: "Оформление заказа в интернет-магазине Mira Brands | Burker",
+    title: "Оформление заказа | Мира Брендс | Буркер",
+    description: "Оформление заказа в интернет-магазине Мира Брендс | Буркер",
   });
 }
 

@@ -6,8 +6,8 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata() {
   return getMetadataForPath("/", {
-    title: "Mira Brands | Burker | Официальный магазин",
-    description: "Элегантные женские часы и украшения от Mira Brands | Burker",
+    title: "Мира Брендс | Буркер | Официальный магазин",
+    description: "Элегантные женские часы и украшения от Мира Брендс | Буркер",
   });
 }
 

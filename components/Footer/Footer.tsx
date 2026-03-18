@@ -175,7 +175,7 @@ export default function Footer() {
             </h3>
             <p className="text-sm mb-4">
               Подпишитесь на нашу рассылку, чтобы первыми получать новости о
-              скидках, акциях и специальных предложениях Mira Brands | Burker.
+              скидках, акциях и специальных предложениях Мира Брендс | Буркер.
             </p>
             {newsletterSubmitted && (
               <p className="text-green-600 text-xs mb-2">Вы успешно подписались!</p>
@@ -208,7 +208,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-200 text-center text-sm text-gray-600">
-          <p>© 2026 Mira Brands | Burker</p>
+          <p>© 2026 Мира Брендс | Буркер</p>
         </div>
       </div>
     </footer>

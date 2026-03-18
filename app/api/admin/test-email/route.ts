@@ -73,7 +73,7 @@ async function handleTestEmail(
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <h2 style="color: #333;">Проверка рассылки</h2>
-      <p>Это тестовое письмо от Mira Brands | Burker.</p>
+      <p>Это тестовое письмо от Мира Брендс | Буркер.</p>
       <p>Если вы получили это письмо, рассылка работает.</p>
       <p style="color: #999; font-size: 12px;">Время: ${new Date().toLocaleString("ru-RU")}</p>
     </div>
@@ -81,7 +81,7 @@ async function handleTestEmail(
 
   const result = await sendEmailViaMailopost(
     to,
-    "Проверка рассылки — Burker",
+    "Проверка рассылки — Буркер",
     html
   );
 

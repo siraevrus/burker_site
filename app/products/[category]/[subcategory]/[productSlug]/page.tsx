@@ -21,12 +21,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { category, subcategory, productSlug } = await params;
   const product = await getProductByPath(category, subcategory, productSlug);
-  if (!product) return { title: "Товар | Mira Brands | Burker" };
+  if (!product) return { title: "Товар | Мира Брендс | Буркер" };
 
-  const title = `${product.name} | Mira Brands | Burker`;
+  const title = `${product.name} | Мира Брендс | Буркер`;
   const description =
     product.description?.replace(/<[^>]+>/g, "").slice(0, 160) ||
-    `Купить ${product.name} в официальном магазине Mira Brands | Burker`;
+    `Купить ${product.name} в официальном магазине Мира Брендс | Буркер`;
   const productPath = generateProductPath(product);
   const canonicalUrl = productPath ? `${baseUrl}${productPath}` : `${baseUrl}/products/${category}/${subcategory}/${productSlug}`;
   const imageUrl =
@@ -42,7 +42,7 @@ export async function generateMetadata({
       type: "website",
       locale: "ru_RU",
       url: canonicalUrl,
-      siteName: "Mira Brands | Burker",
+      siteName: "Мира Брендс | Буркер",
       title,
       description,
       images: [
@@ -84,7 +84,7 @@ export default async function ProductPage({
     name: product.name,
     description:
       product.description?.replace(/<[^>]+>/g, "").slice(0, 500) ||
-      `Купить ${product.name} в официальном магазине Mira Brands | Burker`,
+      `Купить ${product.name} в официальном магазине Мира Брендс | Буркер`,
     image: imageUrls,
     url: productUrl,
     offers: {

@@ -4,8 +4,8 @@ import ContactForm from "./ContactForm";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getMetadataForPath("/contact", {
-    title: "Форма обратной связи | Mira Brands | Burker",
-    description: "Свяжитесь с нами — форма обратной связи Mira Brands | Burker",
+    title: "Форма обратной связи | Мира Брендс | Буркер",
+    description: "Свяжитесь с нами — форма обратной связи Мира Брендс | Буркер",
   });
 }
 

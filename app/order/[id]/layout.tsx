@@ -9,8 +9,8 @@ export async function generateMetadata({
   const { id } = await params;
   const path = `/order/${id}/pay`;
   return {
-    title: "Оплата заказа | Mira Brands | Burker",
-    description: "Оплата заказа в интернет-магазине Mira Brands | Burker",
+    title: "Оплата заказа | Мира Брендс | Буркер",
+    description: "Оплата заказа в интернет-магазине Мира Брендс | Буркер",
     alternates: { canonical: getCanonicalUrl(path) },
   };
 }

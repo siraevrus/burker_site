@@ -1,4 +1,4 @@
-# Инструкция по сборке и деплою проекта Mira Brands | Burker
+# Инструкция по сборке и деплою проекта Мира Брендс | Буркер
 
 ## Содержание
 1. [Git-стратегия и два стенда](#git-стратегия-и-два-стенда)
@@ -408,7 +408,7 @@ API_JSON_KEY="ваш-ключ-из-auth_config-парсинга"
 MAILOPOST_API_URL="https://api.mailopost.ru/v1"
 MAILOPOST_API_TOKEN="ваш_api_token"
 MAILOPOST_FROM_EMAIL="noreply@burker-watches.ru"
-MAILOPOST_FROM_NAME="Mira Brands | Burker"
+MAILOPOST_FROM_NAME="Мира Брендс | Буркер"
 ADMIN_EMAIL="info@kondratov.online"
 ```
 

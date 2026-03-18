@@ -5,8 +5,8 @@ import SearchPageClient from "./SearchPageClient";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getMetadataForPath("/search", {
-    title: "Поиск | Mira Brands | Burker",
-    description: "Поиск товаров в интернет-магазине Mira Brands | Burker",
+    title: "Поиск | Мира Брендс | Буркер",
+    description: "Поиск товаров в интернет-магазине Мира Брендс | Буркер",
   });
 }
 

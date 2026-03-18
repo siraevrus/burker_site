@@ -7,7 +7,7 @@
 const API_URL = process.env.MAILOPOST_API_URL || "https://api.mailopost.ru/v1";
 const API_TOKEN = process.env.MAILOPOST_API_TOKEN;
 const FROM_EMAIL = process.env.MAILOPOST_FROM_EMAIL || "noreply@burker-watches.ru";
-const FROM_NAME = process.env.MAILOPOST_FROM_NAME || "Mira Brands | Burker";
+const FROM_NAME = process.env.MAILOPOST_FROM_NAME || "Мира Брендс | Буркер";
 
 export interface SendEmailResult {
   success: boolean;

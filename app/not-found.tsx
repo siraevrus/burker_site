@@ -3,8 +3,8 @@ import { getBestsellers } from "@/lib/products";
 import NotFoundClient from "./not-found/NotFoundClient";
 
 export const metadata: Metadata = {
-  title: "404 — Страница не найдена | Mira Brands | Burker",
-  description: "Запрашиваемая страница не найдена. Вернитесь на главную или в каталог Mira Brands | Burker.",
+  title: "404 — Страница не найдена | Мира Брендс | Буркер",
+  description: "Запрашиваемая страница не найдена. Вернитесь на главную или в каталог Мира Брендс | Буркер.",
 };
 
 export default async function NotFound() {

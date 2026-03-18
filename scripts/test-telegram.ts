@@ -41,7 +41,7 @@ async function main() {
   // Отправка тестового сообщения
   console.log("Отправка тестового сообщения в чат…");
   const sent = await sendTelegramMessage(
-    "🧪 Тест от Burker: бот работает. " + new Date().toLocaleString("ru-RU"),
+    "🧪 Тест от Буркер: бот работает. " + new Date().toLocaleString("ru-RU"),
     { parseMode: "HTML" }
   );
   if (sent) {

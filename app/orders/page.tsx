@@ -7,8 +7,8 @@ import OrdersPageClient from "./OrdersPageClient";
 
 export async function generateMetadata(): Promise<Metadata> {
   return getMetadataForPath("/orders", {
-    title: "Мои заказы | Mira Brands | Burker",
-    description: "История заказов в интернет-магазине Mira Brands | Burker",
+    title: "Мои заказы | Мира Брендс | Буркер",
+    description: "История заказов в интернет-магазине Мира Брендс | Буркер",
   });
 }
 
