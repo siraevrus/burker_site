@@ -257,9 +257,10 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
                 boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
               }}
             >
-              {faq.items.map((item, index) => {
+              {(faq?.items ?? []).map((item, index) => {
+                const items = faq?.items ?? [];
                 const isOpen = faqOpenId === item.id;
-                const nextItem = faq.items[index + 1];
+                const nextItem = items[index + 1];
                 const nextClosed = nextItem && faqOpenId !== nextItem.id;
                 const showDivider = !isOpen && nextClosed;
                 return (
