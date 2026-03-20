@@ -444,92 +444,52 @@ export default function Header() {
               </svg>
             </button>
           </div>
+      </div>
 
-        {/* Mobile menu — на всю ширину под grid */}
-        {isMenuOpen && (
-          <div className="md:hidden mt-4 pb-4 col-span-full">
+      {/* Mobile menu — отдельная панель под header */}
+      {isMenuOpen && (
+        <div
+          className="md:hidden absolute top-full left-0 right-0 z-40 bg-[#FCFAF8] border-b border-gray-200 shadow-lg py-4 px-4"
+        >
+          <div className="flex flex-col gap-1">
             {hasSaleProducts && (
               <Link
                 href="/sale"
-                className="block py-2 hover:text-gray-600"
+                className="py-3 px-2 text-base hover:bg-gray-100 rounded transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 СКИДКИ
               </Link>
             )}
-            <div className="py-2">
-              <button
-                className="w-full text-left"
-                onClick={() => setIsWatchesOpen(!isWatchesOpen)}
-              >
-                ЧАСЫ
-              </button>
-              {isWatchesOpen && (
-                <div className="pl-4 mt-2">
-                  <Link
-                    href="/products/watches"
-                    className="block py-2 hover:text-gray-600"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Все часы
-                  </Link>
-                  {menuWatches.map((item) => (
-                    <Link
-                      key={item.slug}
-                      href={item.href}
-                      className="block py-2 hover:text-gray-600"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="py-2">
-              <button
-                className="w-full text-left"
-                onClick={() => setIsJewelryOpen(!isJewelryOpen)}
-              >
-                УКРАШЕНИЯ
-              </button>
-              {isJewelryOpen && (
-                <div className="pl-4 mt-2">
-                  <Link
-                    href="/products/jewelry"
-                    className="block py-2 hover:text-gray-600"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Все украшения
-                  </Link>
-                  {menuJewelry.map((item) => (
-                    <Link
-                      key={item.slug}
-                      href={item.href}
-                      className="block py-2 hover:text-gray-600"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+            <Link
+              href="/products/watches"
+              className="py-3 px-2 text-base hover:bg-gray-100 rounded transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Часы
+            </Link>
+            <Link
+              href="/products/jewelry"
+              className="py-3 px-2 text-base hover:bg-gray-100 rounded transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Украшения
+            </Link>
             {user ? (
               <>
-                <div className="px-0 py-2 text-sm text-gray-700 border-b border-gray-200 mb-2">
+                <div className="py-2 px-2 text-sm text-gray-500 border-t border-gray-100 mt-2">
                   {user.email}
                 </div>
                 <Link
                   href="/orders"
-                  className="block py-2 hover:text-gray-600"
+                  className="py-3 px-2 text-base hover:bg-gray-100 rounded transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Заказы
                 </Link>
                 <Link
                   href="/profile"
-                  className="block py-2 hover:text-gray-600"
+                  className="py-3 px-2 text-base hover:bg-gray-100 rounded transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Профиль
@@ -539,7 +499,7 @@ export default function Header() {
                     logout();
                     setIsMenuOpen(false);
                   }}
-                  className="block py-2 text-red-600 hover:text-red-800 w-full text-left"
+                  className="py-3 px-2 text-base text-red-600 hover:bg-gray-100 rounded transition-colors w-full text-left"
                 >
                   Выйти
                 </button>
@@ -547,15 +507,15 @@ export default function Header() {
             ) : (
               <Link
                 href="/login"
-                className="block py-2 hover:text-gray-600"
+                className="py-3 px-2 text-base hover:bg-gray-100 rounded transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Войти
               </Link>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Search Panel */}
       <AnimatePresence>

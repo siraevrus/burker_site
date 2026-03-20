@@ -323,6 +323,14 @@ export default function CheckoutForm({ user, rates = null, productSellingPriceEu
     setError("");
     setLoading(true);
 
+    if (cart.some((item) => item.soldOut)) {
+      setError(
+        "Нельзя оформить заказ: в корзине есть распроданные товары. Удалите их в корзине и вернитесь к оформлению."
+      );
+      setLoading(false);
+      return;
+    }
+
     // Валидация обязательных полей
     if (
       !formData.email ||

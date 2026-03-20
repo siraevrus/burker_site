@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useStore, getCustomsCategory } from "@/lib/store";
+import { useStore, getCustomsCategory, cartHasSoldOutItems } from "@/lib/store";
 import { calculateShipping, type ShippingRateEntry } from "@/lib/shipping";
 import { CartItem } from "@/lib/types";
 import { motion } from "framer-motion";
@@ -37,6 +37,11 @@ export default function CartPage() {
   const updateQuantity = useStore((state) => state.updateQuantity);
   const getTotalPrice = useStore((state) => state.getTotalPrice);
   const getTotalQuantityByCategory = useStore((state) => state.getTotalQuantityByCategory);
+  const refreshCartPrices = useStore((state) => state.refreshCartPrices);
+
+  useEffect(() => {
+    void refreshCartPrices();
+  }, [refreshCartPrices]);
   const [customsHintKey, setCustomsHintKey] = useState<string | null>(null);
   const [shippingRates, setShippingRates] = useState<ShippingRateEntry[]>([]);
   const [rates, setRates] = useState<ExchangeRates | null>(null);
@@ -76,6 +81,7 @@ export default function CartPage() {
       .catch(() => {});
   }, []);
 
+  const hasSoldOut = cartHasSoldOutItems(cart);
   const totalPrice = getTotalPrice();
   const { totalWeight, totalCost: shippingCost } = calculateShipping(
     cart,
@@ -141,7 +147,7 @@ export default function CartPage() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row gap-4"
+                className={`bg-white border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row gap-4 ${item.soldOut ? "opacity-90" : ""}`}
               >
                 {/* Product Image */}
                 <Link 
@@ -157,6 +163,11 @@ export default function CartPage() {
 
                 {/* Product Info */}
                 <div className="flex-1">
+                  {item.soldOut && (
+                    <p className="text-sm font-medium text-red-800 bg-red-50 border border-red-200 rounded-md px-2 py-1.5 mb-2 inline-block">
+                      Товар распродан
+                    </p>
+                  )}
                   <Link 
                     href={generateProductPath(item) ?? "#"}
                     className="font-semibold text-lg mb-2 hover:text-gray-600 transition-colors block"
@@ -180,17 +191,23 @@ export default function CartPage() {
                   {/* Quantity Controls */}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-4">
-                      <div className="flex items-center border border-gray-300 rounded-md">
+                      <div
+                        className={`flex items-center border border-gray-300 rounded-md ${item.soldOut ? "opacity-50" : ""}`}
+                      >
                         <button
+                          type="button"
+                          disabled={item.soldOut}
                           onClick={() =>
                             updateQuantity(item.id, item.quantity - 1, item.selectedColor)
                           }
-                          className="px-3 py-1 hover:bg-gray-100"
+                          className="px-3 py-1 hover:bg-gray-100 disabled:pointer-events-none disabled:opacity-50"
                         >
                           -
                         </button>
                         <span className="px-4 py-1">{item.quantity}</span>
                         <button
+                          type="button"
+                          disabled={item.soldOut}
                           onClick={() => {
                             const category = getCustomsCategory(item);
                             if (getTotalQuantityByCategory(category) >= 3) {
@@ -199,7 +216,7 @@ export default function CartPage() {
                             }
                             updateQuantity(item.id, item.quantity + 1, item.selectedColor);
                           }}
-                          className="px-3 py-1 hover:bg-gray-100"
+                          className="px-3 py-1 hover:bg-gray-100 disabled:pointer-events-none disabled:opacity-50"
                         >
                           +
                         </button>
@@ -292,12 +309,26 @@ export default function CartPage() {
                 )}
               </div>
             )}
-            <Link
-              href="/checkout"
-              className="block w-full bg-black text-white py-3 rounded-md hover:bg-gray-800 transition-colors font-semibold text-center"
-            >
-              Оформить заказ
-            </Link>
+            {hasSoldOut ? (
+              <div>
+                <p className="text-sm text-red-700 mb-2">
+                  В корзине есть распроданные товары. Удалите их, чтобы перейти к оформлению заказа.
+                </p>
+                <span
+                  className="block w-full bg-gray-300 text-gray-600 py-3 rounded-md font-semibold text-center cursor-not-allowed"
+                  aria-disabled="true"
+                >
+                  Оформить заказ
+                </span>
+              </div>
+            ) : (
+              <Link
+                href="/checkout"
+                className="block w-full bg-black text-white py-3 rounded-md hover:bg-gray-800 transition-colors font-semibold text-center"
+              >
+                Оформить заказ
+              </Link>
+            )}
 
             {/* Information Block */}
             <div className="mt-6 bg-white border border-gray-300 rounded-lg p-4">

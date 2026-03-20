@@ -4,6 +4,9 @@ interface OrderSummaryBlockProps {
   totalPrice: number;
   totalWeight: number;
   shippingCost: number;
+  /** Блокировка кнопки (напр. распроданные товары в корзине) */
+  submitDisabled?: boolean;
+  submitDisabledReason?: string;
   promoCode: string;
   setPromoCode: (value: string) => void;
   promoCodeError: string;
@@ -39,6 +42,8 @@ export default function OrderSummaryBlock({
   setRequiresConfirmation,
   loading,
   onSubmit,
+  submitDisabled = false,
+  submitDisabledReason,
 }: OrderSummaryBlockProps) {
   // Скидка только с комиссии; доставку не уменьшаем, итог = товары + доставка − скидка
   const finalTotal = totalPrice + shippingCost - promoDiscount;
@@ -140,10 +145,13 @@ export default function OrderSummaryBlock({
       <p className="text-xs text-gray-500 mb-2">
         После оформления — оплата через СБП (система быстрых платежей, карта любого банка).
       </p>
+      {submitDisabled && submitDisabledReason && (
+        <p className="text-sm text-red-700 mb-2">{submitDisabledReason}</p>
+      )}
       <button
         type="button"
         onClick={onSubmit}
-        disabled={loading}
+        disabled={loading || submitDisabled}
         className="w-full bg-black text-white py-3 rounded-md hover:bg-gray-800 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? "Оформление заказа..." : "Оформить заказ"}

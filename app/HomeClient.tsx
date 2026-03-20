@@ -98,11 +98,11 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
       </div>
 
       {/* Бестселлеры */}
-      <section className="pt-4 md:pt-8 pb-12 md:pb-16">
+      <section className="pt-5 md:pt-8 pb-12 md:pb-16">
         <div className="container mx-auto px-4 relative">
-          <h2 className="text-xl mb-3 md:mb-4 text-center uppercase">Бестселлеры</h2>
+          <h2 className="text-xl font-semibold mb-2 md:mb-4 text-center uppercase">Бестселлеры</h2>
           <div className="flex justify-center mb-6 md:mb-8">
-            <div style={{ width: 35, height: 3, backgroundColor: "#CAC8C6" }} />
+            <div className="w-10 h-[3px] md:w-[35px]" style={{ backgroundColor: "#9a9794" }} />
           </div>
           <div className="relative flex items-center">
             <button
@@ -268,18 +268,19 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
                     <button
                       type="button"
                       onClick={() => setFaqOpenId(isOpen ? null : item.id)}
-                      className={`w-full flex items-center justify-between text-left transition-colors ${
+                      className={`w-full flex items-center justify-between text-left transition-colors px-4 md:px-[38px] ${
                         isOpen ? "bg-[#faf8f5]" : "bg-white hover:bg-[#fcfcfb]"
                       }`}
                       style={{
-                        padding: "28px 38px",
+                        paddingTop: "20px",
+                        paddingBottom: "20px",
                         fontFamily: 'Geist, "Geist Fallback", -apple-system, sans-serif',
                         fontSize: "17px",
                         fontWeight: isOpen ? 600 : 500,
                         color: isOpen ? "#1a1a1a" : "#333",
                       }}
                     >
-                      <span className="pr-4">{item.question}</span>
+                      <span className="pr-4 text-left">{item.question}</span>
                       <svg
                         className={`w-5 h-5 flex-shrink-0 text-[#888] transition-transform duration-200 ${
                           isOpen ? "rotate-180" : ""
@@ -297,9 +298,8 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
                       }`}
                     >
                       <div
-                        className="whitespace-pre-wrap"
+                        className="whitespace-pre-wrap px-4 pt-2 pb-3 md:px-[38px] md:pt-1 md:pb-5"
                         style={{
-                          padding: "0 38px 28px",
                           fontFamily: 'Geist, "Geist Fallback", -apple-system, sans-serif',
                           fontSize: "15px",
                           fontWeight: 400,
@@ -312,7 +312,7 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
                     </div>
                     {showDivider && (
                       <div
-                        className="mx-[38px] h-px"
+                        className="mx-4 md:mx-[38px] h-px"
                         style={{ backgroundColor: "rgba(0,0,0,0.05)" }}
                       />
                     )}

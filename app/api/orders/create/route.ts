@@ -131,8 +131,22 @@ export async function POST(request: NextRequest) {
     const productIds = items.map((item: any) => item.productId);
     const productsFromDb = await prisma.product.findMany({
       where: { id: { in: productIds } },
-      select: { id: true, price: true, originalPrice: true },
+      select: { id: true, price: true, originalPrice: true, soldOut: true, disabled: true },
     });
+
+    const unavailable = items.filter((item: { productId: string }) => {
+      const p = productsFromDb.find((x) => x.id === item.productId);
+      return !p || p.soldOut || p.disabled;
+    });
+    if (unavailable.length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "В заказе есть недоступные товары (распроданы или сняты с продажи). Обновите корзину и попробуйте снова.",
+        },
+        { status: 400 }
+      );
+    }
     // Цена продажи в EUR (с учётом скидки) — база для расчёта комиссии (наценки)
     const productSellingPriceEur = new Map(
       productsFromDb.map((p) => [p.id, p.price])

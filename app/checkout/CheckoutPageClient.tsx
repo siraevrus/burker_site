@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useStore } from "@/lib/store";
+import { useStore, cartHasSoldOutItems } from "@/lib/store";
 import { CartItem } from "@/lib/types";
 import Link from "next/link";
 import ProductImage from "@/components/ProductImage";
@@ -38,8 +38,13 @@ function getItemCommission(
 
 export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
   const cart = useStore((state) => state.cart);
+  const refreshCartPrices = useStore((state) => state.refreshCartPrices);
   const [rates, setRates] = useState<ExchangeRates | null>(null);
   const [productSellingPriceEur, setProductSellingPriceEur] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    void refreshCartPrices();
+  }, [refreshCartPrices]);
 
   useEffect(() => {
     Promise.all([
@@ -62,6 +67,8 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
       })
       .catch(() => {});
   }, []);
+  const hasSoldOut = cartHasSoldOutItems(cart);
+
   const [formData, setFormData] = useState<{
     totalPrice: number;
     totalWeight: number;
@@ -123,6 +130,16 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
       </Link>
       <h1 className="text-3xl font-bold mb-8">Оформление заказа</h1>
 
+      {hasSoldOut && (
+        <div
+          className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm"
+          role="alert"
+        >
+          В корзине есть распроданные товары. Удалите их на странице корзины — оформление заказа недоступно,
+          пока такие позиции остаются в корзине.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Форма заказа */}
         <div className="lg:col-span-2">
@@ -173,6 +190,11 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:justify-between sm:items-start">
                       <div className="min-w-0 flex-1">
+                        {item.soldOut && (
+                          <p className="text-xs font-medium text-red-800 bg-red-50 border border-red-200 rounded px-2 py-1 mb-1 inline-block">
+                            Товар распродан
+                          </p>
+                        )}
                         <p className="text-[16.8px] font-medium truncate">{item.name}</p>
                         {(item.colors?.length > 0 && item.selectedColor) ? (
                           <p className="text-[14.4px] text-gray-600">Цвет: {item.selectedColor}</p>
@@ -210,6 +232,8 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                 setRequiresConfirmation={formData.setRequiresConfirmation}
                 loading={formData.loading}
                 onSubmit={formData.onSubmit}
+                submitDisabled={hasSoldOut}
+                submitDisabledReason="Удалите распроданные позиции в корзине, затем вернитесь к оформлению."
               />
             )}
             <p className="text-sm text-gray-600 mt-4 pt-4 border-t border-[#e5e6ea]">

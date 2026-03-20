@@ -335,3 +335,16 @@ export async function getJewelryBySubcategory(subcategory: string): Promise<Prod
   ]);
   return dbProducts.map((p) => mapProductFromDbWithRates(p, rates));
 }
+
+/** Актуальные данные товаров по id (для синхронизации корзины; без фильтра disabled/soldOut). */
+export async function getProductsByIdsForCart(ids: string[]): Promise<Product[]> {
+  const unique = [...new Set(ids.filter((id) => typeof id === "string" && id.length > 0))];
+  if (unique.length === 0) return [];
+  const [dbProducts, rates] = await Promise.all([
+    prisma.product.findMany({
+      where: { id: { in: unique } },
+    }),
+    getExchangeRates(),
+  ]);
+  return dbProducts.map((p) => mapProductFromDbWithRates(p, rates));
+}

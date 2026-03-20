@@ -1,6 +1,27 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { CartItem, Collection, Color, User } from "./types";
+import { CartItem, Collection, Color, Product, User } from "./types";
+
+function mergeCartItemWithProduct(item: CartItem, fresh: Product): CartItem {
+  return {
+    ...item,
+    price: fresh.price,
+    originalPrice: fresh.originalPrice,
+    discount: fresh.discount,
+    priceEur: fresh.priceEur,
+    originalPriceEur: fresh.originalPriceEur,
+    inStock: fresh.inStock,
+    soldOut: fresh.soldOut,
+    disabled: fresh.disabled,
+    name: fresh.name,
+    images: fresh.images,
+    colors: fresh.colors,
+    bestseller: fresh.bestseller,
+    collection: fresh.collection,
+    subcategory: fresh.subcategory,
+    variant: fresh.variant,
+  };
+}
 
 /** По таможенным правилам — не более 3 вещей одной категории в один заказ (часы, браслеты, ожерелье, серьги, кольца) */
 export const MAX_QUANTITY_PER_CATEGORY = 3;
@@ -27,6 +48,11 @@ function syncCartToServer(cart: CartItem[]) {
       }),
     }).catch(() => {});
   }, 500);
+}
+
+/** В корзине есть позиции в статусе «распродан» (актуально после refreshCartPrices). */
+export function cartHasSoldOutItems(cart: CartItem[]): boolean {
+  return cart.some((item) => item.soldOut);
 }
 
 /** Категория для таможенного лимита: часы — одна категория, украшения — по subcategory */
@@ -57,6 +83,8 @@ interface Store {
   clearCart: () => void;
   loadUser: () => Promise<void>;
   logout: () => Promise<void>;
+  /** Актуальные цены и наличие из БД (batch); сохраняет quantity и selectedColor. */
+  refreshCartPrices: () => Promise<void>;
 }
 
 export const useStore = create<Store>()(
@@ -194,6 +222,37 @@ export const useStore = create<Store>()(
       window.location.href = "/";
     } catch (error) {
       console.error("Error logging out:", error);
+    }
+  },
+  refreshCartPrices: async () => {
+    const cart = get().cart;
+    if (cart.length === 0) return;
+    const ids = [...new Set(cart.map((i) => i.id))];
+    const chunkSize = 80;
+    try {
+      const products: Product[] = [];
+      for (let i = 0; i < ids.length; i += chunkSize) {
+        const chunk = ids.slice(i, i + chunkSize);
+        const res = await fetch("/api/products/cart-prices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: chunk }),
+        });
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (Array.isArray(data.products)) products.push(...data.products);
+      }
+      if (products.length === 0) return;
+      const byId = new Map(products.map((p) => [p.id, p]));
+      const newCart = cart.map((item) => {
+        const fresh = byId.get(item.id);
+        if (!fresh) return item;
+        return mergeCartItemWithProduct(item, fresh);
+      });
+      set({ cart: newCart });
+      if (get().user) syncCartToServer(newCart);
+    } catch {
+      // сеть / парсинг — оставляем корзину как есть
     }
   },
     }),
