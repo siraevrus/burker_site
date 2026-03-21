@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isCronSecretValid } from "@/lib/cron-auth";
 import { importProducts } from "@/lib/import/import";
 import { saveImportHistory } from "@/lib/import/history";
 import { notifyImportResult } from "@/lib/telegram";
@@ -20,9 +21,11 @@ export async function GET(request: NextRequest) {
       xCronSecret?.trim() ||
       querySecret?.trim() ||
       "";
-    const expectedSecret = process.env.CRON_SECRET || process.env.CRON_SECRET_KEY;
 
-    if (expectedSecret && providedSecret !== expectedSecret) {
+    if (!isCronSecretValid(providedSecret)) {
+      console.warn(
+        "[Cron] import: 401 — неверный или пустой секрет (CRON_SECRET / X-Cron-Secret / ?secret=)"
+      );
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -69,12 +72,21 @@ export async function GET(request: NextRequest) {
     // Сохранение истории импорта (тип "automatic" - автоматический импорт через cron)
     await saveImportHistory("automatic", result);
 
-    await notifyImportResult({
-      added: result.added,
-      updated: result.updated,
-      errors: result.errors.length,
-      total: result.total,
-    });
+    try {
+      const telegramOk = await notifyImportResult({
+        added: result.added,
+        updated: result.updated,
+        errors: result.errors.length,
+        total: result.total,
+      });
+      if (!telegramOk) {
+        console.warn(
+          "[Cron] import: уведомление в Telegram не отправлено (см. логи [Telegram] выше)"
+        );
+      }
+    } catch (telegramError) {
+      console.error("[Cron] import: notifyImportResult failed:", telegramError);
+    }
 
     return NextResponse.json({
       success: true,

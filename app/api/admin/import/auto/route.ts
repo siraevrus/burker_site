@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCronExpectedSecret } from "@/lib/cron-auth";
 import { importProducts } from "@/lib/import/import";
 import { saveImportHistory } from "@/lib/import/history";
 import { logError, logEvent } from "@/lib/ops-log";
 import { requireAdmin } from "@/lib/admin-api";
+import { notifyImportResult } from "@/lib/telegram";
 
 const API_BASE = "https://parcing.burker-watches.ru";
 const API_JSON_PATH = "/api_json.php";
@@ -19,10 +21,13 @@ export async function GET(request: NextRequest) {
     const isAdminAuthorized = adminUnauthorized === null;
     const authHeader = request.headers.get("authorization");
     const secretKey = request.nextUrl.searchParams.get("secret");
-    const providedSecret = authHeader?.replace(/^Bearer\s+/i, "") || secretKey || "";
+    const providedSecret = (
+      authHeader?.replace(/^Bearer\s+/i, "") ||
+      secretKey ||
+      ""
+    ).trim();
 
-    const expectedCronSecret =
-      process.env.CRON_SECRET || process.env.CRON_SECRET_KEY;
+    const expectedCronSecret = getCronExpectedSecret();
 
     const isCronAuthorized = Boolean(
       expectedCronSecret && providedSecret === expectedCronSecret
@@ -86,6 +91,26 @@ export async function GET(request: NextRequest) {
       updated: result.updated,
       errorsCount: result.errors.length,
     });
+
+    // Telegram — как у /api/cron/import: только при вызове с CRON_SECRET (внешний cron, вариант B в CRON_SETUP).
+    // Запуск из админки по сессии без секрета уведомлений не шлёт, чтобы не спамить.
+    if (isCronAuthorized) {
+      try {
+        const telegramOk = await notifyImportResult({
+          added: result.added,
+          updated: result.updated,
+          errors: result.errors.length,
+          total: result.total,
+        });
+        if (!telegramOk) {
+          console.warn(
+            "[admin/import/auto] уведомление в Telegram не отправлено (см. логи [Telegram] выше)"
+          );
+        }
+      } catch (telegramError) {
+        console.error("[admin/import/auto] notifyImportResult failed:", telegramError);
+      }
+    }
 
     return NextResponse.json({
       success: true,

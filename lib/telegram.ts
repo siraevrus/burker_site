@@ -5,9 +5,24 @@
 
 const BOT_API = "https://api.telegram.org/bot";
 
+/** Убирает пробелы и обрамляющие кавычки из значений из .env / PM2 (частая причина «всё сломалось после правки конфига»). */
+function normalizeTelegramEnv(value: string | undefined): string {
+  if (!value) return "";
+  let s = value.trim();
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
+    s = s.slice(1, -1).trim();
+  }
+  return s;
+}
+
+let loggedMissingConfig = false;
+
 function getConfig(): { token: string; chatId: string } | null {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const token = normalizeTelegramEnv(process.env.TELEGRAM_BOT_TOKEN);
+  const chatId = normalizeTelegramEnv(process.env.TELEGRAM_CHAT_ID);
   if (!token || !chatId) return null;
   return { token, chatId };
 }
@@ -32,8 +47,11 @@ export async function sendTelegramMessage(
 ): Promise<boolean> {
   const config = getConfig();
   if (!config) {
-    if (process.env.NODE_ENV === "development") {
-      console.log("[Telegram] Не настроен TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID, пропуск отправки");
+    if (!loggedMissingConfig) {
+      loggedMissingConfig = true;
+      console.warn(
+        "[Telegram] Не заданы TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID — уведомления отключены (проверьте PM2 ecosystem / Docker -e / .env на сервере)"
+      );
     }
     return false;
   }
@@ -55,7 +73,13 @@ export async function sendTelegramMessage(
     });
     const data = await res.json().catch(() => ({}));
     if (!data.ok) {
-      console.error("[Telegram] sendMessage error:", data.description || res.status);
+      const err = data as { description?: string; error_code?: number; parameters?: unknown };
+      console.error(
+        "[Telegram] sendMessage error:",
+        err.description || res.status,
+        err.error_code != null ? `(code ${err.error_code})` : "",
+        err.parameters != null ? JSON.stringify(err.parameters) : ""
+      );
       return false;
     }
     return true;

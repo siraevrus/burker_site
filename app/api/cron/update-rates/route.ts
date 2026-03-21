@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateExchangeRates } from "@/lib/exchange-rates";
 import { fetchCbrRates } from "@/lib/cbr-rates";
+import { isCronSecretValid } from "@/lib/cron-auth";
 import { notifyRatesUpdated } from "@/lib/telegram";
 
 // Дефолты при недоступности ЦБ: 80 ₽/USD, 95 ₽/EUR
@@ -16,9 +17,11 @@ export async function GET(request: NextRequest) {
     xCronSecret?.trim() ||
     querySecret?.trim() ||
     "";
-  const expectedSecret = process.env.CRON_SECRET || process.env.CRON_SECRET_KEY;
 
-  if (expectedSecret && providedSecret !== expectedSecret) {
+  if (!isCronSecretValid(providedSecret)) {
+    console.warn(
+      "[Cron] update-rates: 401 — неверный или пустой секрет (CRON_SECRET / X-Cron-Secret / ?secret=)"
+    );
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 401 }
@@ -52,11 +55,16 @@ export async function GET(request: NextRequest) {
 
     // Отправка уведомления в Telegram
     try {
-      await notifyRatesUpdated({
+      const telegramOk = await notifyRatesUpdated({
         eurRate,
         rubRate,
         source: source === "cbr" ? "ЦБ РФ" : "по умолчанию",
       });
+      if (!telegramOk) {
+        console.warn(
+          "[Cron] update-rates: уведомление в Telegram не отправлено (см. логи [Telegram] выше)"
+        );
+      }
     } catch (telegramError) {
       console.error("Failed to send Telegram notification:", telegramError);
       // Не прерываем выполнение при ошибке отправки в Telegram
