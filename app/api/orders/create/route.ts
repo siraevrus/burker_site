@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
       productsFromDb.map((p) => [p.id, p.price])
     );
 
-    // Расчет стоимости доставки на основе веса и категории товаров
+    // Доставка: суммарный вес заказа (вес единицы × qty по позициям), один тариф по таблице
     // Преобразуем items в формат CartItem для функции calculateShipping
     const cartItems = items.map((item: any) => ({
       id: item.productId,

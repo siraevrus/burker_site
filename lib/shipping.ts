@@ -71,9 +71,8 @@ function getShippingCostByWeight(
 }
 
 /**
- * Рассчитывает вес и стоимость доставки на основе товаров в корзине.
- * Товары группируются по категориям, для каждой категории считается общий вес
- * и стоимость доставки по таблице веса.
+ * Рассчитывает суммарный вес корзины (с учётом количества) и стоимость доставки
+ * одним проходом по таблице тарифов для итогового веса всего заказа.
  *
  * @param cart - массив товаров в корзине
  * @param rates - опционально таблица тарифов [{ weight, price }]; если не передана — используется встроенная
@@ -82,23 +81,16 @@ export function calculateShipping(
   cart: CartItem[],
   rates?: ShippingRateEntry[]
 ): ShippingCalculation {
-  let totalWeightWatches = 0;
-  let totalWeightJewelry = 0;
+  let totalWeight = 0;
 
   cart.forEach((item) => {
     const isJewelry = item.collection === "Украшения";
     const weightPerUnit = isJewelry ? WEIGHT_PER_UNIT.jewelry : WEIGHT_PER_UNIT.watches;
-    const categoryWeight = weightPerUnit * item.quantity;
-    if (isJewelry) totalWeightJewelry += categoryWeight;
-    else totalWeightWatches += categoryWeight;
+    totalWeight += weightPerUnit * item.quantity;
   });
 
-  const costWatches =
-    totalWeightWatches > 0 ? getShippingCostByWeight(totalWeightWatches, rates) : 0;
-  const costJewelry =
-    totalWeightJewelry > 0 ? getShippingCostByWeight(totalWeightJewelry, rates) : 0;
-  const totalWeight = totalWeightWatches + totalWeightJewelry;
-  const totalCost = costWatches + costJewelry;
+  const totalCost =
+    totalWeight > 0 ? getShippingCostByWeight(totalWeight, rates) : 0;
 
   return { totalWeight, totalCost };
 }
