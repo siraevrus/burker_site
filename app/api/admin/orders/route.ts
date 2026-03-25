@@ -21,6 +21,9 @@ export async function GET(request: NextRequest) {
     const where: any = {};
     if (status && status !== "all") {
       where.status = status;
+    } else {
+      // В общем списке не показываем доставленные — только при выборе «Доставлен» в фильтре
+      where.status = { not: "delivered" };
     }
     if (paymentStatus && paymentStatus !== "all") {
       where.paymentStatus = paymentStatus;

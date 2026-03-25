@@ -313,11 +313,14 @@ function AdminOrdersPageContent() {
 
       if (response.ok) {
         const data = await response.json();
-        setOrders(
-          orders.map((order) => (order.id === orderId ? data.order : order))
-        );
-        // Обновляем статистику после изменения статуса
-        loadStats();
+        if (newStatus === "delivered" && statusFilter === "all") {
+          await loadOrders();
+        } else {
+          setOrders(
+            orders.map((order) => (order.id === orderId ? data.order : order))
+          );
+          loadStats();
+        }
         if (data.emailNotification && !data.emailNotification.sent) {
           const errDetail = data.emailNotification.error
             ? `\n\nОшибка: ${data.emailNotification.error}`
