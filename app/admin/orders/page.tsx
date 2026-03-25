@@ -529,7 +529,7 @@ function AdminOrdersPageContent() {
                       })}
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                     {order.requiresConfirmation && (
                       <div className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
                         Позвонить
@@ -564,6 +564,11 @@ function AdminOrdersPageContent() {
                     >
                       {paymentStatusLabels[order.paymentStatus ?? "pending"] ?? order.paymentStatus ?? "Ожидает оплаты"}
                     </span>
+                    {order.paymentStatus === "paid" && (
+                      <span className="text-sm font-bold text-gray-900 tabular-nums whitespace-nowrap">
+                        Итого: {order.totalAmount.toFixed(0)} ₽
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="ml-4">
