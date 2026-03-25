@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     if (search.length > 0) {
       where.OR = [
         { orderNumber: { contains: search } },
+        { adminOrderRef: { contains: search } },
         { firstName: { contains: search } },
         { lastName: { contains: search } },
         { phone: { contains: search } },

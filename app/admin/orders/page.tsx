@@ -16,6 +16,7 @@ interface OrderItem {
 interface Order {
   id: string;
   orderNumber?: string;
+  adminOrderRef?: string | null;
   email: string;
   firstName: string;
   lastName: string | null;
@@ -62,6 +63,59 @@ interface StatusChangeModal {
   orderNumber: string;
   newStatus: string;
   type: "image" | "track_de" | "track_ru" | null;
+}
+
+function AdminOrderRefInput({
+  order,
+  onOrderUpdated,
+}: {
+  order: Order;
+  onOrderUpdated: (o: Order) => void;
+}) {
+  const [value, setValue] = useState(order.adminOrderRef ?? "");
+  useEffect(() => {
+    setValue(order.adminOrderRef ?? "");
+  }, [order.adminOrderRef, order.id]);
+
+  const persist = async () => {
+    const trimmed = value.trim();
+    const next = trimmed.length > 0 ? trimmed : null;
+    const prev = order.adminOrderRef?.trim() || null;
+    if (next === prev) return;
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminOrderRef: next }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        onOrderUpdated(data.order);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || "Не удалось сохранить номер ордера");
+        setValue(order.adminOrderRef ?? "");
+      }
+    } catch {
+      alert("Ошибка сети при сохранении");
+      setValue(order.adminOrderRef ?? "");
+    }
+  };
+
+  return (
+    <div className="md:col-span-2">
+      <label className="block text-sm text-gray-600 mb-1">Номер ордера</label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={persist}
+        maxLength={200}
+        className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-md text-sm"
+        placeholder="Произвольный номер (отображается в свёрнутой шапке)"
+      />
+    </div>
+  );
 }
 
 function AdminOrdersPageContent() {
@@ -428,7 +482,7 @@ function AdminOrdersPageContent() {
         <div className="flex flex-wrap items-center gap-3">
           <input
             type="search"
-            placeholder="ФИО, телефон, номер заказа..."
+            placeholder="ФИО, телефон, номер заказа, номер ордера..."
             value={searchInput}
             onChange={(e) => {
               setSearchInput(e.target.value);
@@ -516,6 +570,11 @@ function AdminOrdersPageContent() {
                     <div className="text-lg font-bold text-gray-900">
                       Заказ #{order.orderNumber || order.id.slice(0, 8)}
                     </div>
+                    {order.adminOrderRef?.trim() && (
+                      <div className="text-sm font-medium text-gray-800 mt-0.5">
+                        Номер ордера: {order.adminOrderRef.trim()}
+                      </div>
+                    )}
                     <div className="text-sm text-gray-500 mt-1">
                       {new Date(order.createdAt).toLocaleDateString("ru-RU", {
                         year: "numeric",
@@ -593,6 +652,12 @@ function AdminOrdersPageContent() {
               {isExpanded && (
                 <div className="px-6 py-4 border-t border-gray-200">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <AdminOrderRefInput
+                      order={order}
+                      onOrderUpdated={(o) =>
+                        setOrders((prev) => prev.map((x) => (x.id === o.id ? o : x)))
+                      }
+                    />
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Email</p>
                       <p className="font-medium">{order.email}</p>

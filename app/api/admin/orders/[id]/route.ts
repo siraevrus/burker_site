@@ -53,6 +53,71 @@ export async function GET(
   }
 }
 
+const ADMIN_ORDER_REF_MAX_LEN = 200;
+
+/** Частичное обновление полей заказа (без смены статуса). */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const unauthorized = await requireAdmin(request);
+    if (unauthorized) return unauthorized;
+
+    const { id } = await params;
+    const body = await request.json();
+    if (!body || typeof body !== "object" || !("adminOrderRef" in body)) {
+      return NextResponse.json(
+        { error: "Ожидается поле adminOrderRef (строка или null)" },
+        { status: 400 }
+      );
+    }
+
+    let adminOrderRef: string | null;
+    if (body.adminOrderRef === null || body.adminOrderRef === "") {
+      adminOrderRef = null;
+    } else if (typeof body.adminOrderRef === "string") {
+      const t = body.adminOrderRef.trim();
+      adminOrderRef = t.length === 0 ? null : t.slice(0, ADMIN_ORDER_REF_MAX_LEN);
+    } else {
+      return NextResponse.json(
+        { error: "adminOrderRef должен быть строкой или null" },
+        { status: 400 }
+      );
+    }
+
+    const order = await prisma.order.update({
+      where: { id },
+      data: { adminOrderRef },
+      include: {
+        items: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+
+    logEvent("admin_order_ref_updated", { orderId: order.id });
+
+    return NextResponse.json({ order });
+  } catch (error: unknown) {
+    const code = error && typeof error === "object" && "code" in error ? (error as { code: string }).code : "";
+    if (code === "P2025") {
+      return NextResponse.json({ error: "Заказ не найден" }, { status: 404 });
+    }
+    const errorMessage =
+      error instanceof Error ? error.message : "Ошибка при обновлении заказа";
+    console.error("Patch order error:", error);
+    logError("admin_order_patch_error", { error: errorMessage });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

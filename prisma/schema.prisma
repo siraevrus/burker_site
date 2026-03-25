@@ -122,6 +122,7 @@ model EmailVerification {
 model Order {
   id              String      @id @default(cuid())
   orderNumber     String?     @unique // Читаемый номер заказа: burker_YYYYMMDDHHmmss_userId_orderId_XXX
+  adminOrderRef   String?     // Номер ордера (вручную в админке), произвольный текст
   userId          String?     // null для гостевых заказов
   email           String      // обязательное поле
   firstName       String
