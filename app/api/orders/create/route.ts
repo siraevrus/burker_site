@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { createOrder } from "@/lib/orders";
 import { getExchangeRates } from "@/lib/exchange-rates";
-import { sendAdminOrderNotification } from "@/lib/email";
+import { sendAdminOrderNotification, sendOrderPaymentLinkEmail } from "@/lib/email";
 import { calculateShipping } from "@/lib/shipping";
 import { logError, logEvent } from "@/lib/ops-log";
 import {
@@ -339,6 +339,7 @@ export async function POST(request: NextRequest) {
     let paymentLink: string | null = null;
     let paymentId: string | null = null;
     let paymentLinkAvailable = false;
+    let customerPaymentEmailSent = false;
     const orderNumber = order.orderNumber || order.id;
     const description = `Оплата заказа ${orderNumber}`.slice(0, 140);
     let baseUrl =
@@ -445,6 +446,25 @@ export async function POST(request: NextRequest) {
           paymentLink = result.link;
           paymentId = result.qrId;
           paymentLinkAvailable = true;
+
+          const siteBase = baseUrl.replace(/\/+$/, "");
+          const payPageUrl = `${siteBase}/order/${order.id}/pay?token=${encodeURIComponent(accessToken)}`;
+          const itemsForPayEmail = order.items.map((item) => ({
+            name: item.productName,
+            quantity: item.quantity,
+            price: item.productPrice * item.quantity,
+          }));
+          try {
+            customerPaymentEmailSent = await sendOrderPaymentLinkEmail(order.email, orderNumber, {
+              firstName: order.firstName,
+              totalAmount: order.totalAmount,
+              items: itemsForPayEmail,
+              payPageUrl,
+              paymentLink: result.link,
+            });
+          } catch (payEmailErr) {
+            console.error("sendOrderPaymentLinkEmail failed:", payEmailErr);
+          }
         } catch (tbankError) {
           const errorMsg = tbankError instanceof Error ? tbankError.message : String(tbankError);
           console.error("T-Bank createOneTimePaymentLink failed:", {
@@ -468,16 +488,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Отправка email уведомлений (только админу; клиенту письмо отправится из вебхука при оплате/отмене)
+    // Отправка email: клиенту — ссылка на оплату при успешном создании СБП-ссылки (выше); при оплате — вебхук T-Bank
     const emailNotification = {
       customerEmailSent: false,
       adminEmailSent: false,
       error: undefined as string | undefined,
     };
     try {
-      const orderNumber = order.orderNumber || order.id;
-      // Письмо клиенту отправляется только из вебхука T-Bank при оплате или отмене
-      emailNotification.customerEmailSent = false;
+      emailNotification.customerEmailSent = customerPaymentEmailSent;
 
       emailNotification.adminEmailSent = await sendAdminOrderNotification(orderNumber, order.id, {
         email: order.email,

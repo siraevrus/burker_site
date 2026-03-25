@@ -123,6 +123,88 @@ export async function sendOrderConfirmation(
 }
 
 /**
+ * Письмо покупателю: состав заказа, сумма, ссылка на страницу оплаты и прямая ссылка СБП.
+ * Отправляется при создании платёжной ссылки (до оплаты).
+ */
+export async function sendOrderPaymentLinkEmail(
+  email: string,
+  orderNumber: string,
+  orderData: {
+    firstName: string;
+    totalAmount: number;
+    items: Array<{ name: string; quantity: number; price: number }>;
+    payPageUrl: string;
+    paymentLink: string;
+  }
+): Promise<boolean> {
+  if (!IS_PRODUCTION) {
+    console.log("💳 Ссылка на оплату заказа #" + orderNumber, orderData.payPageUrl);
+  }
+
+  const itemsList = orderData.items
+    .map(
+      (item) =>
+        `<tr>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${esc(item.name)}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toFixed(0)} ₽</td>
+        </tr>`
+    )
+    .join("");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">Оплатите заказ</h2>
+      <p>Здравствуйте, ${esc(orderData.firstName)}!</p>
+      <p>Заказ <strong>#${esc(orderNumber)}</strong> оформлен. Сумма к оплате: <strong>${orderData.totalAmount.toFixed(0)} ₽</strong>.</p>
+
+      <h3 style="color: #333; margin-top: 24px;">Состав заказа</h3>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <thead>
+          <tr style="background-color: #f5f5f5;">
+            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Товар</th>
+            <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd;">Кол-во</th>
+            <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Сумма</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsList}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold;">Итого:</td>
+            <td style="padding: 10px; text-align: right; font-weight: bold;">${orderData.totalAmount.toFixed(0)} ₽</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div style="text-align: center; margin: 28px 0;">
+        <a href="${esc(orderData.payPageUrl)}" style="display: inline-block; padding: 14px 28px; background-color: #A13D42; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Перейти к оплате</a>
+      </div>
+
+      <p style="font-size: 14px; color: #555;">Если кнопка не открывается, скопируйте ссылку в браузер:<br/>
+      <a href="${esc(orderData.payPageUrl)}" style="color: #A13D42; word-break: break-all;">${esc(orderData.payPageUrl)}</a></p>
+
+      <p style="font-size: 14px; color: #555;">Прямая ссылка на оплату (СБП):<br/>
+      <a href="${esc(orderData.paymentLink)}" style="color: #A13D42; word-break: break-all;">${esc(orderData.paymentLink)}</a></p>
+
+      <p style="font-size: 13px; color: #777;">После оплаты вы получите подтверждение на эту почту.</p>
+
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      ${EMAIL_FOOTER}
+    </div>
+  `;
+
+  const result = await sendEmailViaMailopost(
+    email,
+    `Оплата заказа #${orderNumber} — Мира Брендс | Буркер`,
+    html
+  );
+
+  return result.success;
+}
+
+/**
  * Отправка уведомления админу о новом заказе
  */
 export async function sendAdminOrderNotification(
