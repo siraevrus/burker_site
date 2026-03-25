@@ -137,3 +137,26 @@ export function getProductsBreadcrumbItems(
   }
   return items;
 }
+
+/**
+ * Российский номер для отображения: +7 и 10 цифр после (как нормализация в чекауте).
+ * 8… → 7…; если первая цифра не 7 — добавляется 7; не более 11 цифр.
+ */
+export function formatRuPhonePlus7(phone: string | null | undefined): string {
+  const raw = (phone ?? "").trim();
+  if (!raw) return "—";
+
+  let numbers = raw.replace(/\D/g, "");
+  if (numbers.startsWith("8")) {
+    numbers = "7" + numbers.slice(1);
+  }
+  if (numbers && !numbers.startsWith("7")) {
+    numbers = "7" + numbers;
+  }
+  numbers = numbers.slice(0, 11);
+
+  if (numbers.length === 0) {
+    return raw;
+  }
+  return `+${numbers}`;
+}

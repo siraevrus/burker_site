@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import { formatRuPhonePlus7 } from "@/lib/utils";
 
 interface OrderItem {
   id: string;
@@ -605,7 +606,7 @@ function AdminOrdersPageContent() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Телефон</p>
-                      <p className="font-medium">{order.phone}</p>
+                      <p className="font-medium">{formatRuPhonePlus7(order.phone)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Пользователь</p>
