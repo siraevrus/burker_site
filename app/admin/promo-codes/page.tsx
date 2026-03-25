@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { PromoCode } from "@/lib/types";
+import { formatRub } from "@/lib/utils";
 
 export default function AdminPromoCodesPage() {
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
@@ -138,7 +139,7 @@ export default function AdminPromoCodesPage() {
   };
 
   const formatDiscount = (pc: PromoCode) =>
-    pc.discountType === "percent" ? `${pc.discount}%` : `${pc.discount.toFixed(0)} ₽`;
+    pc.discountType === "percent" ? `${pc.discount}%` : `${formatRub(pc.discount)} ₽`;
 
   if (loading) {
     return (
@@ -362,7 +363,7 @@ export default function AdminPromoCodesPage() {
                         {new Date(pc.validUntil).toLocaleDateString("ru-RU")}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {pc.minOrderAmount ? `${pc.minOrderAmount.toFixed(0)} ₽` : "—"}
+                        {pc.minOrderAmount ? `${formatRub(pc.minOrderAmount)} ₽` : "—"}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                         {pc.firstOrderOnly ? "Да" : "Нет"}

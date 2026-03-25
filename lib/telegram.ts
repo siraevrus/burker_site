@@ -1,3 +1,5 @@
+import { formatRub } from "./utils";
+
 /**
  * Уведомления в Telegram (burkeradmin_bot).
  * Требуются: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (ID чата/группы куда слать).
@@ -127,7 +129,7 @@ export async function notifyNewOrder(data: {
     `Email: ${escapeHtml(data.email)}`,
     `Имя: ${escapeHtml(data.firstName)}`,
     `Телефон: ${escapeHtml(data.phone)}`,
-    `Сумма: ${data.totalAmount.toFixed(0)} ₽`,
+    `Сумма: ${formatRub(data.totalAmount)} ₽`,
     `Товаров: ${data.itemsCount}`,
     "",
     `<a href="${orderLink.replace(/&/g, "&amp;")}">Ссылка на заказ</a>`,

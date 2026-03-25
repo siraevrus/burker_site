@@ -7,6 +7,7 @@ import Link from "next/link";
 import ProductImage from "@/components/ProductImage";
 import CheckoutForm from "@/components/Checkout/CheckoutForm";
 import OrderSummaryBlock from "@/components/Checkout/OrderSummaryBlock";
+import { formatRub } from "@/lib/utils";
 
 interface CheckoutPageClientProps {
   user?: {
@@ -203,12 +204,12 @@ export default function CheckoutPageClient({ user }: CheckoutPageClientProps) {
                         {itemCommission !== null && (
                           <p className="text-[12px] text-gray-400 mt-1 flex flex-wrap items-baseline gap-x-1">
                             <span>В т.ч. вознаграждение сервиса:</span>
-                            <span className="whitespace-nowrap flex-shrink-0">{itemCommission.toFixed(0)} ₽</span>
+                            <span className="whitespace-nowrap flex-shrink-0">{formatRub(itemCommission)} ₽</span>
                           </p>
                         )}
                       </div>
                       <p className="text-[16.8px] font-semibold mt-1 sm:mt-0 sm:ml-3 flex-shrink-0">
-                        {(item.price * item.quantity).toFixed(0)} ₽
+                        {formatRub(item.price * item.quantity)} ₽
                       </p>
                     </div>
                   </div>

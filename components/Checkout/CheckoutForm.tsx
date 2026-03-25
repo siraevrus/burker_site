@@ -6,6 +6,7 @@ import { useStore } from "@/lib/store";
 import { CheckoutFormData } from "@/lib/types";
 import { calculateShipping, type ShippingRateEntry } from "@/lib/shipping";
 import Link from "next/link";
+import { formatRub } from "@/lib/utils";
 
 interface CdekPoint {
   code: string;
@@ -228,7 +229,7 @@ export default function CheckoutForm({ user, rates = null, productSellingPriceEu
 
         if (pc.minOrderAmount && getTotalPrice() < pc.minOrderAmount) {
           setPromoCodeError(
-            `Минимальная сумма заказа для промокода — ${pc.minOrderAmount.toFixed(0)} ₽`
+            `Минимальная сумма заказа для промокода — ${formatRub(pc.minOrderAmount)} ₽`
           );
           setAppliedPromoCode(null);
           return;

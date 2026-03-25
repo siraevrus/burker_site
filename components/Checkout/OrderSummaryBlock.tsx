@@ -1,5 +1,7 @@
 "use client";
 
+import { formatRub } from "@/lib/utils";
+
 interface OrderSummaryBlockProps {
   totalPrice: number;
   totalWeight: number;
@@ -59,23 +61,23 @@ export default function OrderSummaryBlock({
       <div className="space-y-2 mb-4">
         <div className="flex justify-between">
           <span>Товары</span>
-          <span>{totalPrice.toFixed(0)} ₽</span>
+          <span>{formatRub(totalPrice)} ₽</span>
         </div>
         <div className="flex justify-between">
           <span>Доставка</span>
           <span>
-            {totalWeight.toFixed(1)} кг / {shippingCost.toFixed(0)} ₽
+            {totalWeight.toFixed(1)} кг / {formatRub(shippingCost)} ₽
           </span>
         </div>
         {appliedPromoCode && promoDiscount > 0 && (
           <div className="flex justify-between text-green-600">
             <span>{discountLabel}</span>
-            <span>-{promoDiscount.toFixed(0)} ₽</span>
+            <span>-{formatRub(promoDiscount)} ₽</span>
           </div>
         )}
         <div className="flex justify-between text-xl font-bold border-t border-gray-200 pt-2">
           <span>Всего</span>
-          <span>{finalTotal.toFixed(0)} ₽</span>
+          <span>{formatRub(finalTotal)} ₽</span>
         </div>
       </div>
 
@@ -122,8 +124,8 @@ export default function OrderSummaryBlock({
           <p className="text-sm text-green-600 mt-1">
             Промокод &quot;{appliedPromoCode.code}&quot; применён. Скидка:{" "}
             {appliedPromoCode.discountType === "percent"
-              ? `${appliedPromoCode.discount}% (${promoDiscount.toFixed(0)} ₽)`
-              : `${promoDiscount.toFixed(0)} ₽`}
+              ? `${appliedPromoCode.discount}% (${formatRub(promoDiscount)} ₽)`
+              : `${formatRub(promoDiscount)} ₽`}
           </p>
         )}
       </div>

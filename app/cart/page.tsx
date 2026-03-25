@@ -7,7 +7,7 @@ import { CartItem } from "@/lib/types";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import ProductImage from "@/components/ProductImage";
-import { generateProductPath } from "@/lib/utils";
+import { generateProductPath, formatRub } from "@/lib/utils";
 
 const CUSTOMS_HINT =
   "По таможенным правилам доставка одного типа товара не более 3 вещей в один заказ";
@@ -141,7 +141,9 @@ export default function CartPage() {
         {/* Cart Items */}
         <div className="lg:col-span-2">
           <div className="space-y-4">
-            {cart.map((item) => (
+            {cart.map((item) => {
+              const lineCommission = getItemCommission(item, rates, productSellingPriceEur);
+              return (
               <motion.div
                 key={`${item.id}-${item.selectedColor}`}
                 initial={{ opacity: 0, x: -20 }}
@@ -180,10 +182,10 @@ export default function CartPage() {
                     </p>
                   ) : null}
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="text-lg font-bold">{item.price.toFixed(0)} ₽</span>
+                    <span className="text-lg font-bold">{formatRub(item.price)} ₽</span>
                     {item.originalPrice > item.price && (
                       <span className="text-sm text-gray-500 line-through">
-                        {item.originalPrice.toFixed(0)} ₽
+                        {formatRub(item.originalPrice)} ₽
                       </span>
                     )}
                   </div>
@@ -242,17 +244,18 @@ export default function CartPage() {
                 {/* Subtotal */}
                 <div className="text-right">
                   <p className="font-semibold text-lg mb-1">
-                    Итого: {(item.price * item.quantity).toFixed(0)} ₽
+                    Итого: {formatRub(item.price * item.quantity)} ₽
                   </p>
-{getItemCommission(item, rates, productSellingPriceEur) !== null && (
+{lineCommission !== null && (
                       <p className="text-xs text-gray-400 flex flex-wrap items-baseline gap-x-1">
                         <span>В т.ч. вознаграждение сервиса:</span>
-                        <span className="whitespace-nowrap flex-shrink-0">{getItemCommission(item, rates, productSellingPriceEur)?.toFixed(0)} ₽</span>
+                        <span className="whitespace-nowrap flex-shrink-0">{formatRub(lineCommission)} ₽</span>
                       </p>
                     )}
                 </div>
               </motion.div>
-            ))}
+            );
+            })}
           </div>
         </div>
 
@@ -263,12 +266,12 @@ export default function CartPage() {
             <div className="space-y-2 mb-4">
               <div className="flex justify-between">
                 <span>Товары</span>
-                <span>{totalPrice.toFixed(0)} ₽</span>
+                <span>{formatRub(totalPrice)} ₽</span>
               </div>
               <div className="flex justify-between">
                 <span>Доставка до РФ</span>
                 <span>
-                  {totalWeight.toFixed(1)} кг / {shippingCost.toFixed(0)} ₽
+                  {totalWeight.toFixed(1)} кг / {formatRub(shippingCost)} ₽
                 </span>
               </div>
             </div>
@@ -276,14 +279,14 @@ export default function CartPage() {
               <div className="flex justify-between text-xl font-bold">
                 <span>Всего</span>
                 <span>
-                  {(totalPrice + shippingCost).toFixed(0)} ₽
+                  {formatRub(totalPrice + shippingCost)} ₽
                 </span>
               </div>
             </div>
             {showDutyBlock && (
               <div ref={dutyPopupRef} className="relative mb-4">
                 <p className="text-sm text-gray-500 flex items-center gap-1">
-                  Таможенная пошлина: {duty.toFixed(0)} ₽
+                  Таможенная пошлина: {formatRub(duty)} ₽
                   <button
                     type="button"
                     onClick={() => setDutyPopupOpen((v) => !v)}

@@ -12,6 +12,7 @@ import {
   type ReceiptParams,
 } from "@/lib/tbank";
 import { getClientIp, getDeviceInfo } from "@/lib/request-info";
+import { formatRub } from "@/lib/utils";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -235,7 +236,7 @@ export async function POST(request: NextRequest) {
 
       if (promoRecord.minOrderAmount && itemsTotal < promoRecord.minOrderAmount) {
         return NextResponse.json(
-          { error: `Минимальная сумма заказа для промокода — ${promoRecord.minOrderAmount.toFixed(0)} ₽` },
+          { error: `Минимальная сумма заказа для промокода — ${formatRub(promoRecord.minOrderAmount)} ₽` },
           { status: 400 }
         );
       }

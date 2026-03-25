@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { formatRub } from "@/lib/utils";
 
 interface OrderItem {
   id: string;
@@ -227,7 +228,7 @@ export default function AdminUserDetailPage({
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <p className="text-sm text-gray-500 mb-1">Всего потрачено</p>
-          <p className="text-2xl font-bold text-green-600">{totalSpent.toFixed(0)} ₽</p>
+          <p className="text-2xl font-bold text-green-600">{formatRub(totalSpent)} ₽</p>
         </div>
       </div>
 
@@ -238,7 +239,7 @@ export default function AdminUserDetailPage({
               Корзина
               <span className="ml-2 text-sm font-normal text-gray-500">
                 ({user.cartItems.reduce((s, i) => s + i.quantity, 0)} шт. на{" "}
-                {user.cartItems.reduce((s, i) => s + i.productPrice * i.quantity, 0).toFixed(0)} ₽)
+                {formatRub(user.cartItems.reduce((s, i) => s + i.productPrice * i.quantity, 0))} ₽)
               </span>
             </h2>
           </div>
@@ -267,7 +268,7 @@ export default function AdminUserDetailPage({
                 </div>
                 <div className="text-sm text-gray-600">{item.quantity} шт.</div>
                 <div className="text-sm font-medium text-gray-900 w-24 text-right">
-                  {(item.productPrice * item.quantity).toFixed(0)} ₽
+                  {formatRub(item.productPrice * item.quantity)} ₽
                 </div>
                 <div className="text-xs text-gray-400 w-28 text-right">
                   {new Date(item.updatedAt).toLocaleString("ru-RU", {
@@ -352,10 +353,10 @@ export default function AdminUserDetailPage({
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-bold">{order.totalAmount.toFixed(0)} ₽</p>
+                    <p className="text-lg font-bold">{formatRub(order.totalAmount)} ₽</p>
                     {order.promoCode && (order.promoDiscount ?? 0) > 0 && (
                       <p className="text-xs text-green-600">
-                        Промокод {order.promoCode} (−{(order.promoDiscount ?? 0).toFixed(0)} ₽)
+                        Промокод {order.promoCode} (−{formatRub(order.promoDiscount ?? 0)} ₽)
                       </p>
                     )}
                   </div>

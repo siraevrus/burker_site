@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { formatRub } from "@/lib/utils";
 
 interface OrderItem {
   id: string;
@@ -228,7 +229,7 @@ function GuestUserContent() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <p className="text-sm text-gray-500 mb-1">Всего потрачено</p>
           <p className="text-2xl font-bold text-green-600">
-            {totalSpent.toFixed(0)} ₽
+            {formatRub(totalSpent)} ₽
           </p>
         </div>
       </div>
@@ -306,12 +307,12 @@ function GuestUserContent() {
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-bold">
-                      {order.totalAmount.toFixed(0)} ₽
+                      {formatRub(order.totalAmount)} ₽
                     </p>
                     {order.promoCode && (order.promoDiscount ?? 0) > 0 && (
                       <p className="text-xs text-green-600">
                         Промокод {order.promoCode} (−
-                        {(order.promoDiscount ?? 0).toFixed(0)} ₽)
+                        {formatRub(order.promoDiscount ?? 0)} ₽)
                       </p>
                     )}
                   </div>

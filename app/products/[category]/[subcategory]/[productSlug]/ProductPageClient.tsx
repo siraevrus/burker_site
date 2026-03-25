@@ -8,7 +8,7 @@ import { useStore, getCustomsCategory } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "@/components/ProductCard/ProductCard";
 import Breadcrumbs from "@/components/Breadcrumbs/Breadcrumbs";
-import { generateProductPath, getProductBreadcrumbItems } from "@/lib/utils";
+import { generateProductPath, getProductBreadcrumbItems, formatRub } from "@/lib/utils";
 
 const CUSTOMS_HINT =
   "По таможенным правилам доставка одного типа товара не более 3 вещей в один заказ";
@@ -283,12 +283,12 @@ export default function ProductPageClient({
           {/* Цена */}
           <div className="flex items-center gap-3 mb-6">
             <span className="text-3xl font-bold" style={{ color: "#A13D42" }}>
-              {product.price.toFixed(0)} ₽
+              {formatRub(product.price)} ₽
             </span>
             {product.originalPrice > product.price && (
               <>
                 <span className="text-lg text-gray-500 line-through">
-                  {product.originalPrice.toFixed(0)} ₽
+                  {formatRub(product.originalPrice)} ₽
                 </span>
                 {discountPercentage > 0 && (
                   <span className="text-sm text-red-600 font-semibold">
@@ -422,11 +422,11 @@ export default function ProductPageClient({
                       <p className="text-sm font-medium">{related.name}</p>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold" style={{ color: "#A13D42" }}>
-                          {related.price.toFixed(0)} ₽
+                          {formatRub(related.price)} ₽
                         </span>
                         {related.originalPrice > related.price && (
                           <span className="text-xs text-gray-500 line-through">
-                            {related.originalPrice.toFixed(0)} ₽
+                            {formatRub(related.originalPrice)} ₽
                           </span>
                         )}
                       </div>

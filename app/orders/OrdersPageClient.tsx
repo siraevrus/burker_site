@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Order, OrderItem } from "@/lib/types";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { formatRub } from "@/lib/utils";
 
 interface OrdersPageClientProps {
   orders: Order[];
@@ -198,20 +199,20 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                           <div className="flex justify-between mb-2">
                             <p className="font-medium">{item.productName}</p>
                             <p className="font-semibold">
-                              {(item.productPrice * item.quantity).toFixed(0)} ₽
+                              {formatRub(item.productPrice * item.quantity)} ₽
                             </p>
                           </div>
                           <div className="text-sm text-gray-600 space-y-1">
                             <div className="flex justify-between">
                               <span>Цена за шт.:</span>
-                              <span>{item.productPrice.toFixed(0)} ₽</span>
+                              <span>{formatRub(item.productPrice)} ₽</span>
                             </div>
                             {item.selectedColor ? <p>Цвет: {item.selectedColor}</p> : null}
                             <p>Кол-во: {item.quantity}</p>
                             {itemCommission !== null && (
                               <p className="text-gray-500 flex flex-wrap items-baseline gap-x-1">
                                 <span>Комиссия товара:</span>
-                                <span className="whitespace-nowrap flex-shrink-0">{itemCommission.toFixed(0)} ₽</span>
+                                <span className="whitespace-nowrap flex-shrink-0">{formatRub(itemCommission)} ₽</span>
                               </p>
                             )}
                           </div>
@@ -381,19 +382,19 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                         {order.shippingCost === 0 ? (
                           <span className="text-green-600 font-medium">Бесплатно</span>
                         ) : (
-                          <span className="font-medium">{order.shippingCost.toFixed(0)} ₽</span>
+                          <span className="font-medium">{formatRub(order.shippingCost)} ₽</span>
                         )}
                       </span>
                     </div>
                     {order.promoCode && (order.promoDiscount ?? 0) > 0 && (
                       <div className="flex justify-between mb-2 text-green-600">
                         <span>Промокод {order.promoCode}:</span>
-                        <span className="font-medium">-{(order.promoDiscount ?? 0).toFixed(0)} ₽</span>
+                        <span className="font-medium">-{formatRub(order.promoDiscount ?? 0)} ₽</span>
                       </div>
                     )}
                     <div className="flex justify-between text-xl font-bold">
                       <span>Итого:</span>
-                      <span>{order.totalAmount.toFixed(0)} ₽</span>
+                      <span>{formatRub(order.totalAmount)} ₽</span>
                     </div>
                     {order.paymentStatus === "paid" && (
                       <div className="mt-4">
@@ -429,7 +430,7 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                       });
                       return hasComm ? (
                         <p className="text-xs text-gray-400 mt-1">
-                          Итого вознаграждение комиссионера: {totalComm.toFixed(0)} ₽
+                          Итого вознаграждение комиссионера: {formatRub(totalComm)} ₽
                         </p>
                       ) : null;
                     })()}

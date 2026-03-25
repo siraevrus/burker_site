@@ -89,7 +89,7 @@ export default async function ProductPage({
     url: productUrl,
     offers: {
       "@type": "Offer",
-      price: product.price.toFixed(0),
+      price: Number.isFinite(product.price) ? product.price.toFixed(2) : "0.00",
       priceCurrency: "RUB",
       availability: product.soldOut
         ? "https://schema.org/OutOfStock"

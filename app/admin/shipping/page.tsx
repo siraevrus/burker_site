@@ -119,9 +119,9 @@ export default function AdminShippingPage() {
                   <input
                     type="number"
                     min="0"
-                    step="1"
+                    step="0.01"
                     value={row.priceRub}
-                    onChange={(e) => updateRow(index, "priceRub", parseInt(e.target.value, 10) || 0)}
+                    onChange={(e) => updateRow(index, "priceRub", parseFloat(e.target.value) || 0)}
                     className="w-28 px-2 py-1.5 border border-gray-300 rounded-md"
                   />
                 </td>

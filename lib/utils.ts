@@ -160,3 +160,12 @@ export function formatRuPhonePlus7(phone: string | null | undefined): string {
   }
   return `+${numbers}`;
 }
+
+/** Сумма в рублях для отображения: копейки, формат ru-RU (напр. 12 345,67). */
+export function formatRub(amount: number): string {
+  if (!Number.isFinite(amount)) return "0,00";
+  return amount.toLocaleString("ru-RU", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}

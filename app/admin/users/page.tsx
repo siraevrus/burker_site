@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { formatRub } from "@/lib/utils";
 
 interface User {
   id: string;
@@ -230,7 +231,7 @@ export default function AdminUsersPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
-                    {getTotalSpent(user.orders).toFixed(0)} ₽
+                    {formatRub(getTotalSpent(user.orders))} ₽
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

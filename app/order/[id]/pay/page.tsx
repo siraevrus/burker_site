@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Order } from "@/lib/types";
+import { formatRub } from "@/lib/utils";
 
 export default function OrderPayPage() {
   const params = useParams();
@@ -118,7 +119,7 @@ export default function OrderPayPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
           <div className="flex justify-between items-baseline mb-6">
             <span className="text-gray-600">Сумма к оплате:</span>
-            <span className="text-2xl font-bold">{order.totalAmount.toFixed(0)} ₽</span>
+            <span className="text-2xl font-bold">{formatRub(order.totalAmount)} ₽</span>
           </div>
           <p className="text-sm text-gray-500 mb-4">
             Нажмите кнопку ниже — откроется страница оплаты Т-Банка. Выберите свой банк и завершите платёж через СБП.

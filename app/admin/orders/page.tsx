@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { formatRuPhonePlus7 } from "@/lib/utils";
+import { formatRuPhonePlus7, formatRub } from "@/lib/utils";
 
 interface OrderItem {
   id: string;
@@ -341,7 +341,7 @@ function AdminOrdersPageContent() {
   };
 
   const handleCancelPayment = async (order: Order) => {
-    const confirmMessage = `Вы уверены, что хотите вернуть платеж для заказа #${order.orderNumber || order.id.slice(0, 8)}?\n\nСумма: ${order.totalAmount.toFixed(2)} ₽`;
+    const confirmMessage = `Вы уверены, что хотите вернуть платеж для заказа #${order.orderNumber || order.id.slice(0, 8)}?\n\nСумма: ${formatRub(order.totalAmount)} ₽`;
     
     if (!confirm(confirmMessage)) {
       return;
@@ -628,7 +628,7 @@ function AdminOrdersPageContent() {
                     </span>
                     {order.paymentStatus === "paid" && (
                       <span className="text-sm font-bold text-gray-900 tabular-nums whitespace-nowrap">
-                        Итого: {order.totalAmount.toFixed(0)} ₽
+                        Итого: {formatRub(order.totalAmount)} ₽
                       </span>
                     )}
                   </div>
@@ -868,7 +868,7 @@ function AdminOrdersPageContent() {
                             </p>
                           </div>
                           <p className="font-semibold">
-                            {(item.productPrice * item.quantity).toFixed(0)} ₽
+                            {formatRub(item.productPrice * item.quantity)} ₽
                           </p>
                         </div>
                       </div>
@@ -910,7 +910,7 @@ function AdminOrdersPageContent() {
                                     <li key={item.id} className="break-all">
                                       {hasEur && costRub != null && itemComm != null ? (
                                         <>
-                                          {name}: ({item.productPrice} − ({item.originalPriceEur!.toFixed(2)} ÷ {eur.toFixed(4)} × {rub.toFixed(2)})) × {item.quantity} = ({item.productPrice} − {costRub.toFixed(0)}) × {item.quantity} = <strong>{itemComm.toFixed(0)} ₽</strong>
+                                          {name}: ({formatRub(item.productPrice)} − ({item.originalPriceEur!.toFixed(2)} ÷ {eur.toFixed(4)} × {rub.toFixed(2)})) × {item.quantity} = ({formatRub(item.productPrice)} − {formatRub(costRub!)}) × {item.quantity} = <strong>{formatRub(itemComm!)} ₽</strong>
                                         </>
                                       ) : (
                                         <>{name}: — (нет данных по оригинальной цене в EUR)</>
@@ -921,7 +921,7 @@ function AdminOrdersPageContent() {
                               </ul>
                               {commission != null && commission.total > 0 && (
                                 <p className="text-xs font-mono text-gray-800 mt-2 pt-2 border-t border-gray-200">
-                                  Итого вознаграждение комиссионера: {order.items.filter((i) => commission.perItem.has(i.id)).map((i) => commission.perItem.get(i.id)!.toFixed(0)).join(" + ")} = <strong>{commission.total.toFixed(0)} ₽</strong>
+                                  Итого вознаграждение комиссионера: {order.items.filter((i) => commission.perItem.has(i.id)).map((i) => formatRub(commission.perItem.get(i.id)!)).join(" + ")} = <strong>{formatRub(commission.total)} ₽</strong>
                                 </p>
                               )}
                             </div>
@@ -951,11 +951,11 @@ function AdminOrdersPageContent() {
                                           {item.originalPriceEur != null ? `${item.originalPriceEur.toFixed(2)} €` : "—"}
                                         </td>
                                         <td className="py-2 pr-2">
-                                          {costRub != null ? `${costRub.toFixed(0)} ₽` : "—"}
+                                          {costRub != null ? `${formatRub(costRub)} ₽` : "—"}
                                         </td>
                                         <td className="py-2 pr-2">{item.quantity}</td>
                                         <td className="py-2 text-right font-medium">
-                                          {itemComm != null ? `${itemComm.toFixed(0)} ₽` : "—"}
+                                          {itemComm != null ? `${formatRub(itemComm)} ₽` : "—"}
                                         </td>
                                       </tr>
                                     );
@@ -965,7 +965,7 @@ function AdminOrdersPageContent() {
                             </div>
                             {commission != null && commission.total > 0 && (
                               <p className="mt-3 text-sm font-semibold text-gray-800">
-                                Итого вознаграждение комиссионера: {commission.total.toFixed(0)} ₽
+                                Итого вознаграждение комиссионера: {formatRub(commission.total)} ₽
                               </p>
                             )}
                           </>
@@ -985,7 +985,7 @@ function AdminOrdersPageContent() {
                         {order.shippingCost === 0 ? (
                           <span className="text-green-600 font-medium">Бесплатно</span>
                         ) : (
-                          <span className="font-medium">{order.shippingCost.toFixed(0)} ₽</span>
+                          <span className="font-medium">{formatRub(order.shippingCost)} ₽</span>
                         )}
                       </span>
                     </div>
@@ -999,12 +999,12 @@ function AdminOrdersPageContent() {
                             </span>
                           )}:
                         </span>
-                        <span className="font-medium">-{(order.promoDiscount ?? 0).toFixed(0)} ₽</span>
+                        <span className="font-medium">-{formatRub(order.promoDiscount ?? 0)} ₽</span>
                       </div>
                     )}
                     <div className="flex justify-between text-xl font-bold">
                       <span>Итого:</span>
-                      <span>{order.totalAmount.toFixed(0)} ₽</span>
+                      <span>{formatRub(order.totalAmount)} ₽</span>
                     </div>
                   </div>
                 </div>

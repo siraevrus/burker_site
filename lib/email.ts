@@ -1,4 +1,5 @@
 import { sendEmailViaMailopost, sendEmailWithAttachment } from "./mailopost";
+import { formatRub } from "./utils";
 
 // Конфигурация из переменных окружения
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.MAILOPOST_FROM_EMAIL || "";
@@ -76,7 +77,7 @@ export async function sendOrderConfirmation(
         `<tr>
           <td style="padding: 10px; border-bottom: 1px solid #eee;">${esc(item.name)}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toFixed(0)} ₽</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatRub(item.price)} ₽</td>
         </tr>`
     )
     .join("");
@@ -102,7 +103,7 @@ export async function sendOrderConfirmation(
         <tfoot>
           <tr>
             <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold;">Итого:</td>
-            <td style="padding: 10px; text-align: right; font-weight: bold;">${orderData.totalAmount.toFixed(0)} ₽</td>
+            <td style="padding: 10px; text-align: right; font-weight: bold;">${formatRub(orderData.totalAmount)} ₽</td>
           </tr>
         </tfoot>
       </table>
@@ -147,7 +148,7 @@ export async function sendOrderPaymentLinkEmail(
         `<tr>
           <td style="padding: 10px; border-bottom: 1px solid #eee;">${esc(item.name)}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toFixed(0)} ₽</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatRub(item.price)} ₽</td>
         </tr>`
     )
     .join("");
@@ -156,7 +157,7 @@ export async function sendOrderPaymentLinkEmail(
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #333;">Оплатите заказ</h2>
       <p>Здравствуйте, ${esc(orderData.firstName)}!</p>
-      <p>Заказ <strong>#${esc(orderNumber)}</strong> оформлен. Сумма к оплате: <strong>${orderData.totalAmount.toFixed(0)} ₽</strong>.</p>
+      <p>Заказ <strong>#${esc(orderNumber)}</strong> оформлен. Сумма к оплате: <strong>${formatRub(orderData.totalAmount)} ₽</strong>.</p>
 
       <h3 style="color: #333; margin-top: 24px;">Состав заказа</h3>
       <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
@@ -173,7 +174,7 @@ export async function sendOrderPaymentLinkEmail(
         <tfoot>
           <tr>
             <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold;">Итого:</td>
-            <td style="padding: 10px; text-align: right; font-weight: bold;">${orderData.totalAmount.toFixed(0)} ₽</td>
+            <td style="padding: 10px; text-align: right; font-weight: bold;">${formatRub(orderData.totalAmount)} ₽</td>
           </tr>
         </tfoot>
       </table>
@@ -237,7 +238,7 @@ export async function sendAdminOrderNotification(
       <p><strong>Телефон:</strong> ${esc(orderData.phone)}</p>
       <p><strong>Адрес:</strong> ${esc(orderData.address)}</p>
       <p><strong>Количество товаров:</strong> ${orderData.itemsCount}</p>
-      <p><strong>Сумма заказа:</strong> ${orderData.totalAmount.toFixed(0)} ₽</p>
+      <p><strong>Сумма заказа:</strong> ${formatRub(orderData.totalAmount)} ₽</p>
       <p><strong>Ссылка на заказ:</strong> <a href="${orderLink}">${orderLink}</a></p>
       <p><a href="${orderLink}" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #A13D42; color: white; text-decoration: none; border-radius: 5px;">Просмотреть заказ #${orderNumber}</a></p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
@@ -392,16 +393,10 @@ export async function sendOrderInTransitToWarehouseEmail(
         <p style="font-size: 18px; color: #A13D42; margin: 0; font-family: monospace;">${esc(trackNumber)}</p>
       </div>
       
-      <p>Вы можете отслеживать посылку по следующим ссылкам:</p>
+      <p>Вы можете отслеживать посылку по ссылке UPS:</p>
       <ul style="padding-left: 20px;">
         <li style="margin-bottom: 10px;">
-          <a href="https://www.dhl.de/en/privatkunden/pakete-empfangen/verfolgen.html?piececode=${encodeURIComponent(trackNumber)}" style="color: #A13D42;">DHL</a>
-        </li>
-        <li style="margin-bottom: 10px;">
-          <a href="https://t.17track.net/en#nums=${encodeURIComponent(trackNumber)}" style="color: #A13D42;">17track</a>
-        </li>
-        <li style="margin-bottom: 10px;">
-          <a href="https://parcelsapp.com/en/tracking/${encodeURIComponent(trackNumber)}" style="color: #A13D42;">Parcels App</a>
+          <a href="https://www.ups.com/track?loc=en_GB&amp;track=yes&amp;trackNums=${encodeURIComponent(trackNumber)}" style="color: #A13D42;">UPS</a>
         </li>
       </ul>
       
@@ -445,16 +440,10 @@ export async function sendOrderInTransitToRussiaEmail(
         <p style="font-size: 18px; color: #A13D42; margin: 0; font-family: monospace;">${esc(trackNumber)}</p>
       </div>
       
-      <p>Вы можете отслеживать посылку по следующим ссылкам:</p>
+      <p>Вы можете отслеживать посылку по ссылке СДЭК:</p>
       <ul style="padding-left: 20px;">
         <li style="margin-bottom: 10px;">
           <a href="https://www.cdek.ru/ru/tracking?order_id=${encodeURIComponent(trackNumber)}" style="color: #A13D42;">СДЭК</a>
-        </li>
-        <li style="margin-bottom: 10px;">
-          <a href="https://t.17track.net/en#nums=${encodeURIComponent(trackNumber)}" style="color: #A13D42;">17track</a>
-        </li>
-        <li style="margin-bottom: 10px;">
-          <a href="https://parcelsapp.com/en/tracking/${encodeURIComponent(trackNumber)}" style="color: #A13D42;">Parcels App</a>
         </li>
       </ul>
       
@@ -534,7 +523,7 @@ export async function sendOrderPaidEmail(
         `<tr>
           <td style="padding: 10px; border-bottom: 1px solid #eee;">${esc(item.name)}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toFixed(0)} ₽</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatRub(item.price)} ₽</td>
         </tr>`
     )
     .join("");
@@ -543,7 +532,7 @@ export async function sendOrderPaidEmail(
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #333;">Заказ оплачен</h2>
       <p>Здравствуйте, ${esc(firstName)}!</p>
-      <p>Мы получили оплату по заказу <strong>#${orderNumber}</strong> на сумму <strong>${totalAmount.toFixed(0)} ₽</strong>.</p>
+      <p>Мы получили оплату по заказу <strong>#${orderNumber}</strong> на сумму <strong>${formatRub(totalAmount)} ₽</strong>.</p>
       
       <div style="background-color: #e8f5e9; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center;">
         <p style="font-size: 48px; margin: 0;">✅</p>
@@ -565,7 +554,7 @@ export async function sendOrderPaidEmail(
         <tfoot>
           <tr>
             <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold;">Итого:</td>
-            <td style="padding: 10px; text-align: right; font-weight: bold;">${totalAmount.toFixed(0)} ₽</td>
+            <td style="padding: 10px; text-align: right; font-weight: bold;">${formatRub(totalAmount)} ₽</td>
           </tr>
         </tfoot>
       </table>
@@ -603,7 +592,7 @@ export async function sendOrderNotPaidEmail(
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #333;">Заказ не оплачен</h2>
       <p>Здравствуйте, ${esc(firstName)}!</p>
-      <p>Платёж по заказу <strong>#${orderNumber}</strong> (сумма ${totalAmount.toFixed(0)} ₽) не был проведён.</p>
+      <p>Платёж по заказу <strong>#${orderNumber}</strong> (сумма ${formatRub(totalAmount)} ₽) не был проведён.</p>
       
       <div style="background-color: #ffebee; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center;">
         <p style="margin: 0; font-weight: bold; color: #c62828;">Оплата не получена</p>
@@ -682,7 +671,7 @@ export async function sendOrderCancelledEmail(
         `<tr>
           <td style="padding: 10px; border-bottom: 1px solid #eee;">${esc(item.name)}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toFixed(0)} ₽</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatRub(item.price)} ₽</td>
         </tr>`
     )
     .join("");
@@ -710,7 +699,7 @@ export async function sendOrderCancelledEmail(
           ${itemsList}
           <tr>
             <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold; border-top: 2px solid #ddd;">Итого:</td>
-            <td style="padding: 10px; text-align: right; font-weight: bold; border-top: 2px solid #ddd;">${totalAmount.toFixed(0)} ₽</td>
+            <td style="padding: 10px; text-align: right; font-weight: bold; border-top: 2px solid #ddd;">${formatRub(totalAmount)} ₽</td>
           </tr>
         </tbody>
       </table>

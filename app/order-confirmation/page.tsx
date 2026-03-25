@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { Order, OrderItem } from "@/lib/types";
+import { formatRub } from "@/lib/utils";
 
 interface ExchangeRates {
   eurRate: number;
@@ -395,13 +396,13 @@ function OrderConfirmationContent() {
                   <div className="flex justify-between mb-2">
                     <p className="font-medium">{item.productName}</p>
                     <p className="font-semibold">
-                      {(item.productPrice * item.quantity).toFixed(0)} ₽
+                      {formatRub(item.productPrice * item.quantity)} ₽
                     </p>
                   </div>
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between text-gray-600">
                       <span>Цена за шт.:</span>
-                      <span>{item.productPrice.toFixed(0)} ₽</span>
+                      <span>{formatRub(item.productPrice)} ₽</span>
                     </div>
                     {item.selectedColor ? (
                       <p className="text-gray-600">
@@ -414,7 +415,7 @@ function OrderConfirmationContent() {
                     {itemCommission !== null && (
                       <div className="flex justify-between items-baseline gap-x-2 text-gray-500">
                         <span className="min-w-0">Комиссия товара:</span>
-                        <span className="whitespace-nowrap flex-shrink-0">{itemCommission.toFixed(0)} ₽</span>
+                        <span className="whitespace-nowrap flex-shrink-0">{formatRub(itemCommission)} ₽</span>
                       </div>
                     )}
                   </div>
@@ -429,23 +430,23 @@ function OrderConfirmationContent() {
                 {order.shippingCost === 0 ? (
                   <span className="text-green-600">Бесплатно</span>
                 ) : (
-                  <span>{order.shippingCost.toFixed(0)} ₽</span>
+                  <span>{formatRub(order.shippingCost)} ₽</span>
                 )}
               </span>
             </div>
             {order.promoCode && (order.promoDiscount ?? 0) > 0 && (
               <div className="flex justify-between mb-2 text-green-600">
                 <span>Промокод {order.promoCode}:</span>
-                <span className="font-medium">-{(order.promoDiscount ?? 0).toFixed(0)} ₽</span>
+                <span className="font-medium">-{formatRub(order.promoDiscount ?? 0)} ₽</span>
               </div>
             )}
             <div className="flex justify-between text-xl font-bold mb-1">
               <span>Итого:</span>
-              <span>{order.totalAmount.toFixed(0)} ₽</span>
+              <span>{formatRub(order.totalAmount)} ₽</span>
             </div>
             {commission !== null && (
               <p className="text-xs text-gray-400">
-                Итого вознаграждение комиссионера: {commission.toFixed(0)} ₽
+                Итого вознаграждение комиссионера: {formatRub(commission)} ₽
               </p>
             )}
           </div>

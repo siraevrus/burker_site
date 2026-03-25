@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Product } from "@/lib/types";
+import { formatRub } from "@/lib/utils";
 
 export default function AdminPage() {
   const [productList, setProductList] = useState<Product[]>([]);
@@ -478,11 +479,11 @@ export default function AdminPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    {product.price.toFixed(0)} ₽
+                    {formatRub(product.price)} ₽
                   </div>
                   {product.originalPrice > product.price && (
                     <div className="text-xs text-gray-500 line-through">
-                      {product.originalPrice.toFixed(0)} ₽
+                      {formatRub(product.originalPrice)} ₽
                     </div>
                   )}
                 </td>

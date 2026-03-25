@@ -6,7 +6,7 @@ import { Product } from "@/lib/types";
 import { useStore, getCustomsCategory } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductImage from "@/components/ProductImage";
-import { generateProductPath } from "@/lib/utils";
+import { generateProductPath, formatRub } from "@/lib/utils";
 
 const CUSTOMS_HINT =
   "По таможенным правилам доставка одного типа товара не более 3 вещей в один заказ";
@@ -129,11 +129,11 @@ export default function ProductCard({ product, disableInternalLink }: ProductCar
                   color: "rgb(162, 60, 66)",
                 }}
               >
-                {product.price.toFixed(0)} ₽
+                {formatRub(product.price)} ₽
               </span>
               {product.originalPrice > product.price && (
                 <span className="text-xs text-gray-500 line-through">
-                  {product.originalPrice.toFixed(0)} ₽
+                  {formatRub(product.originalPrice)} ₽
                 </span>
               )}
             </div>
@@ -184,11 +184,11 @@ export default function ProductCard({ product, disableInternalLink }: ProductCar
                   color: "rgb(162, 60, 66)",
                 }}
               >
-                {product.price.toFixed(0)} ₽
+                {formatRub(product.price)} ₽
               </span>
               {product.originalPrice > product.price && (
                 <span className="text-xs text-gray-500 line-through">
-                  {product.originalPrice.toFixed(0)} ₽
+                  {formatRub(product.originalPrice)} ₽
                 </span>
               )}
             </div>
