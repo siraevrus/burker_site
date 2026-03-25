@@ -65,6 +65,12 @@ export async function sendOrderConfirmation(
     firstName: string;
     totalAmount: number;
     items: Array<{ name: string; quantity: number; price: number }>;
+    /** Стоимость доставки до РФ, фактически включённая в заказ */
+    shippingCost: number;
+    /** Оценочный суммарный вес заказа (кг) для расчёта доставки */
+    totalWeightKg?: number;
+    /** Скидка по промокоду (₽), если была */
+    promoDiscount?: number;
   }
 ): Promise<boolean> {
   if (!IS_PRODUCTION) {
@@ -81,6 +87,28 @@ export async function sendOrderConfirmation(
         </tr>`
     )
     .join("");
+
+  const weightPart =
+    orderData.totalWeightKg != null && Number.isFinite(orderData.totalWeightKg)
+      ? ` — оценочный вес заказа ${orderData.totalWeightKg.toLocaleString("ru-RU", {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        })} кг`
+      : "";
+
+  const shippingCell =
+    orderData.shippingCost <= 0
+      ? `<span style="color: #2e7d32; font-weight: bold;">Бесплатно</span>`
+      : `${formatRub(orderData.shippingCost)} ₽`;
+
+  const promoDiscount = orderData.promoDiscount ?? 0;
+  const promoRow =
+    promoDiscount > 0
+      ? `<tr>
+          <td colspan="2" style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; color: #2e7d32;">Скидка по промокоду:</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; color: #2e7d32; font-weight: bold;">−${formatRub(promoDiscount)} ₽</td>
+        </tr>`
+      : "";
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -99,6 +127,11 @@ export async function sendOrderConfirmation(
         </thead>
         <tbody>
           ${itemsList}
+          <tr>
+            <td colspan="2" style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">Доставка до РФ${weightPart}:</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${shippingCell}</td>
+          </tr>
+          ${promoRow}
         </tbody>
         <tfoot>
           <tr>
@@ -107,6 +140,10 @@ export async function sendOrderConfirmation(
           </tr>
         </tfoot>
       </table>
+      <p style="font-size: 13px; color: #666; line-height: 1.5; margin: 0 0 16px 0;">
+        Стоимость доставки рассчитывается по <strong>суммарному весу</strong> всего заказа и действующей тарифной сетке
+        (часы — 0,3 кг за единицу, украшения — 0,1 кг за единицу; вес позиций суммируется).
+      </p>
       
       <p>Мы свяжемся с вами в ближайшее время для подтверждения заказа.</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">

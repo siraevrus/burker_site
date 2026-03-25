@@ -70,6 +70,27 @@ function getShippingCostByWeight(
   return nextWeight != null ? tableMap[nextWeight] : tableMap[maxW] ?? 0;
 }
 
+/** Минимальные данные строки заказа для оценки веса (как в корзине). */
+export type ShippingLineInput = { collection: string; quantity: number };
+
+/**
+ * Вес и стоимость доставки по строкам (коллекция + количество), без полного CartItem.
+ */
+export function calculateShippingFromLines(
+  lines: ShippingLineInput[],
+  rates?: ShippingRateEntry[]
+): ShippingCalculation {
+  let totalWeight = 0;
+  for (const item of lines) {
+    const isJewelry = item.collection === "Украшения";
+    const weightPerUnit = isJewelry ? WEIGHT_PER_UNIT.jewelry : WEIGHT_PER_UNIT.watches;
+    totalWeight += weightPerUnit * item.quantity;
+  }
+  const totalCost =
+    totalWeight > 0 ? getShippingCostByWeight(totalWeight, rates) : 0;
+  return { totalWeight, totalCost };
+}
+
 /**
  * Рассчитывает суммарный вес корзины (с учётом количества) и стоимость доставки
  * одним проходом по таблице тарифов для итогового веса всего заказа.
@@ -81,16 +102,8 @@ export function calculateShipping(
   cart: CartItem[],
   rates?: ShippingRateEntry[]
 ): ShippingCalculation {
-  let totalWeight = 0;
-
-  cart.forEach((item) => {
-    const isJewelry = item.collection === "Украшения";
-    const weightPerUnit = isJewelry ? WEIGHT_PER_UNIT.jewelry : WEIGHT_PER_UNIT.watches;
-    totalWeight += weightPerUnit * item.quantity;
-  });
-
-  const totalCost =
-    totalWeight > 0 ? getShippingCostByWeight(totalWeight, rates) : 0;
-
-  return { totalWeight, totalCost };
+  return calculateShippingFromLines(
+    cart.map((item) => ({ collection: item.collection, quantity: item.quantity })),
+    rates
+  );
 }

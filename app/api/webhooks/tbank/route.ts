@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendOrderConfirmation, sendOrderPaidEmail, sendOrderNotPaidEmail, sendReceiptPdfEmail } from "@/lib/email";
+import { calculateShippingFromLines } from "@/lib/shipping";
 import { verifyNotificationToken } from "@/lib/tbank";
 import { notifyNewOrder } from "@/lib/telegram";
 import { buildFiscalReceiptItems } from "@/lib/fiscal-receipt";
@@ -110,12 +111,37 @@ export async function POST(request: NextRequest) {
         price: item.productPrice * item.quantity,
       }));
 
+      const productIds = [...new Set(order.items.map((i) => i.productId))];
+      const products = await prisma.product.findMany({
+        where: { id: { in: productIds } },
+        select: { id: true, collection: true },
+      });
+      const collById = new Map(products.map((p) => [p.id, p.collection]));
+      const shippingLines = order.items.map((i) => ({
+        collection: collById.get(i.productId) ?? "",
+        quantity: i.quantity,
+      }));
+      const rateRows = await prisma.shippingRate.findMany({
+        orderBy: { weightKg: "asc" },
+      });
+      const shippingRates =
+        rateRows.length > 0
+          ? rateRows.map((r) => ({ weight: r.weightKg, price: r.priceRub }))
+          : undefined;
+      const { totalWeight: totalWeightKg } = calculateShippingFromLines(
+        shippingLines,
+        shippingRates
+      );
+
       // Письмо "Спасибо за заказ! Принят в обработку"
       try {
         await sendOrderConfirmation(order.email, orderNumber, {
           firstName: order.firstName,
           totalAmount: order.totalAmount,
           items: orderItems,
+          shippingCost: order.shippingCost,
+          totalWeightKg,
+          promoDiscount: order.promoDiscount ?? 0,
         });
       } catch (confirmationErr) {
         console.error("T-Bank webhook: sendOrderConfirmation failed", confirmationErr);
