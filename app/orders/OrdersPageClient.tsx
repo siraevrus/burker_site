@@ -180,14 +180,6 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                     </div>
                   )}
                   <h3 className="text-lg font-bold mb-4">Товары</h3>
-                  {getRatesForOrder(order) && (
-                    <div className="mb-4 p-3 bg-gray-50 rounded-lg text-sm">
-                      <p className="font-medium text-gray-700 mb-1">Курс на дату заказа</p>
-                      <p className="text-gray-600">
-                        EUR/USD: {order.eurRate!.toFixed(4)} · RUB/USD: {order.rubRate!.toFixed(4)}
-                      </p>
-                    </div>
-                  )}
                   <div className="space-y-3 mb-6">
                     {order.items.map((item) => {
                       const itemCommission = getItemCommission(item, getRatesForOrder(order));
