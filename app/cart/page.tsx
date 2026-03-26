@@ -247,8 +247,8 @@ export default function CartPage() {
                     Итого: {formatRub(item.price * item.quantity)} ₽
                   </p>
 {lineCommission !== null && (
-                      <p className="text-xs text-gray-400 flex flex-wrap items-baseline gap-x-1">
-                        <span>В т.ч. вознаграждение сервиса:</span>
+                      <p className="text-xs text-gray-400 flex flex-wrap items-baseline gap-x-1 max-sm:justify-end">
+                        <span>Включая вознаграждение сервиса:</span>
                         <span className="whitespace-nowrap flex-shrink-0">{formatRub(lineCommission)} ₽</span>
                       </p>
                     )}
