@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
     const shippingRates = rateRows.length > 0
       ? rateRows.map((r) => ({ weight: r.weightKg, price: r.priceRub }))
       : undefined;
-    const { totalCost: shippingCost } = calculateShipping(cartItems, shippingRates);
+    const { totalCost: shippingCost, totalWeight } = calculateShipping(cartItems, shippingRates);
 
     const rates = await getExchangeRates();
     // Сумма вознаграждения комиссионера (наценка; промокод применяется только к ней)
@@ -462,6 +462,9 @@ export async function POST(request: NextRequest) {
               items: itemsForPayEmail,
               payPageUrl,
               paymentLink: result.link,
+              shippingCost,
+              totalWeightKg: totalWeight,
+              promoDiscount: discountAmount,
             });
           } catch (payEmailErr) {
             console.error("sendOrderPaymentLinkEmail failed:", payEmailErr);

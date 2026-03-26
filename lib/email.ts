@@ -19,6 +19,12 @@ function esc(s: string): string {
 /** Подпись в письмах: Мира Брендс | Буркер со ссылкой на сайт */
 const EMAIL_FOOTER = `<p style="color: #999; font-size: 12px;"><a href="${SITE_URL}" style="color: #999; text-decoration: none;">Мира Брендс | Буркер</a></p>`;
 
+/** Пояснение про расчёт доставки по весу и тарифам (письма с составом заказа) */
+const EMAIL_SHIPPING_COST_EXPLANATION = `<p style="font-size: 13px; color: #666; line-height: 1.5; margin: 0 0 16px 0;">
+        Стоимость доставки рассчитывается по <strong>суммарному весу</strong> всего заказа и действующей тарифной сетке
+        (часы — 0,3 кг за единицу, украшения — 0,1 кг за единицу; вес позиций суммируется).
+      </p>`;
+
 /**
  * Отправка кода верификации на email через Mailopost API.
  * В режиме разработки (NODE_ENV !== production) код дополнительно выводится в консоль.
@@ -140,10 +146,7 @@ export async function sendOrderConfirmation(
           </tr>
         </tfoot>
       </table>
-      <p style="font-size: 13px; color: #666; line-height: 1.5; margin: 0 0 16px 0;">
-        Стоимость доставки рассчитывается по <strong>суммарному весу</strong> всего заказа и действующей тарифной сетке
-        (часы — 0,3 кг за единицу, украшения — 0,1 кг за единицу; вес позиций суммируется).
-      </p>
+      ${EMAIL_SHIPPING_COST_EXPLANATION}
       
       <p>Мы свяжемся с вами в ближайшее время для подтверждения заказа.</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
@@ -173,11 +176,39 @@ export async function sendOrderPaymentLinkEmail(
     items: Array<{ name: string; quantity: number; price: number }>;
     payPageUrl: string;
     paymentLink: string;
+    /** Стоимость доставки до РФ, включённая в сумму к оплате */
+    shippingCost: number;
+    /** Оценочный суммарный вес заказа (кг) для отображения в строке доставки */
+    totalWeightKg?: number;
+    /** Скидка по промокоду (₽), если была */
+    promoDiscount?: number;
   }
 ): Promise<boolean> {
   if (!IS_PRODUCTION) {
     console.log("💳 Ссылка на оплату заказа #" + orderNumber, orderData.payPageUrl);
   }
+
+  const weightPart =
+    orderData.totalWeightKg != null && Number.isFinite(orderData.totalWeightKg)
+      ? ` — оценочный вес заказа ${orderData.totalWeightKg.toLocaleString("ru-RU", {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        })} кг`
+      : "";
+
+  const shippingCell =
+    orderData.shippingCost <= 0
+      ? `<span style="color: #2e7d32; font-weight: bold;">Бесплатно</span>`
+      : `${formatRub(orderData.shippingCost)} ₽`;
+
+  const promoDiscount = orderData.promoDiscount ?? 0;
+  const promoRow =
+    promoDiscount > 0
+      ? `<tr>
+          <td colspan="2" style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; color: #2e7d32;">Скидка по промокоду:</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; color: #2e7d32; font-weight: bold;">−${formatRub(promoDiscount)} ₽</td>
+        </tr>`
+      : "";
 
   const itemsList = orderData.items
     .map(
@@ -207,14 +238,21 @@ export async function sendOrderPaymentLinkEmail(
         </thead>
         <tbody>
           ${itemsList}
+          <tr>
+            <td colspan="2" style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">Доставка до РФ${weightPart}:</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${shippingCell}</td>
+          </tr>
+          ${promoRow}
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold;">Итого:</td>
+            <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold;">Итого к оплате:</td>
             <td style="padding: 10px; text-align: right; font-weight: bold;">${formatRub(orderData.totalAmount)} ₽</td>
           </tr>
         </tfoot>
       </table>
+
+      ${EMAIL_SHIPPING_COST_EXPLANATION}
 
       <div style="text-align: center; margin: 28px 0;">
         <a href="${esc(orderData.payPageUrl)}" style="display: inline-block; padding: 14px 28px; background-color: #A13D42; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Перейти к оплате</a>
