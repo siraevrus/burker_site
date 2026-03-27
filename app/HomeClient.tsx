@@ -24,7 +24,8 @@ interface FaqData {
   items: FaqItem[];
 }
 
-const SCROLL_STEP = 280; // ширина карточки (w-64 = 256px) + gap
+// Ширина слайда ≈ колонка сетки (container + lg:grid-cols-4 + gap-5) + gap между слайдами
+const SCROLL_STEP = 320;
 
 const BRANDS = ["Macy", "Olivia", "Julia", "Isabell", "Ruby"];
 
@@ -119,7 +120,7 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
               ref={bestsellersRef}
               className="overflow-x-auto pb-4 scrollbar-hide mx-12"
             >
-              <div className="flex gap-6">
+              <div className="flex gap-5">
                 {bestsellers
                   .filter((p) => generateProductPath(p))
                   .map((product, index) => {
@@ -128,7 +129,7 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
                       <Link
                         key={product.id}
                         href={productPath}
-                        className="flex-shrink-0 w-64 block cursor-pointer hover:opacity-95 transition-opacity"
+                        className="flex-shrink-0 block w-[min(300px,calc(100vw-8rem))] cursor-pointer hover:opacity-95 transition-opacity"
                       >
                         <motion.div
                           initial={{ opacity: 0, y: 20 }}
