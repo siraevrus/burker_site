@@ -186,3 +186,23 @@ export async function notifyImportResult(data: {
     `Время: ${new Date().toLocaleString("ru-RU")}`;
   return sendTelegramMessage(text, { parseMode: "HTML" });
 }
+
+/** Уведомление о сообщении в чате поддержки */
+export async function notifySupportChatMessage(data: {
+  sessionId: string;
+  preview: string;
+  isNewSession: boolean;
+}): Promise<boolean> {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://burker-watches.ru";
+  const adminLink = `${siteUrl.replace(/\/+$/, "")}/admin/support/${encodeURIComponent(data.sessionId)}`;
+  const headline = data.isNewSession
+    ? "🆕 <b>Новый чат поддержки</b>"
+    : "💬 <b>Сообщение в чате поддержки</b>";
+  const preview =
+    data.preview.length > 500 ? data.preview.slice(0, 500) + "…" : data.preview;
+  const text =
+    `${headline}\n\n` +
+    `${escapeHtml(preview)}\n\n` +
+    `<a href="${adminLink.replace(/&/g, "&amp;")}">Открыть в админке</a>`;
+  return sendTelegramMessage(text, { parseMode: "HTML" });
+}

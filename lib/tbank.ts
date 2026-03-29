@@ -21,6 +21,9 @@ function getBaseUrl(): string {
 const TBANK_PASSWORD = process.env.TBANK_PASSWORD;
 const TBANK_TOKEN = process.env.TBANK_TOKEN; // опционально: Bearer для заголовка
 
+/** Срок жизни ссылки на оплату по умолчанию (RedirectDueDate = сейчас + TTL). */
+const DEFAULT_PAYMENT_LINK_TTL_MS = 6 * 60 * 60 * 1000;
+
 /** Позиция чека для Receipt (EACQ FFD 1.05) */
 export interface ReceiptItem {
   name: string;
@@ -46,7 +49,8 @@ export interface CreateOneTimeLinkParams {
   successUrl: string;
   failUrl: string;
   notificationUrl: string;
-  redirectDueDate?: string; // срок жизни ссылки: YYYY-MM-DDTHH:MI:SS+00:00
+  /** ISO8601 (напр. 2019-06-25T13:08:40+03:00). По умолчанию — через 6 ч от Init. */
+  redirectDueDate?: string;
   receipt?: ReceiptParams; // для чека (обязательно при онлайн-кассе, для теста №7)
 }
 
@@ -140,8 +144,7 @@ async function initPayment(params: CreateOneTimeLinkParams): Promise<InitResult>
   const redirectDueDate =
     params.redirectDueDate ??
     (() => {
-      const d = new Date();
-      d.setDate(d.getDate() + 3);
+      const d = new Date(Date.now() + DEFAULT_PAYMENT_LINK_TTL_MS);
       return d.toISOString().replace(/\.\d{3}Z$/, "+00:00");
     })();
 

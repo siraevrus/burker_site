@@ -5,6 +5,7 @@ import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
 import CookieBanner from "@/components/CookieBanner/CookieBanner";
 import SeoMeta from "@/components/SeoMeta/SeoMeta";
+import SupportChatWidget from "@/components/SupportChat/SupportChatWidget";
 
 export default function ConditionalLayout({
   children,
@@ -25,6 +26,7 @@ export default function ConditionalLayout({
           <main className="min-h-screen">{children}</main>
           <Footer />
           <CookieBanner />
+          <SupportChatWidget />
         </>
       )}
     </>

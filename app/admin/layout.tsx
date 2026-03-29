@@ -35,11 +35,13 @@ const MENU_GROUPS = [
       { href: "/admin/users", label: "Пользователи" },
       { href: "/admin/subscribers", label: "Подписчики" },
       { href: "/admin/feedback", label: "ФОС" },
+      { href: "/admin/support", label: "Чат поддержки" },
     ],
   },
   {
     label: "Настройки",
     items: [
+      { href: "/admin/support/settings", label: "Чат (расписание)" },
       { href: "/admin/seo", label: "SEO" },
       { href: "/admin/shipping", label: "Стоимость доставки" },
       { href: "/admin/exchange-rates", label: "Курсы валют" },

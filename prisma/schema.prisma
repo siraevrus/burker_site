@@ -81,9 +81,10 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
-  orders             Order[]
-  emailVerifications EmailVerification[]
-  cartItems          UserCartItem[]
+  orders               Order[]
+  emailVerifications   EmailVerification[]
+  cartItems            UserCartItem[]
+  supportChatSessions  SupportChatSession[]
 }
 
 model UserCartItem {
@@ -340,4 +341,48 @@ model HomeFaqItem {
   order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Чат поддержки (виджет на сайте)
+model SupportChatSession {
+  id                String   @id @default(cuid())
+  visitorToken      String   @unique
+  status            String   @default("open") // open | closed
+  userId            String?
+  visitorName       String?
+  visitorEmail      String?
+  lastMessageAt     DateTime @default(now())
+  closedAt          DateTime?
+  hasUnreadForAdmin Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user     User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages SupportChatMessage[]
+
+  @@index([status, lastMessageAt])
+  @@index([visitorToken])
+}
+
+model SupportChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  role      String // visitor | admin
+  body      String
+  createdAt DateTime @default(now())
+
+  session SupportChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+}
+
+model SupportWidgetSettings {
+  id               String   @id @default("single")
+  enabled          Boolean  @default(true)
+  timezone         String   @default("Europe/Moscow")
+  scheduleJson     String   @default("[]") // JSON: [{days,start,end}] пустой = 24/7
+  offlineMessage   String   @default("Мы ответим в ближайшее рабочее время.")
+  welcomeTitle     String   @default("Поддержка")
+  telegramNotifyOn String   @default("every_visitor") // first_message_only | every_visitor
+  updatedAt        DateTime @updatedAt
 }
