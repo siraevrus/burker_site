@@ -29,15 +29,16 @@ const SCROLL_STEP = 320;
 
 const BRANDS = ["Macy", "Olivia", "Julia", "Isabell", "Ruby"];
 
-function getRandomBrand() {
-  return BRANDS[Math.floor(Math.random() * BRANDS.length)];
-}
-
 export default function HomeClient({ products, bestsellers }: HomeClientProps) {
-  const [activeBrand, setActiveBrand] = useState(() => getRandomBrand());
+  /** Детерминированный старт для SSR = гидратация без расхождений; случайный бренд — только после mount. */
+  const [activeBrand, setActiveBrand] = useState(BRANDS[0]);
   const bestsellersRef = useRef<HTMLDivElement>(null);
   const [faq, setFaq] = useState<FaqData | null>(null);
   const [faqOpenId, setFaqOpenId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setActiveBrand(BRANDS[Math.floor(Math.random() * BRANDS.length)]);
+  }, []);
 
   useEffect(() => {
     fetch("/api/faq")

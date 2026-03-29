@@ -119,11 +119,12 @@ export default function AdminSupportDetailPage() {
     );
   }
 
-  const meta =
-    session.user?.email ||
-    session.visitorEmail ||
-    session.visitorName ||
-    "Гость";
+  const contactLines: string[] = [];
+  if (session.user?.email) contactLines.push(`Аккаунт: ${session.user.email}`);
+  if (session.user?.firstName) contactLines.push(`Имя: ${session.user.firstName}`);
+  if (session.visitorName) contactLines.push(`Имя (гость): ${session.visitorName}`);
+  if (session.visitorEmail) contactLines.push(`Email (гость): ${session.visitorEmail}`);
+  if (session.user?.phone) contactLines.push(`Телефон: ${session.user.phone}`);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
@@ -132,9 +133,19 @@ export default function AdminSupportDetailPage() {
           <Link href="/admin/support" className="text-sm text-blue-600 hover:underline">
             ← Все диалоги
           </Link>
-          <h1 className="text-xl font-bold mt-2">{meta}</h1>
-          {session.user?.phone && (
-            <p className="text-sm text-gray-600">Телефон: {session.user.phone}</p>
+          <p className="text-xs text-gray-500 mt-2 uppercase tracking-wide">ID сессии</p>
+          <h1
+            className="text-lg sm:text-xl font-semibold mt-0.5 font-mono break-all"
+            title={session.id}
+          >
+            {session.id}
+          </h1>
+          {contactLines.length > 0 && (
+            <div className="text-sm text-gray-600 mt-3 space-y-0.5">
+              {contactLines.map((line, i) => (
+                <p key={i}>{line}</p>
+              ))}
+            </div>
           )}
         </div>
         {session.status === "open" && (
