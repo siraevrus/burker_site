@@ -12,7 +12,7 @@ export const FISCAL_PAYMENT_SUBJECT_AGENT_FEE = 11;
 /** Платёж (аванс / предоплата по ФФД 1.2, значение 10) */
 export const FISCAL_PAYMENT_SUBJECT_PAYMENT = 10;
 export const FISCAL_ADVANCE_POSITION_TEXT =
-  "Аванс по договору комиссии на выкуп товара";
+  "Аванс по договору комиссии за выкуп товара";
 export const FISCAL_AGENT_TYPE_COMMISSIONER = 32;
 export const FISCAL_SUPPLIER_INN = "000000000000";
 export const FISCAL_SUPPLIER_NAME = "BURKER INTERNATIONAL BV";

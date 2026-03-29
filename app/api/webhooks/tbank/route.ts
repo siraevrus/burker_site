@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { sendOrderConfirmation, sendOrderPaidEmail, sendOrderNotPaidEmail, sendReceiptPdfEmail } from "@/lib/email";
+import { sendOrderConfirmation, sendOrderPaidEmail, sendOrderNotPaidEmail } from "@/lib/email";
 import { calculateShippingFromLines } from "@/lib/shipping";
 import { verifyNotificationToken } from "@/lib/tbank";
 import { notifyNewOrder } from "@/lib/telegram";
@@ -204,17 +204,6 @@ export async function POST(request: NextRequest) {
           });
           if (!result.success) {
             logError("OrangeData_sendReceipt", { error: result.error, orderId: order.id });
-          } else {
-            try {
-              await sendReceiptPdfEmail(
-                order.email,
-                order.firstName,
-                order.orderNumber || order.id.slice(0, 8),
-                order.id
-              );
-            } catch (receiptEmailErr) {
-              console.error("T-Bank webhook: sendReceiptPdfEmail failed", receiptEmailErr);
-            }
           }
         } catch (orangeErr) {
           console.error("T-Bank webhook: Orange Data sendFiscalReceipt failed", orangeErr);
