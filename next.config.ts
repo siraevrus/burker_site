@@ -1,7 +1,13 @@
 import type { NextConfig } from "next";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// Фиксированный root для file tracing (иначе при лишнем lockfile выше по дереву standalone бывает неполным).
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
+  output: "standalone",
+  outputFileTracingRoot: projectRoot,
   images: {
     remotePatterns: [
       {

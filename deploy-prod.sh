@@ -183,6 +183,15 @@ fi
 
 mkdir -p .next/standalone/.next
 
+# Next иногда не кладёт в standalone часть server-артефактов; без middleware-manifest.json PM2 падает с MODULE_NOT_FOUND.
+log_info "Копирование .next/server → standalone/.next/server..."
+if [[ ! -d ".next/server" ]]; then
+  log_err "Нет .next/server после сборки"
+  exit 1
+fi
+mkdir -p .next/standalone/.next/server
+cp -a .next/server/. .next/standalone/.next/server/
+
 if [[ ! -d ".next/static" ]]; then
   log_err "Не найдена директория .next/static после build"
   exit 1

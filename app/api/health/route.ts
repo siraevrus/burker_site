@@ -16,9 +16,7 @@ export async function GET() {
   } catch (error: unknown) {
     const durationMs = Date.now() - startedAt;
     const message = error instanceof Error ? error.message : "Health check failed";
-    if (process.env.NODE_ENV !== "production") {
-      console.error("Health check error:", error);
-    }
+    console.error("Health check error:", message, error);
     return NextResponse.json(
       {
         status: "error",
