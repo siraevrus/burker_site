@@ -25,26 +25,37 @@ export default function SupportChatWidget() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/support/widget-config")
-      .then(async (r) => {
-        if (!r.ok) return;
-        const c = (await r.json()) as WidgetConfig;
-        if (
-          c &&
-          typeof c.enabled === "boolean" &&
-          typeof c.isWithinSchedule === "boolean" &&
-          typeof c.timezone === "string" &&
-          typeof c.welcomeTitle === "string" &&
-          typeof c.offlineMessage === "string"
-        ) {
-          if (!cancelled) setConfig(c);
-        }
-      })
-      .catch(() => {});
+    const load = () => {
+      fetch("/api/support/widget-config")
+        .then(async (r) => {
+          if (!r.ok) return;
+          const c = (await r.json()) as WidgetConfig;
+          if (
+            c &&
+            typeof c.enabled === "boolean" &&
+            typeof c.isWithinSchedule === "boolean" &&
+            typeof c.timezone === "string" &&
+            typeof c.welcomeTitle === "string" &&
+            typeof c.offlineMessage === "string"
+          ) {
+            if (!cancelled) setConfig(c);
+          }
+        })
+        .catch(() => {});
+    };
+    load();
+    const tick = setInterval(load, 60_000);
     return () => {
       cancelled = true;
+      clearInterval(tick);
     };
   }, []);
+
+  useEffect(() => {
+    if (config && (!config.enabled || !config.isWithinSchedule)) {
+      setOpen(false);
+    }
+  }, [config]);
 
   const loadMessages = useCallback(async (mode: "full" | "poll") => {
     try {
@@ -139,15 +150,9 @@ export default function SupportChatWidget() {
     }
   };
 
-  if (!config?.enabled) return null;
+  if (!config?.enabled || !config.isWithinSchedule) return null;
 
   const title = config.welcomeTitle || "Поддержка";
-  const offlineBanner =
-    !config.isWithinSchedule && config.offlineMessage ? (
-      <div className="text-xs text-amber-900 bg-amber-50 border-b border-amber-100 px-3 py-2">
-        {config.offlineMessage}
-      </div>
-    ) : null;
 
   return (
     <div className="fixed bottom-4 right-4 z-[100] flex flex-col items-end gap-2 font-sans">
@@ -166,7 +171,6 @@ export default function SupportChatWidget() {
               </svg>
             </button>
           </div>
-          {offlineBanner}
           <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 bg-gray-50">
             {loading && messages.length === 0 ? (
               <p className="text-sm text-gray-500">Загрузка…</p>

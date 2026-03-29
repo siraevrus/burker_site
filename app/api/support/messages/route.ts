@@ -3,7 +3,7 @@ import { randomBytes, randomUUID } from "crypto";
 import { prisma } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
 import { getSupportRequestClientIp } from "@/lib/support-request-ip";
-import { getSupportWidgetSettingsRow } from "@/lib/support-settings";
+import { getPublicWidgetConfig, getSupportWidgetSettingsRow } from "@/lib/support-settings";
 import { checkSupportRateLimit } from "@/lib/support-rate-limit";
 import { notifySupportChatMessage } from "@/lib/telegram";
 
@@ -38,7 +38,8 @@ export async function GET(request: NextRequest) {
     }
 
     const settings = await getSupportWidgetSettingsRow();
-    if (!settings.enabled) {
+    const pub = await getPublicWidgetConfig();
+    if (!pub.enabled || !pub.isWithinSchedule) {
       return NextResponse.json({ messages: [], sessionId: null, disabled: true });
     }
     const token = extractCookie(request.headers.get("cookie"), COOKIE);
@@ -76,10 +77,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const settings = await getSupportWidgetSettingsRow();
-    if (!settings.enabled) {
-      return NextResponse.json({ error: "Чат временно недоступен" }, { status: 403 });
+    const pub = await getPublicWidgetConfig();
+    if (!pub.enabled || !pub.isWithinSchedule) {
+      return NextResponse.json(
+        {
+          error: pub.enabled
+            ? "Сейчас нерабочее время. Напишите нам позже или используйте форму на странице контактов."
+            : "Чат временно недоступен",
+        },
+        { status: 403 }
+      );
     }
+
+    const settings = await getSupportWidgetSettingsRow();
 
     const ip = getSupportRequestClientIp(request);
     if (!checkSupportRateLimit(`support-post:${ip}`, POST_RATE_IP_MAX, POST_RATE_IP_MS)) {
