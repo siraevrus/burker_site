@@ -265,9 +265,11 @@ pm2 save
 log_ok "PM2 перезапущен"
 
 log_info "Health-check ${HEALTH_PATH}..."
+# Дать Node время открыть порт (иначе первый curl даёт connection refused и пугает в логе).
+sleep 3
 success=0
 for ((i=1; i<=RETRIES; i++)); do
-  code="$(curl -sS -o /tmp/burker-health.json -w "%{http_code}" "http://127.0.0.1:${PORT}${HEALTH_PATH}" || true)"
+  code="$(curl -sS -o /tmp/burker-health.json -w "%{http_code}" "http://127.0.0.1:${PORT}${HEALTH_PATH}" 2>/dev/null || true)"
   if [[ "${code}" == "200" ]]; then
     success=1
     break
