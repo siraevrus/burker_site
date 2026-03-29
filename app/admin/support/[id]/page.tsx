@@ -12,7 +12,12 @@ type Session = {
   messages: Msg[];
   visitorName: string | null;
   visitorEmail: string | null;
-  user: { email: string; firstName: string | null; phone: string | null } | null;
+  user: {
+    id: string;
+    email: string;
+    firstName: string | null;
+    phone: string | null;
+  } | null;
 };
 
 export default function AdminSupportDetailPage() {
@@ -119,12 +124,14 @@ export default function AdminSupportDetailPage() {
     );
   }
 
-  const contactLines: string[] = [];
-  if (session.user?.email) contactLines.push(`Аккаунт: ${session.user.email}`);
-  if (session.user?.firstName) contactLines.push(`Имя: ${session.user.firstName}`);
-  if (session.visitorName) contactLines.push(`Имя (гость): ${session.visitorName}`);
-  if (session.visitorEmail) contactLines.push(`Email (гость): ${session.visitorEmail}`);
-  if (session.user?.phone) contactLines.push(`Телефон: ${session.user.phone}`);
+  const extraContactLines: string[] = [];
+  if (session.user) {
+    if (session.user.firstName) extraContactLines.push(`Имя: ${session.user.firstName}`);
+    if (session.user.phone) extraContactLines.push(`Телефон: ${session.user.phone}`);
+  } else {
+    if (session.visitorName) extraContactLines.push(`Имя (гость): ${session.visitorName}`);
+    if (session.visitorEmail) extraContactLines.push(`Email (гость): ${session.visitorEmail}`);
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
@@ -133,16 +140,37 @@ export default function AdminSupportDetailPage() {
           <Link href="/admin/support" className="text-sm text-blue-600 hover:underline">
             ← Все диалоги
           </Link>
-          <p className="text-xs text-gray-500 mt-2 uppercase tracking-wide">ID сессии</p>
-          <h1
-            className="text-lg sm:text-xl font-semibold mt-0.5 font-mono break-all"
-            title={session.id}
-          >
-            {session.id}
-          </h1>
-          {contactLines.length > 0 && (
+          {session.user ? (
+            <>
+              <p className="text-xs text-gray-500 mt-2 uppercase tracking-wide">
+                Авторизованный пользователь
+              </p>
+              <h1 className="text-xl font-bold mt-1">
+                <Link
+                  href={`/admin/users/${session.user.id}`}
+                  className="text-blue-700 hover:underline break-all"
+                >
+                  {session.user.email}
+                </Link>
+              </h1>
+              <p className="text-xs text-gray-500 mt-2 font-mono break-all" title={session.id}>
+                ID сессии: {session.id}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-gray-500 mt-2 uppercase tracking-wide">ID сессии</p>
+              <h1
+                className="text-lg sm:text-xl font-semibold mt-0.5 font-mono break-all"
+                title={session.id}
+              >
+                {session.id}
+              </h1>
+            </>
+          )}
+          {extraContactLines.length > 0 && (
             <div className="text-sm text-gray-600 mt-3 space-y-0.5">
-              {contactLines.map((line, i) => (
+              {extraContactLines.map((line, i) => (
                 <p key={i}>{line}</p>
               ))}
             </div>
