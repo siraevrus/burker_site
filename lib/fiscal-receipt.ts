@@ -3,10 +3,16 @@ export const FISCAL_GROUP = "Main_2";
 export const FISCAL_TAXATION_SYSTEM_USN_INCOME = 1;
 export const FISCAL_TAX_NO_VAT = 6;
 export const FISCAL_PAYMENT_METHOD_FULL_PAYMENT = 4;
+/** Аванс (денежными средствами), ФФД 1.2 */
+export const FISCAL_PAYMENT_METHOD_ADVANCE = 3;
 export const FISCAL_PAYMENT_TYPE_CASHLESS = 2;
 export const FISCAL_PAYMENT_SUBJECT_PRODUCT = 1;
 export const FISCAL_PAYMENT_SUBJECT_SERVICE = 4;
 export const FISCAL_PAYMENT_SUBJECT_AGENT_FEE = 11;
+/** Платёж (аванс / предоплата по ФФД 1.2, значение 10) */
+export const FISCAL_PAYMENT_SUBJECT_PAYMENT = 10;
+export const FISCAL_ADVANCE_POSITION_TEXT =
+  "Аванс по договору комиссии на выкуп товара";
 export const FISCAL_AGENT_TYPE_COMMISSIONER = 32;
 export const FISCAL_SUPPLIER_INN = "000000000000";
 export const FISCAL_SUPPLIER_NAME = "BURKER INTERNATIONAL BV";
@@ -14,7 +20,7 @@ export const FISCAL_COMMISSION_LABEL =
   "Вознаграждение комиссионера по приобретению товара по поручению клиента";
 
 export interface FiscalReceiptItem {
-  type: "product" | "commission" | "shipping";
+  type: "product" | "commission" | "shipping" | "advance";
   name: string;
   quantity: number;
   price: number;
@@ -177,4 +183,23 @@ export function buildFiscalReceiptItems(order: FiscalReceiptOrderInput): FiscalR
   }
 
   return items;
+}
+
+/**
+ * Авансовый чек при оплате: одна позиция, как в Orange Data (предмет 10, способ 3).
+ */
+export function buildAdvanceFiscalReceiptItems(totalAmount: number): FiscalReceiptItem[] {
+  const amount = Math.max(0, totalAmount);
+  return [
+    {
+      type: "advance",
+      name: FISCAL_ADVANCE_POSITION_TEXT,
+      quantity: 1,
+      price: amount,
+      amount,
+      tax: FISCAL_TAX_NO_VAT,
+      paymentMethodType: FISCAL_PAYMENT_METHOD_ADVANCE,
+      paymentSubjectType: FISCAL_PAYMENT_SUBJECT_PAYMENT,
+    },
+  ];
 }

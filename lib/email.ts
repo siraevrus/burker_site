@@ -709,16 +709,20 @@ export async function sendReceiptPdfEmail(
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #333;">Ваш кассовый чек</h2>
+      <h2 style="color: #333;">Ваш авансовый чек</h2>
       <p>Здравствуйте, ${esc(firstName)}!</p>
-      <p>Во вложении — кассовый чек по заказу <strong>#${orderNumber}</strong>.</p>
+      <p>Во вложении — авансовый кассовый чек по заказу <strong>#${orderNumber}</strong> (PDF).</p>
       <p>Чек сформирован в соответствии с требованиями 54-ФЗ.</p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
       ${EMAIL_FOOTER}
     </div>
   `;
 
-  const result = await sendEmailWithAttachment(email, `Чек по заказу #${orderNumber}`, html, {
+  const result = await sendEmailWithAttachment(
+    email,
+    `Авансовый чек по заказу #${orderNumber}`,
+    html,
+    {
     filename,
     content: pdfBuffer,
   });

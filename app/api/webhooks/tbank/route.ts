@@ -4,7 +4,7 @@ import { sendOrderConfirmation, sendOrderPaidEmail, sendOrderNotPaidEmail, sendR
 import { calculateShippingFromLines } from "@/lib/shipping";
 import { verifyNotificationToken } from "@/lib/tbank";
 import { notifyNewOrder } from "@/lib/telegram";
-import { buildFiscalReceiptItems } from "@/lib/fiscal-receipt";
+import { buildAdvanceFiscalReceiptItems } from "@/lib/fiscal-receipt";
 import { sendFiscalReceipt, isOrangeDataEnabled } from "@/lib/orange-data";
 import { logError } from "@/lib/ops-log";
 
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
       // Фискализация Orange Data (54-ФЗ)
       if (await isOrangeDataEnabled()) {
         try {
-          const receiptItems = buildFiscalReceiptItems(order).map((item) => ({
+          const receiptItems = buildAdvanceFiscalReceiptItems(Number(order.totalAmount)).map((item) => ({
             name: item.name,
             price: item.price,
             quantity: item.quantity,

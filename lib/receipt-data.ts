@@ -1,10 +1,10 @@
 /**
  * Подготовка данных заказа для генерации PDF-чека.
- * Формат по образцу receipt.pdf (ФФД 1.2, агентская модель).
+ * Формат PDF как авансовый чек при оплате (ФФД 1.2, одна позиция — аванс).
  */
 
 import {
-  buildFiscalReceiptItems,
+  buildAdvanceFiscalReceiptItems,
   FISCAL_SETTLEMENT_PLACE,
   FISCAL_SUPPLIER_INN,
   FISCAL_SUPPLIER_NAME,
@@ -86,7 +86,7 @@ export function mapOrderToReceiptData(order: Order): ReceiptData {
   const config = getReceiptConfig();
   const dateToUse = order.paidAt || order.createdAt;
   const eurPerRub = getEurPerRub(order);
-  const items: ReceiptItem[] = buildFiscalReceiptItems(order);
+  const items: ReceiptItem[] = buildAdvanceFiscalReceiptItems(Number(order.totalAmount));
 
   const cashAmount = 0;
   const electronicAmount = order.totalAmount;

@@ -93,7 +93,7 @@ export async function generateReceiptPdf(orderId: string): Promise<Buffer> {
   writeEmpty();
 
   writeLine("КАССОВЫЙ ЧЕК", TITLE_SIZE);
-  writeLine(`Приход ${data.dateTime}`);
+  writeLine(`Приход (аванс) ${data.dateTime}`);
   writeLine("признак ККТ для расчетов только в Интернет: да");
   writeEmpty();
 
@@ -107,7 +107,15 @@ export async function generateReceiptPdf(orderId: string): Promise<Buffer> {
   writeEmpty();
 
   for (const item of data.items) {
-    if (item.type === "product") {
+    if (item.type === "advance") {
+      writeLine(item.name.slice(0, 80));
+      writeLine(`${item.quantity} шт. х ${item.price.toFixed(2)}`);
+      writeLine("общая стоимость позиции с учетом скидок и наценок");
+      writeLine(item.amount.toFixed(2));
+      writeLine("Ставка НДС не облагается");
+      writeLine("способ расчета АВАНС");
+      writeLine("признак предмета расчета ПЛАТЕЖ");
+    } else if (item.type === "product") {
       const eurStr =
         item.originalPriceEur != null
           ? `, ${item.originalPriceEur.toFixed(2)} EUR`
