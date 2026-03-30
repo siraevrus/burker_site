@@ -6,6 +6,8 @@ export const FISCAL_PAYMENT_METHOD_FULL_PAYMENT = 4;
 /** Аванс (денежными средствами), ФФД 1.2 */
 export const FISCAL_PAYMENT_METHOD_ADVANCE = 3;
 export const FISCAL_PAYMENT_TYPE_CASHLESS = 2;
+/** В блоке оплат чека: зачёт предоплаты (аванса), ФФД 1.2 */
+export const FISCAL_CHECK_PAYMENT_PREPAYMENT = 3;
 export const FISCAL_PAYMENT_SUBJECT_PRODUCT = 1;
 export const FISCAL_PAYMENT_SUBJECT_SERVICE = 4;
 export const FISCAL_PAYMENT_SUBJECT_AGENT_FEE = 11;
@@ -18,6 +20,12 @@ export const FISCAL_SUPPLIER_INN = "000000000000";
 export const FISCAL_SUPPLIER_NAME = "BURKER INTERNATIONAL BV";
 export const FISCAL_COMMISSION_LABEL =
   "Вознаграждение комиссионера по приобретению товара по поручению клиента";
+
+/** Закрывающий чек: услуга доставки СДЭК (фиксированный текст) */
+export const FISCAL_CLOSING_SHIPPING_NAME =
+  "Услуги доставки по Договор №ИМ-ВБ-ELE-3";
+export const FISCAL_CLOSING_CDEK_SUPPLIER_NAME = 'ООО "Сдэк-Глобал"';
+export const FISCAL_CLOSING_CDEK_INN = "7722327689";
 
 export interface FiscalReceiptItem {
   type: "product" | "commission" | "shipping" | "advance";
@@ -202,4 +210,86 @@ export function buildAdvanceFiscalReceiptItems(totalAmount: number): FiscalRecei
       paymentSubjectType: FISCAL_PAYMENT_SUBJECT_PAYMENT,
     },
   ];
+}
+
+export interface ClosingFiscalOrderItem {
+  originalPriceEur: number | null;
+  quantity: number;
+}
+
+export interface ClosingFiscalInput {
+  adminOrderRef: string;
+  totalAmount: number;
+  deliveryToRussiaRub: number;
+  customsOrderDate: Date;
+  cbrEurRubOnOrderDate: number;
+  items: ClosingFiscalOrderItem[];
+}
+
+/**
+ * Закрывающий чек к авансу: 3 позиции (товар BV, доставка СДЭК, комиссия).
+ * Суммы в рублях с копейками; позиция 3 = totalAmount − поз.1 − поз.2 (копейки).
+ */
+export type ClosingFiscalBuildResult =
+  | { ok: true; nameLine1: string; line1Rub: number; line2Rub: number; line3Rub: number }
+  | { ok: false; error: string };
+
+export function buildClosingFiscalReceiptData(input: ClosingFiscalInput): ClosingFiscalBuildResult {
+  const ref = input.adminOrderRef.trim();
+  if (!ref) {
+    return { ok: false, error: "Не указан номер ордера (adminOrderRef)" };
+  }
+
+  let eurSum = 0;
+  for (const it of input.items) {
+    const eur = it.originalPriceEur != null ? Number(it.originalPriceEur) : 0;
+    if (!Number.isFinite(eur) || eur < 0) {
+      return { ok: false, error: "Некорректная цена в EUR в позиции заказа" };
+    }
+    eurSum += eur * Math.max(1, it.quantity);
+  }
+  if (eurSum <= 0) {
+    return { ok: false, error: "Сумма заказа в EUR (originalPriceEur × qty) должна быть больше 0" };
+  }
+
+  const cbr = input.cbrEurRubOnOrderDate;
+  if (!Number.isFinite(cbr) || cbr <= 0) {
+    return { ok: false, error: "Некорректный курс EUR/RUB" };
+  }
+
+  const totalCents = toCents(input.totalAmount);
+  const line1Cents = Math.round(eurSum * cbr * 100);
+  const line2Cents = toCents(input.deliveryToRussiaRub);
+  const line3Cents = totalCents - line1Cents - line2Cents;
+
+  if (line1Cents < 0 || line2Cents < 0) {
+    return { ok: false, error: "Некорректные суммы позиций 1–2" };
+  }
+  if (line3Cents < 0) {
+    return {
+      ok: false,
+      error:
+        "Итог заказа меньше суммы товара по курсу и доставки — проверьте totalAmount, EUR, курс и доставку",
+    };
+  }
+
+  const d = input.customsOrderDate;
+  const dateStr = d.toLocaleDateString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+  const nameLine1 =
+    `Заказ №${ref}, ${eurSum.toFixed(2)} EUR, курс ЦБ на ${dateStr}: ${cbr.toFixed(2)} RUB`.slice(
+      0,
+      128
+    );
+
+  return {
+    ok: true,
+    nameLine1,
+    line1Rub: fromCents(line1Cents),
+    line2Rub: fromCents(line2Cents),
+    line3Rub: fromCents(line3Cents),
+  };
 }

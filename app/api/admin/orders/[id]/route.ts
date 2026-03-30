@@ -8,6 +8,7 @@ import {
   sendOrderInTransitToRussiaEmail,
   sendOrderDeliveredEmail,
 } from "@/lib/email";
+import { sendClosingFiscalReceipt, isOrangeDataEnabled } from "@/lib/orange-data";
 
 export async function GET(
   request: NextRequest,
@@ -214,6 +215,19 @@ export async function PUT(
     }
 
     if (status === "in_transit_ru") {
+      const existingForRef = await prisma.order.findUnique({
+        where: { id },
+        select: { adminOrderRef: true },
+      });
+      if (!existingForRef?.adminOrderRef?.trim()) {
+        return NextResponse.json(
+          {
+            error:
+              "Укажите номер ордера (поле «Номер ордера») в карточке заказа перед переводом в статус «В пути в РФ»",
+          },
+          { status: 400 }
+        );
+      }
       if (!russiaTrackNumber) {
         return NextResponse.json(
           { error: "Для статуса 'В пути в РФ' требуется указать трек-номер" },
@@ -346,15 +360,107 @@ export async function PUT(
       });
     }
 
+    let fiscalClosingNotification: {
+      sent: boolean;
+      docId?: string;
+      error?: string;
+      skipped?: string;
+    } | null = null;
+
+    if (
+      status === "in_transit_ru" &&
+      order.paymentStatus === "paid" &&
+      !order.fiscalClosingReceiptId
+    ) {
+      const odOn = await isOrangeDataEnabled();
+      if (!odOn) {
+        fiscalClosingNotification = { sent: false, skipped: "Orange Data отключён или не настроен" };
+      } else {
+        const ref = order.adminOrderRef?.trim() ?? "";
+        const dRub = order.deliveryToRussiaRub;
+        const cDate = order.customsOrderDate;
+        const cbr = order.cbrEurRubOnOrderDate;
+        if (ref && dRub != null && cDate && cbr != null) {
+          try {
+            const fiscalResult = await sendClosingFiscalReceipt({
+              orderId: `${order.id}-close`,
+              email: order.email,
+              adminOrderRef: ref,
+              totalAmount: order.totalAmount,
+              deliveryToRussiaRub: dRub,
+              customsOrderDate: cDate,
+              cbrEurRubOnOrderDate: cbr,
+              items: order.items.map((it) => ({
+                originalPriceEur: it.originalPriceEur,
+                quantity: it.quantity,
+              })),
+            });
+            fiscalClosingNotification = {
+              sent: fiscalResult.success,
+              docId: fiscalResult.docId,
+              error: fiscalResult.error,
+            };
+            await prisma.order.update({
+              where: { id: order.id },
+              data: {
+                fiscalClosingReceiptId: fiscalResult.success ? fiscalResult.docId ?? null : null,
+                fiscalClosingReceiptStatus: fiscalResult.success ? "sent" : "error",
+              },
+            });
+            if (!fiscalResult.success) {
+              logError("OrangeData_closingReceipt", {
+                requestId,
+                orderId: order.id,
+                error: fiscalResult.error,
+              });
+            }
+          } catch (fiscalErr) {
+            const msg =
+              fiscalErr instanceof Error ? fiscalErr.message : String(fiscalErr);
+            fiscalClosingNotification = { sent: false, error: msg };
+            await prisma.order.update({
+              where: { id: order.id },
+              data: { fiscalClosingReceiptStatus: "error" },
+            });
+            logError("OrangeData_closingReceipt_exception", {
+              requestId,
+              orderId: order.id,
+              error: msg,
+            });
+          }
+        }
+      }
+    }
+
+    const orderOut = await prisma.order.findUnique({
+      where: { id: order.id },
+      include: {
+        items: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+
     logEvent("admin_order_status_updated", {
       requestId,
       orderId: order.id,
       status,
       emailSent: emailNotification.sent,
       emailError: emailNotification.error || null,
+      fiscalClosingSent: fiscalClosingNotification?.sent ?? null,
     });
 
-    return NextResponse.json({ order, emailNotification });
+    return NextResponse.json({
+      order: orderOut ?? order,
+      emailNotification,
+      fiscalClosingNotification,
+    });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Ошибка при обновлении заказа";
     logError("admin_order_status_update_error", {

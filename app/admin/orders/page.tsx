@@ -53,6 +53,10 @@ interface Order {
   paymentId?: string | null;
   paymentLink?: string | null;
   paidAt?: string | null;
+  fiscalReceiptId?: string | null;
+  fiscalReceiptStatus?: string | null;
+  fiscalClosingReceiptId?: string | null;
+  fiscalClosingReceiptStatus?: string | null;
   user: {
     id: string;
     email: string;
@@ -338,6 +342,10 @@ function AdminOrdersPageContent() {
             ? `\n\nОшибка: ${data.emailNotification.error}`
             : "";
           alert(`Статус обновлён, но email-уведомление не отправлено.${errDetail}`);
+        }
+        const fc = data.fiscalClosingNotification;
+        if (fc && !fc.skipped && !fc.sent && fc.error) {
+          alert(`Статус обновлён, но закрывающий чек Orange Data не отправлен: ${fc.error}`);
         }
         return true;
       } else {
@@ -852,6 +860,35 @@ function AdminOrdersPageContent() {
                             </svg>
                             Скачать чек (PDF)
                           </a>
+                        )}
+                        {(order.fiscalReceiptId || order.fiscalClosingReceiptId) && (
+                          <div className="w-full text-sm text-gray-600 space-y-1">
+                            {order.fiscalReceiptId && (
+                              <p>
+                                Фискализация (аванс):{" "}
+                                <span className="font-mono">{order.fiscalReceiptId}</span>
+                                {order.fiscalReceiptStatus && (
+                                  <span className="ml-2">({order.fiscalReceiptStatus})</span>
+                                )}
+                              </p>
+                            )}
+                            {order.fiscalClosingReceiptId && (
+                              <p>
+                                Закрывающий чек:{" "}
+                                <span className="font-mono">{order.fiscalClosingReceiptId}</span>
+                                {order.fiscalClosingReceiptStatus && (
+                                  <span className="ml-2">({order.fiscalClosingReceiptStatus})</span>
+                                )}
+                              </p>
+                            )}
+                            {order.fiscalClosingReceiptStatus === "error" &&
+                              !order.fiscalClosingReceiptId && (
+                                <p className="text-red-600">
+                                  Закрывающий чек не создан (ошибка Orange Data). Проверьте данные и
+                                  при необходимости обратитесь в поддержку.
+                                </p>
+                              )}
+                          </div>
                         )}
                       </div>
                     </div>

@@ -9,8 +9,23 @@ import fs from "fs";
 import path from "path";
 import {
   FISCAL_GROUP,
+  FISCAL_CHECK_PAYMENT_PREPAYMENT,
+  FISCAL_COMMISSION_LABEL,
+  FISCAL_CLOSING_CDEK_INN,
+  FISCAL_CLOSING_CDEK_SUPPLIER_NAME,
+  FISCAL_CLOSING_SHIPPING_NAME,
   FISCAL_PAYMENT_TYPE_CASHLESS,
   FISCAL_TAXATION_SYSTEM_USN_INCOME,
+  FISCAL_AGENT_TYPE_COMMISSIONER,
+  FISCAL_SUPPLIER_INN,
+  FISCAL_SUPPLIER_NAME,
+  FISCAL_TAX_NO_VAT,
+  FISCAL_PAYMENT_METHOD_FULL_PAYMENT,
+  FISCAL_PAYMENT_SUBJECT_PRODUCT,
+  FISCAL_PAYMENT_SUBJECT_SERVICE,
+  FISCAL_PAYMENT_SUBJECT_AGENT_FEE,
+  type ClosingFiscalInput,
+  buildClosingFiscalReceiptData,
 } from "./fiscal-receipt";
 
 const ORANGEDATA_INN_DEFAULT = "290124976119";
@@ -200,6 +215,109 @@ export async function sendFiscalReceipt(
       success: true,
       docId: order.id,
     };
+  } catch (err: unknown) {
+    const { OrangeDataError, OrangeDataApiError } = await import("node-orangedata/lib/errors").catch(
+      () => ({ OrangeDataError: Error, OrangeDataApiError: Error })
+    );
+
+    let message = err instanceof Error ? err.message : String(err);
+    if (err instanceof OrangeDataApiError) {
+      message = (err as { errors?: string[] }).errors?.join("; ") ?? message;
+    } else if (err instanceof OrangeDataError) {
+      message = (err as { message: string }).message;
+    }
+
+    return {
+      success: false,
+      error: typeof message === "string" ? message : JSON.stringify(message),
+    };
+  }
+}
+
+const FFD_QTY_UNIT_PIECE = 0;
+
+/**
+ * Закрывающий чек к авансу при статусе «В пути в РФ»: 3 позиции, оплата за счёт предоплаты (тип 3).
+ */
+export async function sendClosingFiscalReceipt(
+  params: ClosingFiscalInput & { orderId: string; email: string }
+): Promise<{ success: boolean; docId?: string; error?: string }> {
+  if (!(await isOrangeDataEnabled())) {
+    return { success: false, error: "Orange Data не настроен или отключён в админке" };
+  }
+
+  const built = buildClosingFiscalReceiptData(params);
+  if (!built.ok) {
+    return { success: false, error: built.error };
+  }
+  const { nameLine1, line1Rub, line2Rub, line3Rub } = built;
+
+  const totalAmount = Number((line1Rub + line2Rub + line3Rub).toFixed(2));
+
+  const files = getOrangeProdFiles();
+  if (!files) {
+    return { success: false, error: "Файлы сертификатов не найдены в orange_prod/" };
+  }
+
+  try {
+    const { OrangeData, Order } = await import("node-orangedata");
+    const agent = new OrangeData(files as Record<string, unknown>);
+
+    const docId =
+      params.orderId.length <= 64 ? params.orderId : crypto.randomUUID();
+
+    const order = new Order({
+      id: docId,
+      inn: ORANGEDATA_INN,
+      group: ORANGEDATA_GROUP,
+      key: ORANGEDATA_KEY_NAME,
+      type: 1,
+      ffdVersion: 4,
+      customerContact: params.email,
+      taxationSystem: FISCAL_TAXATION_SYSTEM_USN_INCOME,
+    });
+
+    order.addPosition({
+      text: nameLine1,
+      quantity: 1,
+      price: line1Rub,
+      tax: FISCAL_TAX_NO_VAT,
+      paymentMethodType: FISCAL_PAYMENT_METHOD_FULL_PAYMENT,
+      paymentSubjectType: FISCAL_PAYMENT_SUBJECT_PRODUCT,
+      supplierINN: FISCAL_SUPPLIER_INN,
+      supplierInfo: { name: FISCAL_SUPPLIER_NAME },
+      agentType: FISCAL_AGENT_TYPE_COMMISSIONER,
+      quantityMeasurementUnit: FFD_QTY_UNIT_PIECE,
+    });
+
+    order.addPosition({
+      text: FISCAL_CLOSING_SHIPPING_NAME.slice(0, 128),
+      quantity: 1,
+      price: line2Rub,
+      tax: FISCAL_TAX_NO_VAT,
+      paymentMethodType: FISCAL_PAYMENT_METHOD_FULL_PAYMENT,
+      paymentSubjectType: FISCAL_PAYMENT_SUBJECT_SERVICE,
+      supplierINN: FISCAL_CLOSING_CDEK_INN,
+      supplierInfo: { name: FISCAL_CLOSING_CDEK_SUPPLIER_NAME },
+      agentType: FISCAL_AGENT_TYPE_COMMISSIONER,
+      quantityMeasurementUnit: FFD_QTY_UNIT_PIECE,
+    });
+
+    order.addPosition({
+      text: FISCAL_COMMISSION_LABEL.slice(0, 128),
+      quantity: 1,
+      price: line3Rub,
+      tax: FISCAL_TAX_NO_VAT,
+      paymentMethodType: FISCAL_PAYMENT_METHOD_FULL_PAYMENT,
+      paymentSubjectType: FISCAL_PAYMENT_SUBJECT_AGENT_FEE,
+      quantityMeasurementUnit: FFD_QTY_UNIT_PIECE,
+    });
+
+    order.addPayment({ type: FISCAL_CHECK_PAYMENT_PREPAYMENT, amount: totalAmount });
+
+    await agent.sendOrder(order);
+
+    return { success: true, docId: order.id };
   } catch (err: unknown) {
     const { OrangeDataError, OrangeDataApiError } = await import("node-orangedata/lib/errors").catch(
       () => ({ OrangeDataError: Error, OrangeDataApiError: Error })

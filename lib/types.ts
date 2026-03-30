@@ -116,6 +116,8 @@ export interface Order {
   accessToken?: string; // секретный токен доступа (не отдаётся клиенту)
   fiscalReceiptId?: string | null;
   fiscalReceiptStatus?: string | null; // sent | error
+  fiscalClosingReceiptId?: string | null;
+  fiscalClosingReceiptStatus?: string | null; // sent | error
   items: OrderItem[];
   createdAt: Date;
   updatedAt: Date;

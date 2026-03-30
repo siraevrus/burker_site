@@ -173,8 +173,10 @@ model Order {
   accessToken    String?  // секретный токен для доступа к заказу (гостевые заказы, ссылки)
 
   // Orange Data (фискализация 54-ФЗ)
-  fiscalReceiptId   String?  // ID документа в Orange Data
+  fiscalReceiptId   String?  // ID документа в Orange Data (авансовый чек при оплате)
   fiscalReceiptStatus String? // sent | error | null
+  fiscalClosingReceiptId   String?  // ID закрывающего чека (статус «В пути в РФ»)
+  fiscalClosingReceiptStatus String? // sent | error | null
   
   // Информация о клиенте при создании заказа
   ipAddress      String?  // IP-адрес при создании заказа

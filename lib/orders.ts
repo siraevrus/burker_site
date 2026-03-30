@@ -67,6 +67,8 @@ export function mapOrderFromDb(dbOrder: any): Order {
     accessToken: dbOrder.accessToken ?? undefined,
     fiscalReceiptId: dbOrder.fiscalReceiptId ?? undefined,
     fiscalReceiptStatus: dbOrder.fiscalReceiptStatus ?? undefined,
+    fiscalClosingReceiptId: dbOrder.fiscalClosingReceiptId ?? undefined,
+    fiscalClosingReceiptStatus: dbOrder.fiscalClosingReceiptStatus ?? undefined,
     items: dbOrder.items?.map((item: any) => ({
       id: item.id,
       orderId: item.orderId,
