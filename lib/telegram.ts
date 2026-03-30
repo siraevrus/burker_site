@@ -115,6 +115,8 @@ export async function notifyNewOrder(data: {
   totalAmount: number;
   itemsCount: number;
   items: Array<{ productName: string; quantity: number }>;
+  /** Клиент отметил «связаться для подтверждения заказа» */
+  requiresConfirmation?: boolean;
 }): Promise<boolean> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://burker-watches.ru";
   const orderLink = `${siteUrl.replace(/\/+$/, "")}/admin/orders/${data.orderId}`;
@@ -124,6 +126,9 @@ export async function notifyNewOrder(data: {
   const lines = [
     "📦 <b>Новый заказ</b>",
     "",
+    ...(data.requiresConfirmation
+      ? ["<b>Клиент просит связаться для подтверждения заказа</b>", ""]
+      : []),
     `Номер: ${escapeHtml(data.orderNumber)}`,
     `Товар(ы):\n${itemsList || "—"}`,
     `Email: ${escapeHtml(data.email)}`,

@@ -166,6 +166,7 @@ export async function POST(request: NextRequest) {
           phone: order.phone,
           totalAmount: order.totalAmount,
           itemsCount: order.items.length,
+          requiresConfirmation: order.requiresConfirmation,
           items: order.items.map((item) => ({
             productName: item.productName,
             quantity: item.quantity,
