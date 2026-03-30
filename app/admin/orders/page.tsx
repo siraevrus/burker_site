@@ -46,6 +46,9 @@ interface Order {
   purchaseProofImage?: string | null;
   sellerTrackNumber?: string | null;
   russiaTrackNumber?: string | null;
+  deliveryToRussiaRub?: number | null;
+  customsOrderDate?: string | null;
+  cbrEurRubOnOrderDate?: number | null;
   paymentStatus?: string | null;
   paymentId?: string | null;
   paymentLink?: string | null;
@@ -151,6 +154,11 @@ function AdminOrdersPageContent() {
   });
   const [modalLoading, setModalLoading] = useState(false);
   const [trackInput, setTrackInput] = useState("");
+  const [ruDeliveryRub, setRuDeliveryRub] = useState("");
+  const [ruOrderDate, setRuOrderDate] = useState("");
+  const [ruCbrEur, setRuCbrEur] = useState("");
+  const [cbrLoading, setCbrLoading] = useState(false);
+  const [cbrError, setCbrError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -301,6 +309,9 @@ function AdminOrdersPageContent() {
       purchaseProofImage?: string;
       sellerTrackNumber?: string;
       russiaTrackNumber?: string;
+      deliveryToRussiaRub?: number;
+      customsOrderDate?: string;
+      cbrEurRubOnOrderDate?: number;
     }
   ) => {
     try {
@@ -422,8 +433,25 @@ function AdminOrdersPageContent() {
           loadStats();
         }
       } else if (modal.type === "track_ru" && trackInput.trim()) {
+        const delivery = parseFloat(ruDeliveryRub.replace(",", "."));
+        if (!Number.isFinite(delivery) || delivery < 0) {
+          alert("Укажите корректную стоимость доставки до РФ (₽)");
+          return;
+        }
+        if (!ruOrderDate) {
+          alert("Укажите дату ордера");
+          return;
+        }
+        const cbr = parseFloat(ruCbrEur.replace(",", "."));
+        if (!Number.isFinite(cbr) || cbr <= 0) {
+          alert("Укажите курс EUR/RUB ЦБ (или дождитесь загрузки по дате)");
+          return;
+        }
         const success = await updateOrderStatus(modal.orderId, modal.newStatus, {
           russiaTrackNumber: trackInput.trim(),
+          deliveryToRussiaRub: delivery,
+          customsOrderDate: `${ruOrderDate}T12:00:00.000Z`,
+          cbrEurRubOnOrderDate: cbr,
         });
         if (success) {
           closeModal();
@@ -447,6 +475,11 @@ function AdminOrdersPageContent() {
       type: null,
     });
     setTrackInput("");
+    setRuDeliveryRub("");
+    setRuOrderDate("");
+    setRuCbrEur("");
+    setCbrLoading(false);
+    setCbrError(null);
     setSelectedFile(null);
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
@@ -468,7 +501,38 @@ function AdminOrdersPageContent() {
     if (modal.type === "image") {
       return !selectedFile;
     }
+    if (modal.type === "track_ru") {
+      if (!trackInput.trim()) return true;
+      const delivery = parseFloat(ruDeliveryRub.replace(",", "."));
+      if (!Number.isFinite(delivery) || delivery < 0) return true;
+      if (!ruOrderDate) return true;
+      const cbr = parseFloat(ruCbrEur.replace(",", "."));
+      if (!Number.isFinite(cbr) || cbr <= 0) return true;
+      return false;
+    }
     return !trackInput.trim();
+  };
+
+  const fetchCbrForOrderDate = async (dateStr: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
+    setCbrLoading(true);
+    setCbrError(null);
+    try {
+      const res = await fetch(
+        `/api/admin/cbr/eur-rub?date=${encodeURIComponent(dateStr)}`,
+        { credentials: "include" }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(typeof data.error === "string" ? data.error : "Не удалось загрузить курс");
+      }
+      setRuCbrEur(Number(data.eurPerRub).toFixed(4));
+    } catch (e) {
+      setCbrError(e instanceof Error ? e.message : "Ошибка загрузки курса ЦБ");
+      setRuCbrEur("");
+    } finally {
+      setCbrLoading(false);
+    }
   };
 
   if (loading) {
@@ -792,7 +856,12 @@ function AdminOrdersPageContent() {
                       </div>
                     </div>
 
-                    {(order.purchaseProofImage || order.sellerTrackNumber || order.russiaTrackNumber) && (
+                    {(order.purchaseProofImage ||
+                      order.sellerTrackNumber ||
+                      order.russiaTrackNumber ||
+                      order.deliveryToRussiaRub != null ||
+                      order.customsOrderDate ||
+                      order.cbrEurRubOnOrderDate != null) && (
                       <>
                         <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
                           <h4 className="text-sm font-semibold text-gray-700 mb-3">Данные отслеживания</h4>
@@ -824,6 +893,32 @@ function AdminOrdersPageContent() {
                           <div>
                             <p className="text-sm text-gray-600 mb-1">Трек РФ</p>
                             <p className="font-medium font-mono">{order.russiaTrackNumber}</p>
+                          </div>
+                        )}
+                        {order.deliveryToRussiaRub != null && (
+                          <div>
+                            <p className="text-sm text-gray-600 mb-1">Стоимость доставки до РФ</p>
+                            <p className="font-medium">{formatRub(order.deliveryToRussiaRub)} ₽</p>
+                          </div>
+                        )}
+                        {order.customsOrderDate && (
+                          <div>
+                            <p className="text-sm text-gray-600 mb-1">Дата ордера</p>
+                            <p className="font-medium">
+                              {new Date(order.customsOrderDate).toLocaleDateString("ru-RU", {
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                              })}
+                            </p>
+                          </div>
+                        )}
+                        {order.cbrEurRubOnOrderDate != null && (
+                          <div>
+                            <p className="text-sm text-gray-600 mb-1">Курс EUR/RUB ЦБ (на дату ордера)</p>
+                            <p className="font-medium font-mono">
+                              {order.cbrEurRubOnOrderDate.toFixed(4)} ₽ за 1 €
+                            </p>
                           </div>
                         )}
                       </>
@@ -1084,7 +1179,11 @@ function AdminOrdersPageContent() {
 
       {modal.isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
+          <div
+            className={`bg-white rounded-lg w-full p-6 ${
+              modal.type === "track_ru" ? "max-w-lg" : "max-w-md"
+            }`}
+          >
             <h3 className="text-lg font-bold mb-4">
               {modal.type === "image" && "Загрузите подтверждение выкупа"}
               {modal.type === "track_de" && "Введите трек-номер продавца"}
@@ -1140,7 +1239,7 @@ function AdminOrdersPageContent() {
               </div>
             )}
 
-            {(modal.type === "track_de" || modal.type === "track_ru") && (
+            {modal.type === "track_de" && (
               <div className="space-y-4">
                 <input
                   type="text"
@@ -1150,10 +1249,76 @@ function AdminOrdersPageContent() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
                 />
                 <p className="text-sm text-gray-500">
-                  {modal.type === "track_de"
-                    ? "Трек-номер от продавца для отслеживания доставки на склад в Германии"
-                    : "Трек-номер для отслеживания доставки в Россию"}
+                  Трек-номер от продавца для отслеживания доставки на склад в Германии
                 </p>
+              </div>
+            )}
+
+            {modal.type === "track_ru" && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Трек-номер (РФ)</label>
+                  <input
+                    type="text"
+                    value={trackInput}
+                    onChange={(e) => setTrackInput(e.target.value)}
+                    placeholder="Введите трек-номер"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Трек для отслеживания доставки в Россию
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Стоимость доставки до РФ (₽)
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={ruDeliveryRub}
+                    onChange={(e) => setRuDeliveryRub(e.target.value)}
+                    placeholder="0"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Дата ордера</label>
+                  <input
+                    type="date"
+                    value={ruOrderDate}
+                    max={new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setRuOrderDate(v);
+                      if (v) void fetchCbrForOrderDate(v);
+                    }}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    После выбора даты подставляется курс EUR/RUB ЦБ РФ на эту дату
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Курс EUR/RUB (ЦБ РФ), ₽ за 1 €
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={ruCbrEur}
+                    onChange={(e) => setRuCbrEur(e.target.value)}
+                    placeholder={cbrLoading ? "Загрузка…" : "Выберите дату или введите вручную"}
+                    disabled={cbrLoading}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono disabled:bg-gray-50"
+                  />
+                  {cbrLoading && (
+                    <p className="text-sm text-gray-500 mt-1">Загрузка курса с cbr.ru…</p>
+                  )}
+                  {cbrError && (
+                    <p className="text-sm text-red-600 mt-1">{cbrError}</p>
+                  )}
+                </div>
               </div>
             )}
 

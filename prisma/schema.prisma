@@ -161,6 +161,9 @@ model Order {
   purchaseProofImage String?   // URL изображения подтверждения выкупа (для статуса purchased)
   sellerTrackNumber  String?   // Трек-номер продавца (для статуса in_transit_de)
   russiaTrackNumber  String?   // Трек-номер для РФ (для статуса in_transit_ru)
+  deliveryToRussiaRub   Float?    // Фактическая стоимость доставки до РФ (₽), статус in_transit_ru
+  customsOrderDate      DateTime? // Дата ордера (логистика/таможня)
+  cbrEurRubOnOrderDate  Float?    // Курс ЦБ РФ: ₽ за 1 € на дату ордера (снимок при сохранении)
   
   // Оплата (T-Bank СБП B2B)
   paymentStatus  String   @default("pending") // pending | paid | failed | expired | cancelled

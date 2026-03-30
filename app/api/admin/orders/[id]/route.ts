@@ -144,6 +144,46 @@ export async function PUT(
     const russiaTrackNumber =
       typeof body.russiaTrackNumber === "string" ? body.russiaTrackNumber.trim() : "";
 
+    let deliveryToRussiaRub: number | undefined;
+    if (body.deliveryToRussiaRub !== undefined && body.deliveryToRussiaRub !== null) {
+      const n = Number(body.deliveryToRussiaRub);
+      if (!Number.isFinite(n) || n < 0) {
+        return NextResponse.json(
+          { error: "Стоимость доставки до РФ должна быть неотрицательным числом" },
+          { status: 400 }
+        );
+      }
+      deliveryToRussiaRub = n;
+    }
+
+    let customsOrderDate: Date | undefined;
+    if (body.customsOrderDate !== undefined && body.customsOrderDate !== null) {
+      const raw =
+        typeof body.customsOrderDate === "string"
+          ? body.customsOrderDate.trim()
+          : "";
+      if (!raw) {
+        return NextResponse.json({ error: "Укажите дату ордера" }, { status: 400 });
+      }
+      const d = new Date(raw);
+      if (Number.isNaN(d.getTime())) {
+        return NextResponse.json({ error: "Некорректная дата ордера" }, { status: 400 });
+      }
+      customsOrderDate = d;
+    }
+
+    let cbrEurRubOnOrderDate: number | undefined;
+    if (body.cbrEurRubOnOrderDate !== undefined && body.cbrEurRubOnOrderDate !== null) {
+      const n = Number(body.cbrEurRubOnOrderDate);
+      if (!Number.isFinite(n) || n <= 0) {
+        return NextResponse.json(
+          { error: "Курс EUR/RUB ЦБ должен быть положительным числом" },
+          { status: 400 }
+        );
+      }
+      cbrEurRubOnOrderDate = n;
+    }
+
     if (!status) {
       return NextResponse.json(
         { error: "Статус обязателен" },
@@ -173,11 +213,31 @@ export async function PUT(
       );
     }
 
-    if (status === "in_transit_ru" && !russiaTrackNumber) {
-      return NextResponse.json(
-        { error: "Для статуса 'В пути в РФ' требуется указать трек-номер" },
-        { status: 400 }
-      );
+    if (status === "in_transit_ru") {
+      if (!russiaTrackNumber) {
+        return NextResponse.json(
+          { error: "Для статуса 'В пути в РФ' требуется указать трек-номер" },
+          { status: 400 }
+        );
+      }
+      if (deliveryToRussiaRub === undefined) {
+        return NextResponse.json(
+          { error: "Для статуса 'В пути в РФ' укажите стоимость доставки до РФ" },
+          { status: 400 }
+        );
+      }
+      if (!customsOrderDate) {
+        return NextResponse.json(
+          { error: "Для статуса 'В пути в РФ' укажите дату ордера" },
+          { status: 400 }
+        );
+      }
+      if (cbrEurRubOnOrderDate === undefined) {
+        return NextResponse.json(
+          { error: "Для статуса 'В пути в РФ' укажите курс EUR/RUB ЦБ" },
+          { status: 400 }
+        );
+      }
     }
 
     const updateData: {
@@ -185,6 +245,9 @@ export async function PUT(
       purchaseProofImage?: string;
       sellerTrackNumber?: string;
       russiaTrackNumber?: string;
+      deliveryToRussiaRub?: number | null;
+      customsOrderDate?: Date | null;
+      cbrEurRubOnOrderDate?: number | null;
     } = { status };
 
     if (purchaseProofImage) {
@@ -195,6 +258,11 @@ export async function PUT(
     }
     if (russiaTrackNumber) {
       updateData.russiaTrackNumber = russiaTrackNumber;
+    }
+    if (status === "in_transit_ru") {
+      updateData.deliveryToRussiaRub = deliveryToRussiaRub!;
+      updateData.customsOrderDate = customsOrderDate!;
+      updateData.cbrEurRubOnOrderDate = cbrEurRubOnOrderDate!;
     }
 
     const order = await prisma.order.update({

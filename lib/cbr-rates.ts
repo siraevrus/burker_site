@@ -42,21 +42,41 @@ function parseCbrRates(xml: string): { usdPerRub: number; eurPerRub: number } {
   return { usdPerRub, eurPerRub };
 }
 
+async function fetchCbrXmlForDate(date: Date): Promise<string> {
+  const dateReq = formatDateReq(date);
+  const url = `${CBR_API_BASE}?date_req=${encodeURIComponent(dateReq)}`;
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`CBR API returned status ${response.status}`);
+  }
+  return response.text();
+}
+
+/**
+ * Официальный курс ЦБ РФ: рублей за 1 евро на указанную дату (по данным XML_daily).
+ * Дата не должна быть в будущем (сравнение по календарному дню UTC+локаль не критично — используем локальную полночь).
+ */
+export async function fetchCbrEurRubForDate(date: Date): Promise<{ eurPerRub: number }> {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  d.setHours(0, 0, 0, 0);
+  if (d.getTime() > today.getTime()) {
+    throw new Error("Дата не может быть в будущем");
+  }
+
+  const xml = await fetchCbrXmlForDate(d);
+  const { eurPerRub } = parseCbrRates(xml);
+  return { eurPerRub };
+}
+
 /**
  * Загружает курсы ЦБ РФ и возвращает в формате приложения:
  * rubRate = руб за 1 USD, eurRate = (руб за 1 USD) / (руб за 1 EUR)
  */
 export async function fetchCbrRates(): Promise<{ eurRate: number; rubRate: number }> {
   const now = new Date();
-  const dateReq = formatDateReq(now);
-  const url = `${CBR_API_BASE}?date_req=${dateReq}`;
-
-  const response = await fetch(url, { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error(`CBR API returned status ${response.status}`);
-  }
-
-  const xml = await response.text();
+  const xml = await fetchCbrXmlForDate(now);
   const { usdPerRub, eurPerRub } = parseCbrRates(xml);
 
   const rubRate = usdPerRub;
