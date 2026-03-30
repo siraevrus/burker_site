@@ -7,6 +7,7 @@
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
+import { logError, logEvent } from "./ops-log";
 import {
   FISCAL_GROUP,
   FISCAL_CHECK_PAYMENT_PREPAYMENT,
@@ -248,6 +249,10 @@ export async function sendClosingFiscalReceipt(
 
   const built = buildClosingFiscalReceiptData(params);
   if (!built.ok) {
+    logError("OrangeData_closingReceipt_build", {
+      orderId: params.orderId,
+      error: built.error,
+    });
     return { success: false, error: built.error };
   }
   const { nameLine1, line1Rub, line2Rub, line3Rub } = built;
@@ -256,6 +261,10 @@ export async function sendClosingFiscalReceipt(
 
   const files = getOrangeProdFiles();
   if (!files) {
+    logError("OrangeData_closingReceipt_certs", {
+      orderId: params.orderId,
+      error: "Нет client.crt/key или rsa_private.pem в orange_prod/",
+    });
     return { success: false, error: "Файлы сертификатов не найдены в orange_prod/" };
   }
 
@@ -315,7 +324,20 @@ export async function sendClosingFiscalReceipt(
 
     order.addPayment({ type: FISCAL_CHECK_PAYMENT_PREPAYMENT, amount: totalAmount });
 
+    logEvent("OrangeData_closingReceipt_api_send", {
+      orderId: params.orderId,
+      docId,
+      paymentType: FISCAL_CHECK_PAYMENT_PREPAYMENT,
+      totalRub: totalAmount,
+      positionsRub: [line1Rub, line2Rub, line3Rub],
+    });
+
     await agent.sendOrder(order);
+
+    logEvent("OrangeData_closingReceipt_api_ok", {
+      orderId: params.orderId,
+      docId: order.id,
+    });
 
     return { success: true, docId: order.id };
   } catch (err: unknown) {
@@ -324,11 +346,26 @@ export async function sendClosingFiscalReceipt(
     );
 
     let message = err instanceof Error ? err.message : String(err);
+    const extra: Record<string, unknown> = {};
     if (err instanceof OrangeDataApiError) {
-      message = (err as { errors?: string[] }).errors?.join("; ") ?? message;
+      const e = err as {
+        errors?: string[];
+        statusCode?: number;
+        body?: string;
+        message: string;
+      };
+      message = e.errors?.join("; ") ?? message;
+      if (e.statusCode != null) extra.statusCode = e.statusCode;
+      if (e.body != null) extra.bodyPreview = String(e.body).slice(0, 500);
     } else if (err instanceof OrangeDataError) {
       message = (err as { message: string }).message;
     }
+
+    logError("OrangeData_closingReceipt_api_error", {
+      orderId: params.orderId,
+      error: message,
+      ...extra,
+    });
 
     return {
       success: false,

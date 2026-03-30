@@ -410,69 +410,116 @@ export async function PUT(
       skipped?: string;
     } | null = null;
 
-    if (
-      status === "in_transit_ru" &&
-      order.paymentStatus === "paid" &&
-      !order.fiscalClosingReceiptId
-    ) {
-      const odOn = await isOrangeDataEnabled();
-      if (!odOn) {
-        fiscalClosingNotification = { sent: false, skipped: "Orange Data отключён или не настроен" };
+    if (status === "in_transit_ru" && order.paymentStatus === "paid") {
+      if (order.fiscalClosingReceiptId) {
+        logEvent("OrangeData_closingReceipt_skip", {
+          requestId,
+          orderId: order.id,
+          reason: "already_has_closing_doc",
+          fiscalClosingReceiptId: order.fiscalClosingReceiptId,
+        });
       } else {
-        const ref = order.adminOrderRef?.trim() ?? "";
-        const dRub = order.deliveryToRussiaRub;
-        const cDate = order.customsOrderDate;
-        const cbr = order.cbrEurRubOnOrderDate;
-        if (ref && dRub != null && cDate && cbr != null) {
-          try {
-            const fiscalResult = await sendClosingFiscalReceipt({
-              orderId: `${order.id}-close`,
-              email: order.email,
-              adminOrderRef: ref,
-              totalAmount: order.totalAmount,
-              deliveryToRussiaRub: dRub,
-              customsOrderDate: cDate,
-              cbrEurRubOnOrderDate: cbr,
-              items: order.items.map((it) => ({
-                originalPriceEur: it.originalPriceEur,
-                quantity: it.quantity,
-              })),
-            });
+        const odOn = await isOrangeDataEnabled();
+        if (!odOn) {
+          fiscalClosingNotification = {
+            sent: false,
+            skipped: "Orange Data отключён в админке или не настроен (сертификаты / env).",
+          };
+          logEvent("OrangeData_closingReceipt_skip", {
+            requestId,
+            orderId: order.id,
+            reason: "orange_disabled_or_unconfigured",
+          });
+        } else {
+          const ref = order.adminOrderRef?.trim() ?? "";
+          const dRub = order.deliveryToRussiaRub;
+          const cDate = order.customsOrderDate;
+          const cbr = order.cbrEurRubOnOrderDate;
+          const missing: string[] = [];
+          if (!ref) missing.push("Номер ордера (adminOrderRef)");
+          if (dRub == null) missing.push("Стоимость доставки до РФ");
+          if (!cDate) missing.push("Дата ордера");
+          if (cbr == null) missing.push("Курс EUR/RUB ЦБ");
+
+          if (missing.length > 0) {
             fiscalClosingNotification = {
-              sent: fiscalResult.success,
-              docId: fiscalResult.docId,
-              error: fiscalResult.error,
+              sent: false,
+              skipped: `Закрывающий чек не отправлялся: в данных заказа после сохранения нет полей: ${missing.join(", ")}. Проверьте модалку «В пути в РФ» и сохранение.`,
             };
-            await prisma.order.update({
-              where: { id: order.id },
-              data: {
-                fiscalClosingReceiptId: fiscalResult.success ? fiscalResult.docId ?? null : null,
-                fiscalClosingReceiptStatus: fiscalResult.success ? "sent" : "error",
-              },
-            });
-            if (!fiscalResult.success) {
-              logError("OrangeData_closingReceipt", {
-                requestId,
-                orderId: order.id,
-                error: fiscalResult.error,
-              });
-            }
-          } catch (fiscalErr) {
-            const msg =
-              fiscalErr instanceof Error ? fiscalErr.message : String(fiscalErr);
-            fiscalClosingNotification = { sent: false, error: msg };
-            await prisma.order.update({
-              where: { id: order.id },
-              data: { fiscalClosingReceiptStatus: "error" },
-            });
-            logError("OrangeData_closingReceipt_exception", {
+            logEvent("OrangeData_closingReceipt_skip", {
               requestId,
               orderId: order.id,
-              error: msg,
+              reason: "missing_fields_after_update",
+              missingFields: missing,
             });
+          } else {
+            const deliveryRub = dRub as number;
+            const orderDate = cDate as Date;
+            const cbrRate = cbr as number;
+            try {
+              const closingDocKey = `${order.id}-close`;
+              logEvent("OrangeData_closingReceipt_start", {
+                requestId,
+                orderId: order.id,
+                closingDocKeyLen: closingDocKey.length,
+                closingDocKeyPreview: closingDocKey.slice(0, 72),
+              });
+              const fiscalResult = await sendClosingFiscalReceipt({
+                orderId: `${order.id}-close`,
+                email: order.email,
+                adminOrderRef: ref,
+                totalAmount: order.totalAmount,
+                deliveryToRussiaRub: deliveryRub,
+                customsOrderDate: orderDate,
+                cbrEurRubOnOrderDate: cbrRate,
+                items: order.items.map((it) => ({
+                  originalPriceEur: it.originalPriceEur,
+                  quantity: it.quantity,
+                })),
+              });
+              fiscalClosingNotification = {
+                sent: fiscalResult.success,
+                docId: fiscalResult.docId,
+                error: fiscalResult.error,
+              };
+              await prisma.order.update({
+                where: { id: order.id },
+                data: {
+                  fiscalClosingReceiptId: fiscalResult.success ? fiscalResult.docId ?? null : null,
+                  fiscalClosingReceiptStatus: fiscalResult.success ? "sent" : "error",
+                },
+              });
+              if (!fiscalResult.success) {
+                logError("OrangeData_closingReceipt", {
+                  requestId,
+                  orderId: order.id,
+                  error: fiscalResult.error,
+                });
+              }
+            } catch (fiscalErr) {
+              const msg =
+                fiscalErr instanceof Error ? fiscalErr.message : String(fiscalErr);
+              fiscalClosingNotification = { sent: false, error: msg };
+              await prisma.order.update({
+                where: { id: order.id },
+                data: { fiscalClosingReceiptStatus: "error" },
+              });
+              logError("OrangeData_closingReceipt_exception", {
+                requestId,
+                orderId: order.id,
+                error: msg,
+              });
+            }
           }
         }
       }
+    } else if (status === "in_transit_ru") {
+      logEvent("OrangeData_closingReceipt_skip", {
+        requestId,
+        orderId: order.id,
+        reason: "not_paid",
+        paymentStatus: order.paymentStatus,
+      });
     }
 
     const orderOut = await prisma.order.findUnique({

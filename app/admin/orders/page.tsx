@@ -346,7 +346,9 @@ function AdminOrdersPageContent() {
           alert(`Статус обновлён, но email-уведомление не отправлено.${errDetail}`);
         }
         const fc = data.fiscalClosingNotification;
-        if (fc && !fc.skipped && !fc.sent && fc.error) {
+        if (fc?.skipped) {
+          alert(`Закрывающий чек Orange Data: ${fc.skipped}`);
+        } else if (fc && !fc.skipped && !fc.sent && fc.error) {
           alert(`Статус обновлён, но закрывающий чек Orange Data не отправлен: ${fc.error}`);
         }
         return true;
