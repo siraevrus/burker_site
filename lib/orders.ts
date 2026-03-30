@@ -24,7 +24,7 @@ function generateOrderNumber(orderCount: number): string {
 }
 
 // Преобразование данных из БД в формат Order
-function mapOrderFromDb(dbOrder: any): Order {
+export function mapOrderFromDb(dbOrder: any): Order {
   return {
     id: dbOrder.id,
     orderNumber: dbOrder.orderNumber || undefined,

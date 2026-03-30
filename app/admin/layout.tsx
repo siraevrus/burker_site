@@ -26,6 +26,7 @@ const MENU_GROUPS = [
     label: "Магазин",
     items: [
       { href: "/admin/orders", label: "Заказы" },
+      { href: "/admin/orders/dashboard", label: "Статистика заказов" },
       { href: "/admin/import", label: "Импорт товаров" },
     ],
   },

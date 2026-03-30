@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { formatRuPhonePlus7, formatRub } from "@/lib/utils";
 
 interface OrderItem {
@@ -481,7 +482,15 @@ function AdminOrdersPageContent() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
-        <h1 className="text-3xl font-bold">Заказы</h1>
+        <div className="flex flex-wrap items-baseline gap-4">
+          <h1 className="text-3xl font-bold">Заказы</h1>
+          <Link
+            href="/admin/orders/dashboard"
+            className="text-sm font-medium text-blue-600 hover:underline"
+          >
+            Статистика заказов
+          </Link>
+        </div>
         <div className="flex flex-wrap items-center gap-3">
           <input
             type="search"
@@ -961,8 +970,41 @@ function AdminOrdersPageContent() {
                                     );
                                   })}
                                 </tbody>
+                                <tfoot>
+                                  {(() => {
+                                    const itemsWithEur = order.items.filter(
+                                      (i) => i.originalPriceEur != null
+                                    );
+                                    const totalEur = itemsWithEur.reduce(
+                                      (s, i) => s + (i.originalPriceEur as number) * i.quantity,
+                                      0
+                                    );
+                                    const partial =
+                                      itemsWithEur.length > 0 && itemsWithEur.length < order.items.length;
+                                    return (
+                                      <tr className="border-t-2 border-gray-400 bg-gray-100/80">
+                                        <td className="py-2 pr-2 font-semibold text-gray-800">Итого</td>
+                                        <td className="py-2 pr-2 font-mono font-semibold text-gray-900">
+                                          {itemsWithEur.length > 0
+                                            ? `${totalEur.toFixed(2)} €${partial ? " *" : ""}`
+                                            : "—"}
+                                        </td>
+                                        <td className="py-2 pr-2" colSpan={3} />
+                                      </tr>
+                                    );
+                                  })()}
+                                </tfoot>
                               </table>
                             </div>
+                            {(() => {
+                              const iw = order.items.filter((i) => i.originalPriceEur != null);
+                              if (iw.length === 0 || iw.length === order.items.length) return null;
+                              return (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  * В сумме в EUR учтены только позиции с заполненной ценой в EUR.
+                                </p>
+                              );
+                            })()}
                             {commission != null && commission.total > 0 && (
                               <p className="mt-3 text-sm font-semibold text-gray-800">
                                 Итого вознаграждение комиссионера: {formatRub(commission.total)} ₽
