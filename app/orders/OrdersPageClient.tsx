@@ -179,6 +179,17 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                       </Link>
                     </div>
                   )}
+                  {order.paymentStatus === "paid" && (
+                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between flex-wrap gap-2">
+                      <span className="text-sm text-green-800">Сводка: сумма, комиссия, доставка, статус</span>
+                      <Link
+                        href={`/order/${order.id}/dashboard`}
+                        className="inline-block bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
+                      >
+                        Открыть сводку
+                      </Link>
+                    </div>
+                  )}
                   <h3 className="text-lg font-bold mb-4">Товары</h3>
                   <div className="space-y-3 mb-6">
                     {order.items.map((item) => {

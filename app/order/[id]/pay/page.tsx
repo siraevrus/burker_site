@@ -74,8 +74,18 @@ export default function OrderPayPage() {
           <p className="text-gray-600 mb-6">Номер заказа: #{order.orderNumber || order.id}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              href={token ? `/order-confirmation?id=${order.id}&token=${encodeURIComponent(token)}` : `/order-confirmation?id=${order.id}`}
+              href={
+                token
+                  ? `/order/${order.id}/dashboard?token=${encodeURIComponent(token)}`
+                  : `/order/${order.id}/dashboard`
+              }
               className="inline-block bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800"
+            >
+              Сводка по заказу
+            </Link>
+            <Link
+              href={token ? `/order-confirmation?id=${order.id}&token=${encodeURIComponent(token)}` : `/order-confirmation?id=${order.id}`}
+              className="inline-block border border-gray-300 px-6 py-3 rounded-md hover:bg-gray-50"
             >
               Подтверждение заказа
             </Link>

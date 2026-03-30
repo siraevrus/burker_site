@@ -3,13 +3,14 @@
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { Order, OrderItem } from "@/lib/types";
+import { Order } from "@/lib/types";
 import { formatRub } from "@/lib/utils";
-
-interface ExchangeRates {
-  eurRate: number;
-  rubRate: number;
-}
+import {
+  getItemCommission,
+  getOrderCommissionTotal,
+  getRatesForOrder,
+  type ExchangeRates,
+} from "@/lib/order-commission";
 
 const paymentStatusLabels: Record<string, string> = {
   paid: "Оплачено",
@@ -78,38 +79,8 @@ function OrderConfirmationContent() {
     return () => clearTimeout(t);
   }, [orderId, fetchOrder]);
 
-  // Курсы на момент заказа (приоритет) или текущие из API для старых заказов
-  const ratesForCommission =
-    order?.eurRate != null && order?.rubRate != null
-      ? { eurRate: order.eurRate, rubRate: order.rubRate }
-      : rates;
-
-  const calculateCommission = () => {
-    if (!order) return null;
-
-    let totalCommission = 0;
-    let hasCommission = false;
-
-    for (const item of order.items) {
-      const itemComm = getItemCommission(item, ratesForCommission);
-      if (itemComm !== null) {
-        hasCommission = true;
-        totalCommission += itemComm;
-      }
-    }
-
-    return hasCommission ? totalCommission : null;
-  };
-
-  function getItemCommission(item: OrderItem, ratesToUse: ExchangeRates | null): number | null {
-    if (item.commissionAmount != null) return item.commissionAmount;
-    if (!ratesToUse || !item.originalPriceEur) return null;
-    const originalPriceInUsd = item.originalPriceEur / ratesToUse.eurRate;
-    const originalPriceInRub = originalPriceInUsd * ratesToUse.rubRate;
-    return (item.productPrice - originalPriceInRub) * item.quantity;
-  }
-
-  const commission = calculateCommission();
+  const ratesForCommission = order ? getRatesForOrder(order, rates) : null;
+  const commission = order ? getOrderCommissionTotal(order, rates) : null;
 
   if (loading) {
     return (
@@ -443,9 +414,21 @@ function OrderConfirmationContent() {
         </div>
 
         <div className="flex gap-4 justify-center flex-wrap">
+          {order.paymentStatus === "paid" && orderId ? (
+            <Link
+              href={
+                token
+                  ? `/order/${orderId}/dashboard?token=${encodeURIComponent(token)}`
+                  : `/order/${orderId}/dashboard`
+              }
+              className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors"
+            >
+              Сводка по заказу
+            </Link>
+          ) : null}
           <Link
             href="/"
-            className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors"
+            className="border border-gray-300 bg-white px-6 py-3 rounded-md hover:bg-gray-50 transition-colors"
           >
             Вернуться на главную
           </Link>
