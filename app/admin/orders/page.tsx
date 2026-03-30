@@ -166,6 +166,8 @@ function AdminOrdersPageContent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [orderPendingDelete, setOrderPendingDelete] = useState<Order | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const statusLabels: Record<string, string> = {
     accepted: "Заказ принят",
@@ -357,6 +359,33 @@ function AdminOrdersPageContent() {
       console.error("Error updating order status:", error);
       alert("Ошибка при обновлении статуса");
       return false;
+    }
+  };
+
+  const handleConfirmDeleteOrder = async () => {
+    if (!orderPendingDelete) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderPendingDelete.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        const id = orderPendingDelete.id;
+        setOrderPendingDelete(null);
+        setExpandedOrders((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        await loadOrders();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || "Не удалось удалить заказ");
+      }
+    } catch {
+      alert("Ошибка сети при удалении заказа");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -1181,6 +1210,17 @@ function AdminOrdersPageContent() {
                       <span>{formatRub(order.totalAmount)} ₽</span>
                     </div>
                   </div>
+
+                  <div className="mt-6 pt-4 border-t border-red-200">
+                    <p className="text-sm text-gray-600 mb-2">Опасная зона</p>
+                    <button
+                      type="button"
+                      onClick={() => setOrderPendingDelete(order)}
+                      className="px-3 py-2 text-sm font-medium rounded-md border border-red-300 text-red-800 bg-red-50 hover:bg-red-100 transition-colors"
+                    >
+                      Удалить заказ
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -1211,6 +1251,54 @@ function AdminOrdersPageContent() {
           >
             Вперед
           </button>
+        </div>
+      )}
+
+      {orderPendingDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div
+            className="bg-white rounded-lg w-full max-w-md p-6 shadow-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-order-title"
+          >
+            <h3 id="delete-order-title" className="text-lg font-bold text-gray-900 mb-2">
+              Удалить заказ безвозвратно?
+            </h3>
+            <p className="text-sm text-gray-600 mb-1">
+              Заказ{" "}
+              <span className="font-mono font-medium">
+                #{orderPendingDelete.orderNumber || orderPendingDelete.id.slice(0, 8)}
+              </span>
+              {orderPendingDelete.email && (
+                <>
+                  , <span className="break-all">{orderPendingDelete.email}</span>
+                </>
+              )}
+            </p>
+            <p className="text-sm text-red-700 font-medium mb-4">
+              Запись будет полностью удалена из базы данных вместе со строками заказа. Это действие
+              нельзя отменить.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => !deleteLoading && setOrderPendingDelete(null)}
+                disabled={deleteLoading}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteOrder}
+                disabled={deleteLoading}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deleteLoading ? "Удаление…" : "Да, удалить навсегда"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

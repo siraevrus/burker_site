@@ -119,6 +119,49 @@ export async function PATCH(
   }
 }
 
+/** Полное удаление заказа из БД (позиции — каскадом; у промокодов снимается привязка к заказу). */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const unauthorized = await requireAdmin(request);
+    if (unauthorized) return unauthorized;
+
+    const { id } = await params;
+
+    const existing = await prisma.order.findUnique({
+      where: { id },
+      select: { id: true, orderNumber: true, email: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Заказ не найден" }, { status: 404 });
+    }
+
+    await prisma.$transaction([
+      prisma.promoCodeUsage.updateMany({
+        where: { orderId: id },
+        data: { orderId: null },
+      }),
+      prisma.order.delete({ where: { id } }),
+    ]);
+
+    logEvent("admin_order_deleted", {
+      orderId: id,
+      orderNumber: existing.orderNumber,
+      email: existing.email,
+    });
+
+    return NextResponse.json({ ok: true, deletedId: id });
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Ошибка при удалении заказа";
+    console.error("Delete order error:", error);
+    logError("admin_order_delete_error", { error: errorMessage });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
