@@ -15,21 +15,6 @@ interface ExchangeRates {
   rubRate: number;
 }
 
-const statusLabels: Record<string, string> = {
-  accepted: "Заказ принят",
-  purchased: "Выкуплен",
-  in_transit_de: "В пути на склад",
-  in_transit_ru: "В пути в РФ",
-  delivered: "Доставлен",
-};
-
-const statusColors: Record<string, string> = {
-  accepted: "bg-yellow-100 text-yellow-800",
-  purchased: "bg-blue-100 text-blue-800",
-  in_transit_de: "bg-purple-100 text-purple-800",
-  in_transit_ru: "bg-indigo-100 text-indigo-800",
-  delivered: "bg-green-100 text-green-800",
-};
 
 const paymentStatusLabels: Record<string, string> = {
   paid: "Оплачен",
@@ -121,18 +106,6 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-4 flex-wrap">
-                    {order.paymentStatus === "paid" && (
-                      <>
-                        <span className="text-sm text-gray-600">Статус</span>
-                        <span
-                          className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                            statusColors[order.status] || statusColors.accepted
-                          }`}
-                        >
-                          {statusLabels[order.status] || order.status}
-                        </span>
-                      </>
-                    )}
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
                         order.paymentStatus === "paid"
@@ -176,17 +149,6 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                         className="inline-block bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
                       >
                         Оплатить
-                      </Link>
-                    </div>
-                  )}
-                  {order.paymentStatus === "paid" && (
-                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between flex-wrap gap-2">
-                      <span className="text-sm text-green-800">Сводка: сумма, комиссия, доставка, статус</span>
-                      <Link
-                        href={`/order/${order.id}/dashboard`}
-                        className="inline-block bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
-                      >
-                        Открыть сводку
                       </Link>
                     </div>
                   )}
@@ -291,48 +253,12 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                           <div>
                             <p className="text-sm text-gray-600 mb-1">Трек-номер (склад в Германии)</p>
                             <p className="font-medium font-mono text-purple-700">{order.sellerTrackNumber}</p>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              <a
-                                href={`https://t.17track.net/en#nums=${order.sellerTrackNumber}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-600 hover:underline"
-                              >
-                                17track
-                              </a>
-                              <a
-                                href={`https://www.dhl.de/en/privatkunden/pakete-empfangen/verfolgen.html?piececode=${order.sellerTrackNumber}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-600 hover:underline"
-                              >
-                                DHL
-                              </a>
-                            </div>
                           </div>
                         )}
                         {order.russiaTrackNumber && (
                           <div>
                             <p className="text-sm text-gray-600 mb-1">Трек-номер (доставка в РФ)</p>
                             <p className="font-medium font-mono text-indigo-700">{order.russiaTrackNumber}</p>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              <a
-                                href={`https://www.cdek.ru/ru/tracking?order_id=${order.russiaTrackNumber}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-600 hover:underline"
-                              >
-                                СДЭК
-                              </a>
-                              <a
-                                href={`https://t.17track.net/en#nums=${order.russiaTrackNumber}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-600 hover:underline"
-                              >
-                                17track
-                              </a>
-                            </div>
                           </div>
                         )}
                       </>
@@ -378,66 +304,44 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                     </div>
                   )}
 
-                  <div className="border-t border-gray-200 pt-4">
-                    <div className="flex justify-between mb-2">
-                      <span className="text-gray-600">Доставка:</span>
-                      <span>
-                        {order.shippingCost === 0 ? (
-                          <span className="text-green-600 font-medium">Бесплатно</span>
-                        ) : (
-                          <span className="font-medium">{formatRub(order.shippingCost)} ₽</span>
-                        )}
-                      </span>
-                    </div>
-                    {order.promoCode && (order.promoDiscount ?? 0) > 0 && (
-                      <div className="flex justify-between mb-2 text-green-600">
-                        <span>Промокод {order.promoCode}:</span>
-                        <span className="font-medium">-{formatRub(order.promoDiscount ?? 0)} ₽</span>
+                  {order.paymentStatus !== "paid" && (
+                    <div className="border-t border-gray-200 pt-4">
+                      <div className="flex justify-between mb-2">
+                        <span className="text-gray-600">Доставка:</span>
+                        <span>
+                          {order.shippingCost === 0 ? (
+                            <span className="text-green-600 font-medium">Бесплатно</span>
+                          ) : (
+                            <span className="font-medium">{formatRub(order.shippingCost)} ₽</span>
+                          )}
+                        </span>
                       </div>
-                    )}
-                    <div className="flex justify-between text-xl font-bold">
-                      <span>Итого:</span>
-                      <span>{formatRub(order.totalAmount)} ₽</span>
-                    </div>
-                    {order.paymentStatus === "paid" && (
-                      <div className="mt-4">
-                        <a
-                          href={`/api/orders/${order.id}/receipt`}
-                          download={`check-${order.orderNumber || order.id}.pdf`}
-                          className="inline-flex items-center gap-2 text-sm border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                          </svg>
-                          Скачать чек (PDF)
-                        </a>
+                      {order.promoCode && (order.promoDiscount ?? 0) > 0 && (
+                        <div className="flex justify-between mb-2 text-green-600">
+                          <span>Промокод {order.promoCode}:</span>
+                          <span className="font-medium">-{formatRub(order.promoDiscount ?? 0)} ₽</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-xl font-bold">
+                        <span>Итого:</span>
+                        <span>{formatRub(order.totalAmount)} ₽</span>
                       </div>
-                    )}
-                    {(() => {
-                      const rates = getRatesForOrder(order);
-                      let totalComm = 0;
-                      let hasComm = false;
-                      order.items.forEach((it) => {
-                        const c = getItemCommission(it, rates);
-                        if (c != null) { hasComm = true; totalComm += c; }
-                      });
-                      return hasComm ? (
-                        <p className="text-xs text-gray-400 mt-1">
-                          Итого вознаграждение комиссионера: {formatRub(totalComm)} ₽
-                        </p>
-                      ) : null;
-                    })()}
-                  </div>
+                      {(() => {
+                        const rates = getRatesForOrder(order);
+                        let totalComm = 0;
+                        let hasComm = false;
+                        order.items.forEach((it) => {
+                          const c = getItemCommission(it, rates);
+                          if (c != null) { hasComm = true; totalComm += c; }
+                        });
+                        return hasComm ? (
+                          <p className="text-xs text-gray-400 mt-1">
+                            Итого вознаграждение комиссионера: {formatRub(totalComm)} ₽
+                          </p>
+                        ) : null;
+                      })()}
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>
