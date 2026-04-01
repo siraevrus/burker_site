@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { Order } from "@/lib/types";
@@ -54,9 +54,7 @@ function formatDateOnly(d: Date | string | null | undefined): string {
 
 function OrderDashboardContent() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const orderId = typeof params.id === "string" ? params.id : null;
-  const token = searchParams.get("token");
   const [order, setOrder] = useState<Order | null>(null);
   const [liveRates, setLiveRates] = useState<ExchangeRates | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,27 +62,21 @@ function OrderDashboardContent() {
 
   const fetchOrder = useCallback(() => {
     if (!orderId) return;
-    const url = token
-      ? `/api/orders/${orderId}?token=${encodeURIComponent(token)}`
-      : `/api/orders/${orderId}`;
-    fetch(url)
+    fetch(`/api/orders/${orderId}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.order) setOrder(data.order);
       })
       .catch(() => {});
-  }, [orderId, token]);
+  }, [orderId]);
 
   useEffect(() => {
     if (!orderId) {
       setLoading(false);
       return;
     }
-    const orderUrl = token
-      ? `/api/orders/${orderId}?token=${encodeURIComponent(token)}`
-      : `/api/orders/${orderId}`;
     Promise.all([
-      fetch(orderUrl).then((res) => res.json()),
+      fetch(`/api/orders/${orderId}`).then((res) => res.json()),
       fetch("/api/exchange-rates").then((res) => res.json()),
     ])
       .then(([data, ratesData]) => {
@@ -107,7 +99,7 @@ function OrderDashboardContent() {
         setError("Ошибка загрузки");
         setLoading(false);
       });
-  }, [orderId, token]);
+  }, [orderId]);
 
   useEffect(() => {
     if (!orderId || !order || order.paymentStatus !== "paid") return;
@@ -142,9 +134,6 @@ function OrderDashboardContent() {
     );
   }
 
-  const tokenQs = token ? `?token=${encodeURIComponent(token)}` : "";
-  const tokenQsAmp = token ? `&token=${encodeURIComponent(token)}` : "";
-
   const isPaid = order.paymentStatus === "paid";
 
   if (!isPaid) {
@@ -164,14 +153,14 @@ function OrderDashboardContent() {
             <div className="flex flex-wrap gap-3">
               {order.paymentLink ? (
                 <Link
-                  href={`/order/${order.id}/pay${tokenQs}`}
+                  href={`/order/${order.id}/pay`}
                   className="inline-block bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
                 >
                   Перейти к оплате
                 </Link>
               ) : null}
               <Link
-                href={`/order-confirmation?id=${order.id}${tokenQsAmp}`}
+                href={`/order-confirmation?id=${order.id}`}
                 className="inline-block border border-amber-300 text-amber-900 px-6 py-2 rounded-md hover:bg-amber-100 text-sm font-medium"
               >
                 Страница заказа
@@ -266,7 +255,7 @@ function OrderDashboardContent() {
           <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100 text-sm">
             <p className="font-medium text-gray-700 mb-1">Курс на дату заказа</p>
             <p className="text-gray-600">
-              EUR/USD: {order.eurRate.toFixed(4)} · RUB/USD: {order.rubRate.toFixed(4)}
+              EUR/USD: {order.eurRate.toFixed(2)} · RUB/USD: {order.rubRate.toFixed(2)}
             </p>
           </div>
         ) : null}
@@ -370,7 +359,7 @@ function OrderDashboardContent() {
 
         <div className="flex flex-wrap gap-3 justify-center">
           <Link
-            href={`/order-confirmation?id=${order.id}${tokenQsAmp}`}
+            href={`/order-confirmation?id=${order.id}`}
             className="inline-block border border-gray-300 px-5 py-2.5 rounded-md hover:bg-gray-50 text-sm font-medium"
           >
             Подтверждение заказа

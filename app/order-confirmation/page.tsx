@@ -8,40 +8,27 @@ interface Props {
 }
 
 export default async function OrderConfirmationPage({ searchParams }: Props) {
-  const { id: orderId, token } = await searchParams;
+  const { id: orderId } = await searchParams;
 
-  // Нет id — нечего показывать
   if (!orderId) {
-    redirect("/");
-  }
-
-  const order = await getOrderById(orderId);
-
-  // Заказ не найден
-  if (!order) {
     redirect("/");
   }
 
   const currentUser = await getCurrentUser();
 
-  const isOwner =
-    currentUser != null &&
-    order.userId != null &&
-    order.userId === currentUser.userId;
-
-  const isGuestWithToken =
-    order.userId == null &&
-    order.accessToken != null &&
-    typeof token === "string" &&
-    token.length > 0 &&
-    order.accessToken === token;
-
-  // Нет прав — редирект на логин
-  if (!isOwner && !isGuestWithToken) {
+  if (!currentUser) {
     redirect(`/login?redirect=/order-confirmation?id=${orderId}`);
   }
 
-  // Права подтверждены — рендерим клиентский компонент
-  // (он сам дозагрузит данные через API с тем же токеном)
+  const order = await getOrderById(orderId);
+
+  if (!order) {
+    redirect("/");
+  }
+
+  if (order.userId !== currentUser.userId) {
+    redirect("/orders");
+  }
+
   return <OrderConfirmationClient />;
 }

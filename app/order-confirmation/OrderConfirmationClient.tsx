@@ -23,7 +23,6 @@ const paymentStatusLabels: Record<string, string> = {
 function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("id");
-  const token = searchParams.get("token");
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [rates, setRates] = useState<ExchangeRates | null>(null);
@@ -38,20 +37,18 @@ function OrderConfirmationContent() {
 
   const fetchOrder = useCallback(() => {
     if (!orderId) return;
-    const url = token ? `/api/orders/${orderId}?token=${encodeURIComponent(token)}` : `/api/orders/${orderId}`;
-    fetch(url)
+    fetch(`/api/orders/${orderId}`)
       .then((res) => res.json())
       .then((orderData) => {
         if (orderData.order) setOrder(orderData.order);
       })
       .catch(() => {});
-  }, [orderId, token]);
+  }, [orderId]);
 
   useEffect(() => {
     if (orderId) {
-      const orderUrl = token ? `/api/orders/${orderId}?token=${encodeURIComponent(token)}` : `/api/orders/${orderId}`;
       Promise.all([
-        fetch(orderUrl).then((res) => res.json()),
+        fetch(`/api/orders/${orderId}`).then((res) => res.json()),
         fetch("/api/exchange-rates").then((res) => res.json()),
       ])
         .then(([orderData, ratesData]) => {
@@ -70,7 +67,7 @@ function OrderConfirmationContent() {
     } else {
       setLoading(false);
     }
-  }, [orderId, token]);
+  }, [orderId]);
 
   // После редиректа с банка (paid=1 — успех, без paid — неуспех) опрашиваем заказ через 2 с (вебхук может прийти с задержкой)
   useEffect(() => {
@@ -174,7 +171,7 @@ function OrderConfirmationContent() {
             </p>
             {order.paymentLink ? (
               <Link
-                href={token ? `/order/${order.id}/pay?token=${encodeURIComponent(token)}` : `/order/${order.id}/pay`}
+                href={`/order/${order.id}/pay`}
                 className="inline-block bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
               >
                 Оплатить заказ
@@ -230,7 +227,7 @@ function OrderConfirmationContent() {
             </p>
             {order.paymentStatus !== "expired" && order.paymentLink && (
               <Link
-                href={token ? `/order/${order.id}/pay?token=${encodeURIComponent(token)}` : `/order/${order.id}/pay`}
+                href={`/order/${order.id}/pay`}
                 className="inline-block bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
               >
                 Попробовать оплатить снова
@@ -345,7 +342,7 @@ function OrderConfirmationContent() {
             <div className="mb-4 p-3 bg-gray-50 rounded-lg text-sm">
               <p className="font-medium text-gray-700 mb-1">Курс на дату заказа</p>
               <p className="text-gray-600">
-                EUR/USD: {order.eurRate.toFixed(4)} · RUB/USD: {order.rubRate.toFixed(4)}
+                EUR/USD: {order.eurRate.toFixed(2)} · RUB/USD: {order.rubRate.toFixed(2)}
               </p>
             </div>
           )}
@@ -416,11 +413,7 @@ function OrderConfirmationContent() {
         <div className="flex gap-4 justify-center flex-wrap">
           {order.paymentStatus === "paid" && orderId ? (
             <Link
-              href={
-                token
-                  ? `/order/${orderId}/dashboard?token=${encodeURIComponent(token)}`
-                  : `/order/${orderId}/dashboard`
-              }
+              href={`/order/${orderId}/dashboard`}
               className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors"
             >
               Сводка по заказу
