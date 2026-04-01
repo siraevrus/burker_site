@@ -8,7 +8,6 @@ import { formatRub } from "@/lib/utils";
 
 export default function OrderPayPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const orderId = typeof params.id === "string" ? params.id : null;
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
