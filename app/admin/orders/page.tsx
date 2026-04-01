@@ -626,7 +626,7 @@ function AdminOrdersPageContent() {
       if (!res.ok) {
         throw new Error(typeof data.error === "string" ? data.error : "Не удалось загрузить курс");
       }
-      setRuCbrEur(Number(data.eurPerRub).toFixed(4));
+      setRuCbrEur(Number(data.eurPerRub).toFixed(2));
     } catch (e) {
       setCbrError(e instanceof Error ? e.message : "Ошибка загрузки курса ЦБ");
       setRuCbrEur("");
@@ -1064,7 +1064,7 @@ function AdminOrdersPageContent() {
                           <div>
                             <p className="text-sm text-gray-600 mb-1">Курс EUR/RUB ЦБ (на дату ордера)</p>
                             <p className="font-medium font-mono">
-                              {order.cbrEurRubOnOrderDate.toFixed(4)} ₽ за 1 €
+                              {order.cbrEurRubOnOrderDate.toFixed(2)} ₽ за 1 €
                             </p>
                           </div>
                         )}
