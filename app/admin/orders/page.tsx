@@ -297,6 +297,16 @@ function AdminOrdersPageContent() {
         type: "track_de",
       });
     } else if (newStatus === "in_transit_ru") {
+      if (order.adminOrderRef?.trim()) {
+        setPurchaseOrderRef(order.adminOrderRef.trim());
+      }
+      if (order.cbrEurRubOnOrderDate != null) {
+        setRuCbrEur(order.cbrEurRubOnOrderDate.toFixed(2));
+      }
+      if (order.customsOrderDate) {
+        const dateStr = order.customsOrderDate.slice(0, 10);
+        setRuOrderDate(dateStr);
+      }
       setModal({
         isOpen: true,
         orderId: order.id,
@@ -527,6 +537,10 @@ function AdminOrdersPageContent() {
           loadStats();
         }
       } else if (modal.type === "track_ru" && trackInput.trim()) {
+        if (!purchaseOrderRef.trim()) {
+          alert("Укажите номер ордера");
+          return;
+        }
         const delivery = parseFloat(ruDeliveryRub.replace(",", "."));
         if (!Number.isFinite(delivery) || delivery < 0) {
           alert("Укажите корректную стоимость доставки до РФ (₽)");
@@ -543,6 +557,7 @@ function AdminOrdersPageContent() {
         }
         const success = await updateOrderStatus(modal.orderId, modal.newStatus, {
           russiaTrackNumber: trackInput.trim(),
+          adminOrderRef: purchaseOrderRef.trim(),
           deliveryToRussiaRub: delivery,
           customsOrderDate: `${ruOrderDate}T12:00:00.000Z`,
           cbrEurRubOnOrderDate: cbr,
@@ -603,6 +618,7 @@ function AdminOrdersPageContent() {
     }
     if (modal.type === "track_ru") {
       if (!trackInput.trim()) return true;
+      if (!purchaseOrderRef.trim()) return true;
       const delivery = parseFloat(ruDeliveryRub.replace(",", "."));
       if (!Number.isFinite(delivery) || delivery < 0) return true;
       if (!ruOrderDate) return true;
@@ -1510,6 +1526,16 @@ function AdminOrdersPageContent() {
 
             {modal.type === "track_ru" && (
               <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Номер ордера *</label>
+                  <input
+                    type="text"
+                    value={purchaseOrderRef}
+                    onChange={(e) => setPurchaseOrderRef(e.target.value)}
+                    placeholder="Например: 12345"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Трек-номер (РФ)</label>
                   <input
