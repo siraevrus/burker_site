@@ -20,11 +20,22 @@ export async function GET(
     const currentUser = await getCurrentUser();
     const providedToken = request.nextUrl.searchParams.get("token") || "";
 
-    // Доступ: авторизованный пользователь — только свои заказы; гость — только с токеном
-    const isOwner = currentUser && order.userId && order.userId === currentUser.userId;
-    const hasValidToken = order.accessToken && providedToken && order.accessToken === providedToken;
+    // Правила доступа:
+    // 1. Авторизованный владелец заказа — всегда разрешено
+    // 2. Гостевой заказ (без userId) + валидный токен — разрешено
+    // 3. Всё остальное — запрещено (в т.ч. чужой токен при наличии userId у заказа)
+    const isOwner =
+      currentUser != null &&
+      order.userId != null &&
+      order.userId === currentUser.userId;
 
-    if (!isOwner && !hasValidToken) {
+    const isGuestWithToken =
+      order.userId == null &&
+      order.accessToken != null &&
+      providedToken.length > 0 &&
+      order.accessToken === providedToken;
+
+    if (!isOwner && !isGuestWithToken) {
       return NextResponse.json(
         { error: "Доступ запрещен" },
         { status: 403 }
