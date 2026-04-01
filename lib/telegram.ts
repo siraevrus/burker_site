@@ -152,8 +152,8 @@ export async function notifyRatesUpdated(data: {
   const text =
     `💱 <b>Курсы валют обновлены</b>\n\n` +
     `Источник: ${escapeHtml(data.source)}\n` +
-    `EUR: ${data.eurRate.toFixed(4)}\n` +
-    `RUB: ${data.rubRate.toFixed(4)}\n` +
+    `EUR: ${data.eurRate.toFixed(2)}\n` +
+    `RUB: ${data.rubRate.toFixed(2)}\n` +
     `Время: ${new Date().toLocaleString("ru-RU")}`;
   return sendTelegramMessage(text, { parseMode: "HTML" });
 }

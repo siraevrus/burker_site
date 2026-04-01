@@ -1137,7 +1137,7 @@ function AdminOrdersPageContent() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm mb-4">
                               <div>
                                 <span className="text-gray-600">Курс EUR (к USD) на момент оплаты:</span>
-                                <span className="ml-2 font-mono font-medium">{order.eurRate!.toFixed(4)}</span>
+                                <span className="ml-2 font-mono font-medium">{order.eurRate!.toFixed(2)}</span>
                               </div>
                               <div>
                                 <span className="text-gray-600">Курс RUB (к USD) на момент оплаты:</span>
@@ -1161,7 +1161,7 @@ function AdminOrdersPageContent() {
                                     <li key={item.id} className="break-all">
                                       {hasEur && costRub != null && itemComm != null ? (
                                         <>
-                                          {name}: ({formatRub(item.productPrice)} − ({item.originalPriceEur!.toFixed(2)} ÷ {eur.toFixed(4)} × {rub.toFixed(2)})) × {item.quantity} = ({formatRub(item.productPrice)} − {formatRub(costRub!)}) × {item.quantity} = <strong>{formatRub(itemComm!)} ₽</strong>
+                                          {name}: ({formatRub(item.productPrice)} − ({item.originalPriceEur!.toFixed(2)} ÷ {eur.toFixed(2)} × {rub.toFixed(2)})) × {item.quantity} = ({formatRub(item.productPrice)} − {formatRub(costRub!)}) × {item.quantity} = <strong>{formatRub(itemComm!)} ₽</strong>
                                         </>
                                       ) : (
                                         <>{name}: — (нет данных по оригинальной цене в EUR)</>
