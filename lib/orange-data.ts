@@ -15,7 +15,6 @@ import {
   FISCAL_CLOSING_CDEK_INN,
   FISCAL_CLOSING_CDEK_SUPPLIER_NAME,
   FISCAL_CLOSING_SHIPPING_NAME,
-  FISCAL_PAYMENT_TYPE_CASHLESS,
   FISCAL_TAXATION_SYSTEM_USN_INCOME,
   FISCAL_AGENT_TYPE_COMMISSIONER,
   FISCAL_SUPPLIER_INN,
@@ -208,7 +207,7 @@ export async function sendFiscalReceipt(
         agentType: item.agentType,
       });
     }
-    order.addPayment({ type: FISCAL_PAYMENT_TYPE_CASHLESS, amount: params.totalAmount });
+    order.addPayment({ type: FISCAL_CHECK_PAYMENT_PREPAYMENT, amount: params.totalAmount });
 
     await agent.sendOrder(order);
 
