@@ -187,6 +187,8 @@ export async function PUT(
       typeof body.sellerTrackNumber === "string" ? body.sellerTrackNumber.trim() : "";
     const russiaTrackNumber =
       typeof body.russiaTrackNumber === "string" ? body.russiaTrackNumber.trim() : "";
+    const adminOrderRef =
+      typeof body.adminOrderRef === "string" ? body.adminOrderRef.trim() : "";
 
     let deliveryToRussiaRub: number | undefined;
     if (body.deliveryToRussiaRub !== undefined && body.deliveryToRussiaRub !== null) {
@@ -243,11 +245,31 @@ export async function PUT(
       );
     }
 
-    if (status === "purchased" && !purchaseProofImage) {
-      return NextResponse.json(
-        { error: "Для статуса 'Выкуплен' требуется прикрепить изображение подтверждения" },
-        { status: 400 }
-      );
+    if (status === "purchased") {
+      if (!purchaseProofImage) {
+        return NextResponse.json(
+          { error: "Для статуса 'Выкуплен' требуется прикрепить изображение подтверждения" },
+          { status: 400 }
+        );
+      }
+      if (!adminOrderRef) {
+        return NextResponse.json(
+          { error: "Для статуса 'Выкуплен' укажите номер ордера" },
+          { status: 400 }
+        );
+      }
+      if (!customsOrderDate) {
+        return NextResponse.json(
+          { error: "Для статуса 'Выкуплен' укажите дату ордера" },
+          { status: 400 }
+        );
+      }
+      if (cbrEurRubOnOrderDate === undefined) {
+        return NextResponse.json(
+          { error: "Для статуса 'Выкуплен' укажите курс EUR/RUB ЦБ" },
+          { status: 400 }
+        );
+      }
     }
 
     if (status === "in_transit_de" && !sellerTrackNumber) {
@@ -302,6 +324,7 @@ export async function PUT(
       purchaseProofImage?: string;
       sellerTrackNumber?: string;
       russiaTrackNumber?: string;
+      adminOrderRef?: string;
       deliveryToRussiaRub?: number | null;
       customsOrderDate?: Date | null;
       cbrEurRubOnOrderDate?: number | null;
@@ -315,6 +338,11 @@ export async function PUT(
     }
     if (russiaTrackNumber) {
       updateData.russiaTrackNumber = russiaTrackNumber;
+    }
+    if (status === "purchased") {
+      updateData.adminOrderRef = adminOrderRef;
+      updateData.customsOrderDate = customsOrderDate!;
+      updateData.cbrEurRubOnOrderDate = cbrEurRubOnOrderDate!;
     }
     if (status === "in_transit_ru") {
       updateData.deliveryToRussiaRub = deliveryToRussiaRub!;

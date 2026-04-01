@@ -105,6 +105,7 @@ export interface Order {
   purchaseProofImage?: string; // URL изображения подтверждения выкупа
   sellerTrackNumber?: string; // Трек-номер продавца
   russiaTrackNumber?: string; // Трек-номер для РФ
+  adminOrderRef?: string | null; // Номер ордера (заполняется админом)
   deliveryToRussiaRub?: number | null; // Доставка до РФ (₽)
   customsOrderDate?: Date | string | null; // Дата ордера
   cbrEurRubOnOrderDate?: number | null; // Курс ЦБ ₽/€ на дату ордера

@@ -391,3 +391,8 @@ model SupportWidgetSettings {
   telegramNotifyOn String   @default("every_visitor") // first_message_only | every_visitor
   updatedAt        DateTime @updatedAt
 }
+
+model OrderCounter {
+  id    String @id @default("order_seq")
+  value Int    @default(0)
+}

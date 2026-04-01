@@ -166,6 +166,7 @@ function AdminOrdersPageContent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [purchaseOrderRef, setPurchaseOrderRef] = useState("");
   const [orderPendingDelete, setOrderPendingDelete] = useState<Order | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -315,6 +316,7 @@ function AdminOrdersPageContent() {
       purchaseProofImage?: string;
       sellerTrackNumber?: string;
       russiaTrackNumber?: string;
+      adminOrderRef?: string;
       deliveryToRussiaRub?: number;
       customsOrderDate?: string;
       cbrEurRubOnOrderDate?: number;
@@ -425,6 +427,42 @@ function AdminOrdersPageContent() {
     }
   };
 
+  const handleSetPaymentStatus = async (
+    order: Order,
+    newStatus: string,
+    triggerFiscal = false
+  ) => {
+    const label =
+      newStatus === "paid"
+        ? "оплаченным"
+        : newStatus === "pending"
+          ? "ожидающим оплаты"
+          : newStatus === "cancelled"
+            ? "отменённым"
+            : newStatus;
+    const msg = `Изменить статус оплаты заказа #${order.orderNumber || order.id.slice(0, 8)} на «${label}»?`;
+    if (!confirm(msg)) return;
+
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}/payment-status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentStatus: newStatus, triggerFiscal }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(orders.map((o) => (o.id === order.id ? data.order : o)));
+        alert(`Статус оплаты изменён на «${label}»`);
+        loadOrders();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || "Не удалось изменить статус оплаты");
+      }
+    } catch {
+      alert("Ошибка сети при изменении статуса оплаты");
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -441,6 +479,20 @@ function AdminOrdersPageContent() {
 
     try {
       if (modal.type === "image" && selectedFile) {
+        if (!purchaseOrderRef.trim()) {
+          alert("Укажите номер ордера");
+          return;
+        }
+        if (!ruOrderDate) {
+          alert("Укажите дату ордера");
+          return;
+        }
+        const cbr = parseFloat(ruCbrEur.replace(",", "."));
+        if (!Number.isFinite(cbr) || cbr <= 0) {
+          alert("Укажите курс EUR/RUB ЦБ (или дождитесь загрузки по дате)");
+          return;
+        }
+
         const formData = new FormData();
         formData.append("file", selectedFile);
         formData.append("orderId", modal.orderId);
@@ -457,6 +509,9 @@ function AdminOrdersPageContent() {
         const uploadData = await uploadResponse.json();
         const success = await updateOrderStatus(modal.orderId, modal.newStatus, {
           purchaseProofImage: uploadData.url,
+          adminOrderRef: purchaseOrderRef.trim(),
+          customsOrderDate: `${ruOrderDate}T12:00:00.000Z`,
+          cbrEurRubOnOrderDate: cbr,
         });
 
         if (success) {
@@ -520,6 +575,7 @@ function AdminOrdersPageContent() {
     setCbrLoading(false);
     setCbrError(null);
     setSelectedFile(null);
+    setPurchaseOrderRef("");
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
@@ -538,7 +594,12 @@ function AdminOrdersPageContent() {
 
   const isSubmitDisabled = () => {
     if (modal.type === "image") {
-      return !selectedFile;
+      if (!selectedFile) return true;
+      if (!purchaseOrderRef.trim()) return true;
+      if (!ruOrderDate) return true;
+      const cbr = parseFloat(ruCbrEur.replace(",", "."));
+      if (!Number.isFinite(cbr) || cbr <= 0) return true;
+      return false;
     }
     if (modal.type === "track_ru") {
       if (!trackInput.trim()) return true;
@@ -870,6 +931,15 @@ function AdminOrdersPageContent() {
                             Скопировать ссылку на оплату
                           </button>
                         )}
+                        {order.paymentStatus !== "paid" && (
+                          <button
+                            type="button"
+                            onClick={() => handleSetPaymentStatus(order, "paid", true)}
+                            className="px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-800 rounded-md text-sm font-medium"
+                          >
+                            Пометить как оплаченный
+                          </button>
+                        )}
                         {order.paymentStatus === "paid" && order.paymentId && (
                           <button
                             type="button"
@@ -877,6 +947,15 @@ function AdminOrdersPageContent() {
                             className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-800 rounded-md text-sm font-medium"
                           >
                             Вернуть платеж
+                          </button>
+                        )}
+                        {order.paymentStatus === "paid" && (
+                          <button
+                            type="button"
+                            onClick={() => handleSetPaymentStatus(order, "pending")}
+                            className="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-md text-sm font-medium"
+                          >
+                            Сбросить на «Ожидает»
                           </button>
                         )}
                         {order.paymentStatus === "paid" && (
@@ -1308,7 +1387,7 @@ function AdminOrdersPageContent() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div
             className={`bg-white rounded-lg w-full p-6 ${
-              modal.type === "track_ru" ? "max-w-lg" : "max-w-md"
+              modal.type === "track_ru" || modal.type === "image" ? "max-w-lg" : "max-w-md"
             }`}
           >
             <h3 className="text-lg font-bold mb-4">
@@ -1363,6 +1442,54 @@ function AdminOrdersPageContent() {
                     Выбран файл: {selectedFile.name}
                   </p>
                 )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Номер ордера *</label>
+                  <input
+                    type="text"
+                    value={purchaseOrderRef}
+                    onChange={(e) => setPurchaseOrderRef(e.target.value)}
+                    placeholder="Например: 12345"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Дата ордера *</label>
+                  <input
+                    type="date"
+                    value={ruOrderDate}
+                    max={new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setRuOrderDate(v);
+                      if (v) void fetchCbrForOrderDate(v);
+                    }}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    После выбора даты автоматически подставляется курс EUR/RUB ЦБ РФ
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Курс EUR/RUB (ЦБ РФ), ₽ за 1 € *
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={ruCbrEur}
+                    onChange={(e) => setRuCbrEur(e.target.value)}
+                    placeholder={cbrLoading ? "Загрузка…" : "Выберите дату или введите вручную"}
+                    disabled={cbrLoading}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono disabled:bg-gray-50"
+                  />
+                  {cbrLoading && (
+                    <p className="text-sm text-gray-500 mt-1">Загрузка курса с cbr.ru…</p>
+                  )}
+                  {cbrError && (
+                    <p className="text-sm text-red-600 mt-1">{cbrError}</p>
+                  )}
+                </div>
               </div>
             )}
 

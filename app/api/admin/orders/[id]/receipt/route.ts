@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-api";
 import { getOrderById } from "@/lib/orders";
 import { generateReceiptPdf } from "@/lib/receipt-pdf";
+import type { ReceiptType } from "@/lib/receipt-data";
 
 /**
- * Скачивание чека (PDF) администратором
+ * Скачивание чека (PDF) администратором.
+ * ?type=closing — закрывающий чек (зачёт предоплаты).
  */
 export async function GET(
   request: NextRequest,
@@ -21,9 +23,13 @@ export async function GET(
       return NextResponse.json({ error: "Заказ не найден" }, { status: 404 });
     }
 
-    const pdfBuffer = await generateReceiptPdf(id);
+    const rawType = request.nextUrl.searchParams.get("type") || "advance";
+    const receiptType: ReceiptType = rawType === "closing" ? "closing" : "advance";
+
+    const pdfBuffer = await generateReceiptPdf(id, receiptType);
     const orderNumber = order.orderNumber || order.id;
-    const filename = `check-${orderNumber}.pdf`;
+    const suffix = receiptType === "closing" ? "-closing" : "";
+    const filename = `check-${orderNumber}${suffix}.pdf`;
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,

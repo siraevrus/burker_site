@@ -586,7 +586,12 @@ export async function sendOrderPaidEmail(
   orderNumber: string,
   firstName: string,
   totalAmount: number,
-  items: Array<{ name: string; quantity: number; price: number }>
+  items: Array<{ name: string; quantity: number; price: number }>,
+  extra?: {
+    shippingCost?: number;
+    totalWeightKg?: number;
+    promoDiscount?: number;
+  }
 ): Promise<boolean> {
   if (!IS_PRODUCTION) {
     console.log("💳 Заказ оплачен #" + orderNumber);
@@ -602,6 +607,40 @@ export async function sendOrderPaidEmail(
         </tr>`
     )
     .join("");
+
+  const shippingCost = extra?.shippingCost ?? 0;
+  const totalWeightKg = extra?.totalWeightKg;
+  const promoDiscount = extra?.promoDiscount ?? 0;
+
+  const weightPart =
+    totalWeightKg != null && Number.isFinite(totalWeightKg)
+      ? ` — оценочный вес заказа ${totalWeightKg.toLocaleString("ru-RU", {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        })} кг`
+      : "";
+
+  const shippingRow =
+    shippingCost > 0 || weightPart
+      ? `<tr>
+          <td colspan="2" style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">Доставка до РФ${weightPart}:</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${
+            shippingCost <= 0
+              ? '<span style="color: #2e7d32; font-weight: bold;">Бесплатно</span>'
+              : `${formatRub(shippingCost)} ₽`
+          }</td>
+        </tr>`
+      : "";
+
+  const promoRow =
+    promoDiscount > 0
+      ? `<tr>
+          <td colspan="2" style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; color: #2e7d32;">Скидка по промокоду:</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; color: #2e7d32; font-weight: bold;">−${formatRub(promoDiscount)} ₽</td>
+        </tr>`
+      : "";
+
+  const shippingExplanation = shippingCost > 0 || weightPart ? EMAIL_SHIPPING_COST_EXPLANATION : "";
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -625,6 +664,8 @@ export async function sendOrderPaidEmail(
         </thead>
         <tbody>
           ${itemsList}
+          ${shippingRow}
+          ${promoRow}
         </tbody>
         <tfoot>
           <tr>
@@ -633,6 +674,7 @@ export async function sendOrderPaidEmail(
           </tr>
         </tfoot>
       </table>
+      ${shippingExplanation}
       
       <p>Заказ передан в обработку. Мы свяжемся с вами при изменении статуса доставки.</p>
       

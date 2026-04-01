@@ -6,10 +6,10 @@ import { Order, OrderItem } from "./types";
  * Генерирует читаемый номер заказа в формате:
  * BRK_ДДММГГЧЧММ_XXXXX
  * 
- * @param orderCount - порядковый номер заказа в системе (начиная с 1)
+ * @param seq - порядковый номер заказа (монотонно растущий, никогда не уменьшается)
  * @returns номер заказа в формате BRK_ДДММГГЧЧММ_00001
  */
-function generateOrderNumber(orderCount: number): string {
+function generateOrderNumber(seq: number): string {
   const now = new Date();
   const day = String(now.getDate()).padStart(2, "0");
   const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -18,9 +18,64 @@ function generateOrderNumber(orderCount: number): string {
   const minutes = String(now.getMinutes()).padStart(2, "0");
   
   const dateTime = `${day}${month}${year}${hours}${minutes}`;
-  const sequentialNumber = String(orderCount).padStart(5, "0");
+  const sequentialNumber = String(seq).padStart(5, "0");
   
   return `BRK_${dateTime}_${sequentialNumber}`;
+}
+
+/**
+ * Извлекает максимальный порядковый номер из существующих заказов.
+ * Формат orderNumber: BRK_DDMMYYHHMM_XXXXX — берём последние 5 символов.
+ */
+async function getMaxExistingSequence(): Promise<number> {
+  const orders = await prisma.order.findMany({
+    where: { orderNumber: { not: null } },
+    select: { orderNumber: true },
+  });
+
+  let max = 0;
+  for (const o of orders) {
+    if (!o.orderNumber) continue;
+    const parts = o.orderNumber.split("_");
+    const seq = parseInt(parts[parts.length - 1], 10);
+    if (Number.isFinite(seq) && seq > max) max = seq;
+  }
+  return max;
+}
+
+/**
+ * Атомарно получает следующий порядковый номер заказа.
+ * Счётчик хранится в таблице OrderCounter и только растёт —
+ * удаление заказов на него не влияет.
+ */
+async function getNextOrderSequence(): Promise<number> {
+  const existing = await prisma.orderCounter.findUnique({
+    where: { id: "order_seq" },
+  });
+
+  if (existing) {
+    const updated = await prisma.orderCounter.update({
+      where: { id: "order_seq" },
+      data: { value: { increment: 1 } },
+    });
+    return updated.value;
+  }
+
+  const maxSeq = await getMaxExistingSequence();
+  const startValue = maxSeq + 1;
+
+  try {
+    const created = await prisma.orderCounter.create({
+      data: { id: "order_seq", value: startValue },
+    });
+    return created.value;
+  } catch {
+    const updated = await prisma.orderCounter.update({
+      where: { id: "order_seq" },
+      data: { value: { increment: 1 } },
+    });
+    return updated.value;
+  }
 }
 
 // Преобразование данных из БД в формат Order
@@ -225,11 +280,8 @@ export async function createOrder(orderData: {
     },
   });
 
-  // Получаем общее количество заказов в системе для порядкового номера
-  const orderCount = await prisma.order.count();
-  
-  // Генерируем номер заказа
-  const orderNumber = generateOrderNumber(orderCount);
+  const nextSeq = await getNextOrderSequence();
+  const orderNumber = generateOrderNumber(nextSeq);
   
   // Обновляем заказ с номером
   const updatedOrder = await prisma.order.update({

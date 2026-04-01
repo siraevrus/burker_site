@@ -6,7 +6,11 @@ import fs from "fs";
 import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { getOrderById } from "./orders";
-import { mapOrderToReceiptData } from "./receipt-data";
+import {
+  mapOrderToReceiptData,
+  mapOrderToClosingReceiptData,
+  type ReceiptType,
+} from "./receipt-data";
 
 const ROBOTO_TTF_URL =
   "https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf";
@@ -54,11 +58,17 @@ function drawText(
   page.drawText(text, { x, y, size, font, color: rgb(0, 0, 0) });
 }
 
-export async function generateReceiptPdf(orderId: string): Promise<Buffer> {
+export async function generateReceiptPdf(
+  orderId: string,
+  type: ReceiptType = "advance"
+): Promise<Buffer> {
   const order = await getOrderById(orderId);
   if (!order) throw new Error("Заказ не найден");
 
-  const data = mapOrderToReceiptData(order);
+  const data =
+    type === "closing"
+      ? mapOrderToClosingReceiptData(order)
+      : mapOrderToReceiptData(order);
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
 
@@ -93,7 +103,9 @@ export async function generateReceiptPdf(orderId: string): Promise<Buffer> {
   writeEmpty();
 
   writeLine("КАССОВЫЙ ЧЕК", TITLE_SIZE);
-  writeLine(`Приход (аванс) ${data.dateTime}`);
+  const receiptLabel =
+    data.receiptType === "closing" ? "Приход" : "Приход (аванс)";
+  writeLine(`${receiptLabel} ${data.dateTime}`);
   writeLine("признак ККТ для расчетов только в Интернет: да");
   writeEmpty();
 
@@ -158,7 +170,7 @@ export async function generateReceiptPdf(orderId: string): Promise<Buffer> {
   writeLine(`ИТОГ ${data.totalAmount.toFixed(2)}`, TITLE_SIZE);
   writeLine(`НАЛИЧНЫМИ ${data.cashAmount.toFixed(2)}`);
   writeLine(`БЕЗНАЛИЧНЫМИ ${data.electronicAmount.toFixed(2)}`);
-  writeLine("Зачет предоплаты (аванса) 0.00");
+  writeLine(`ЗАЧЕТ ПРЕДОПЛАТЫ (АВАНСА) ${data.prepaymentAmount.toFixed(2)}`);
   writeLine("Сумма по чеку (БСО) в кредит 0.00");
   writeLine("Сумма по чеку (БСО) встречным предоставлением 0.00");
   writeLine(`Итого без НДС ${data.totalAmount.toFixed(2)}`);

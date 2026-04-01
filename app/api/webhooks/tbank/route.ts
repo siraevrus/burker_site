@@ -35,6 +35,11 @@ export async function POST(request: NextRequest) {
   // EACQ: проверка подписи (Token) обязательна
   if (!TBANK_PASSWORD) {
     console.warn("T-Bank webhook: TBANK_PASSWORD not set, cannot verify");
+    logError("tbank_webhook_no_password", {
+      paymentId: String(b.PaymentId ?? b.paymentId ?? ""),
+      status: String(b.Status ?? b.status ?? ""),
+      hint: "Заказ НЕ обновлён — задайте TBANK_PASSWORD в .env",
+    });
     return okResponse();
   }
   if (!verifyNotificationToken(b, TBANK_PASSWORD)) {
@@ -78,6 +83,12 @@ export async function POST(request: NextRequest) {
   });
 
   if (!order) {
+    logError("tbank_webhook_order_not_found", {
+      paymentId,
+      tbankStatus: status,
+      success,
+      hint: "Вебхук получен, но заказ с таким paymentId не найден в БД — статус НЕ обновлён",
+    });
     return okResponse();
   }
 
@@ -87,7 +98,18 @@ export async function POST(request: NextRequest) {
       ? status === "DEADLINE_EXPIRED" || status === "EXPIRED"
         ? "expired"
         : "cancelled"
-      : order.paymentStatus; // не меняем при неизвестном статусе
+      : order.paymentStatus;
+
+  if (!isPaid && !isCancelledOrExpired && status) {
+    logError("tbank_webhook_unhandled_status", {
+      paymentId,
+      orderId: order.id,
+      tbankStatus: status,
+      success,
+      currentPaymentStatus: order.paymentStatus,
+      hint: "Статус T-Bank не распознан — paymentStatus заказа НЕ изменён. Если оплата прошла, используйте ручную установку статуса в админке.",
+    });
+  }
 
   const statusChanged = order.paymentStatus !== newPaymentStatus;
   const wasPaid = order.paymentStatus === "paid";
@@ -153,7 +175,12 @@ export async function POST(request: NextRequest) {
         orderNumber,
         order.firstName,
         order.totalAmount,
-        orderItems
+        orderItems,
+        {
+          shippingCost: order.shippingCost,
+          totalWeightKg,
+          promoDiscount: order.promoDiscount ?? 0,
+        }
       );
 
       // Отправка уведомления в Telegram только после оплаты заказа
