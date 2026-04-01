@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Product } from "@/lib/types";
 import { useRouter } from "next/navigation";
+import { formatRub } from "@/lib/utils";
 
 interface AdminProductEditClientProps {
   product: Product;
@@ -211,15 +212,11 @@ export default function AdminProductEditClient({ product }: AdminProductEditClie
             <div className="p-3 bg-gray-50 border border-gray-200 rounded-md space-y-1.5">
               <p className="text-sm font-medium text-gray-700">Цена (₽)</p>
               <p className="text-lg font-semibold text-gray-900">
-                {pricesRub.price > 0
-                  ? `${pricesRub.price.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`
-                  : "—"}
+                {pricesRub.price > 0 ? `${formatRub(pricesRub.price)} ₽` : "—"}
               </p>
               <p className="text-sm font-medium text-gray-700 mt-2">Оригинальная цена (₽)</p>
               <p className="text-lg font-semibold text-gray-900">
-                {pricesRub.originalPrice > 0
-                  ? `${pricesRub.originalPrice.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`
-                  : "—"}
+                {pricesRub.originalPrice > 0 ? `${formatRub(pricesRub.originalPrice)} ₽` : "—"}
               </p>
               <p className="text-xs text-gray-500 mt-2">
                 Рассчитываются автоматически по текущему курсу после сохранения

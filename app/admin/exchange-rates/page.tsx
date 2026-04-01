@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatRub } from "@/lib/utils";
 
 interface RatesData {
   eurRate: number;
@@ -146,11 +147,11 @@ export default function AdminExchangeRatesPage() {
           <tbody>
             <tr className="border-b border-gray-100">
               <td className="px-4 py-3 font-medium">USD</td>
-              <td className="px-4 py-3">{data?.rubRate != null ? `${data.rubRate.toFixed(2)} ₽` : "—"}</td>
+              <td className="px-4 py-3">{data?.rubRate != null ? `${formatRub(data.rubRate)} ₽` : "—"}</td>
             </tr>
             <tr className="border-b border-gray-100">
               <td className="px-4 py-3 font-medium">EUR</td>
-              <td className="px-4 py-3">{data?.rubPerEur != null ? `${data.rubPerEur.toFixed(2)} ₽` : "—"}</td>
+              <td className="px-4 py-3">{data?.rubPerEur != null ? `${formatRub(data.rubPerEur)} ₽` : "—"}</td>
             </tr>
           </tbody>
         </table>
