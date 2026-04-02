@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Order, OrderItem } from "@/lib/types";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { formatRub } from "@/lib/utils";
+import { useStore } from "@/lib/store";
+import { isOrderExpired } from "@/lib/order-utils";
 
 interface OrdersPageClientProps {
   orders: Order[];
@@ -22,6 +25,7 @@ const paymentStatusLabels: Record<string, string> = {
   expired: "Истекла ссылка",
   cancelled: "Отменена",
   failed: "Ошибка",
+  closed: "Заказ закрыт",
 };
 
 function getItemCommission(item: OrderItem, rates: ExchangeRates | null): number | null {
@@ -41,6 +45,9 @@ function getRatesForOrder(order: Order): ExchangeRates | null {
 
 export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
+  const { addToCart, clearCart } = useStore();
+  const router = useRouter();
 
   const toggleOrder = (orderId: string) => {
     const newExpanded = new Set(expandedOrders);
@@ -51,6 +58,63 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
     }
     setExpandedOrders(newExpanded);
   };
+
+  const handleReorder = useCallback(async (order: Order) => {
+    setReorderingId(order.id);
+    try {
+      const productIds = order.items.map((item) => item.productId);
+      const res = await fetch("/api/products/cart-prices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: productIds }),
+      });
+      const data = await res.json();
+      const freshProducts: Array<{
+        id: string;
+        name: string;
+        price: number;
+        originalPrice: number;
+        discount: number;
+        colors: string[];
+        images: string[];
+        inStock: boolean;
+        soldOut?: boolean;
+        collection: string;
+        subcategory?: string;
+      }> = Array.isArray(data.products) ? data.products : [];
+
+      const byId = new Map(freshProducts.map((p) => [p.id, p]));
+
+      clearCart();
+
+      for (const item of order.items) {
+        const fresh = byId.get(item.productId);
+        if (!fresh || fresh.soldOut || !fresh.inStock) continue;
+        addToCart({
+          id: fresh.id,
+          name: fresh.name,
+          price: fresh.price,
+          originalPrice: fresh.originalPrice,
+          discount: fresh.discount,
+          colors: fresh.colors,
+          images: fresh.images,
+          inStock: fresh.inStock,
+          soldOut: fresh.soldOut,
+          collection: fresh.collection,
+          subcategory: fresh.subcategory,
+          selectedColor: item.selectedColor,
+          quantity: item.quantity,
+        });
+      }
+
+      router.push("/cart");
+    } catch {
+      // при ошибке просто перенаправляем в корзину
+      router.push("/cart");
+    } finally {
+      setReorderingId(null);
+    }
+  }, [addToCart, clearCart, router]);
   if (orders.length === 0) {
     return (
       <div className="container mx-auto px-4 py-16">
@@ -75,6 +139,8 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
       <div className="space-y-4">
         {orders.map((order) => {
           const isExpanded = expandedOrders.has(order.id);
+          const orderClosed = isOrderExpired(order);
+          const effectiveStatus = orderClosed ? "closed" : (order.paymentStatus ?? "pending");
           return (
             <motion.div
               key={order.id}
@@ -108,14 +174,16 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                   <div className="flex items-center gap-4 flex-wrap">
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                        order.paymentStatus === "paid"
+                        effectiveStatus === "paid"
                           ? "bg-green-100 text-green-800"
-                          : order.paymentStatus === "pending"
+                          : effectiveStatus === "pending"
                             ? "bg-amber-100 text-amber-800"
-                            : "bg-gray-100 text-gray-700"
+                            : effectiveStatus === "closed"
+                              ? "bg-gray-200 text-gray-600"
+                              : "bg-gray-100 text-gray-700"
                       }`}
                     >
-                      {paymentStatusLabels[order.paymentStatus ?? "pending"] ?? order.paymentStatus ?? "Ожидает оплаты"}
+                      {paymentStatusLabels[effectiveStatus] ?? effectiveStatus}
                     </span>
                   </div>
                 </div>
@@ -141,7 +209,18 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
               {/* Раскрывающийся контент */}
               {isExpanded && (
                 <div className="px-6 py-4 border-t border-gray-200">
-                  {order.paymentStatus === "pending" && order.paymentLink && (
+                  {orderClosed ? (
+                    <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-between flex-wrap gap-2">
+                      <span className="text-sm text-gray-600">Время на оплату истекло. Вы можете повторить заказ с актуальными ценами.</span>
+                      <button
+                        onClick={() => handleReorder(order)}
+                        disabled={reorderingId === order.id}
+                        className="inline-block bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {reorderingId === order.id ? "Загрузка..." : "Повторить заказ"}
+                      </button>
+                    </div>
+                  ) : order.paymentStatus === "pending" && order.paymentLink ? (
                     <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between flex-wrap gap-2">
                       <span className="text-sm text-amber-800">Заказ ожидает оплаты</span>
                       <Link
@@ -151,7 +230,7 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                         Оплатить
                       </Link>
                     </div>
-                  )}
+                  ) : null}
                   <h3 className="text-lg font-bold mb-4">Товары</h3>
                   <div className="space-y-3 mb-6">
                     {order.items.map((item) => {

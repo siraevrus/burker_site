@@ -300,3 +300,5 @@ export async function createOrder(orderData: {
   const mapped = mapOrderFromDb(updatedOrder);
   return { order: mapped, accessToken };
 }
+
+export { isOrderExpired } from "./order-utils";

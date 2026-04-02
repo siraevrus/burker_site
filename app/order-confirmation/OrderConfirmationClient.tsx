@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Order } from "@/lib/types";
 import { formatRub } from "@/lib/utils";
 import {
@@ -12,6 +13,8 @@ import {
   type ExchangeRates,
 } from "@/lib/order-commission";
 import { appendAccessToken, getOrderApiUrl } from "@/lib/order-access";
+import { useStore } from "@/lib/store";
+import { isOrderExpired } from "@/lib/order-utils";
 
 const paymentStatusLabels: Record<string, string> = {
   paid: "Оплачено",
@@ -28,6 +31,9 @@ function OrderConfirmationContent() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [rates, setRates] = useState<ExchangeRates | null>(null);
+  const [reordering, setReordering] = useState(false);
+  const { addToCart, clearCart } = useStore();
+  const router = useRouter();
 
   const statusLabels: Record<string, string> = {
     accepted: "Заказ принят",
@@ -78,6 +84,63 @@ function OrderConfirmationContent() {
     return () => clearTimeout(t);
   }, [orderId, fetchOrder]);
 
+  const handleReorder = useCallback(async () => {
+    if (!order) return;
+    setReordering(true);
+    try {
+      const productIds = order.items.map((item) => item.productId);
+      const res = await fetch("/api/products/cart-prices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: productIds }),
+      });
+      const data = await res.json();
+      const freshProducts: Array<{
+        id: string;
+        name: string;
+        price: number;
+        originalPrice: number;
+        discount: number;
+        colors: string[];
+        images: string[];
+        inStock: boolean;
+        soldOut?: boolean;
+        collection: string;
+        subcategory?: string;
+      }> = Array.isArray(data.products) ? data.products : [];
+
+      const byId = new Map(freshProducts.map((p) => [p.id, p]));
+
+      clearCart();
+
+      for (const item of order.items) {
+        const fresh = byId.get(item.productId);
+        if (!fresh || fresh.soldOut || !fresh.inStock) continue;
+        addToCart({
+          id: fresh.id,
+          name: fresh.name,
+          price: fresh.price,
+          originalPrice: fresh.originalPrice,
+          discount: fresh.discount,
+          colors: fresh.colors,
+          images: fresh.images,
+          inStock: fresh.inStock,
+          soldOut: fresh.soldOut,
+          collection: fresh.collection,
+          subcategory: fresh.subcategory,
+          selectedColor: item.selectedColor,
+          quantity: item.quantity,
+        });
+      }
+
+      router.push("/cart");
+    } catch {
+      router.push("/cart");
+    } finally {
+      setReordering(false);
+    }
+  }, [order, addToCart, clearCart, router]);
+
   const ratesForCommission = order ? getRatesForOrder(order, rates) : null;
   const commission = order ? getOrderCommissionTotal(order, rates) : null;
 
@@ -104,6 +167,8 @@ function OrderConfirmationContent() {
       </div>
     );
   }
+
+  const orderClosed = isOrderExpired(order);
 
   const isPaymentCancelled =
     order.paymentStatus === "cancelled" ||
@@ -138,23 +203,29 @@ function OrderConfirmationContent() {
             </>
           ) : (
             <>
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-8 h-8 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+              <div className={`w-16 h-16 ${orderClosed ? "bg-gray-100" : "bg-green-100"} rounded-full flex items-center justify-center mx-auto mb-4`}>
+                {orderClosed ? (
+                  <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-8 h-8 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                )}
               </div>
               <h1 className="text-3xl font-bold mb-2">
-                {order.paymentStatus === "pending" ? "Заказ в ожидании оплаты" : "Заказ успешно оформлен!"}
+                {orderClosed ? "Заказ закрыт" : order.paymentStatus === "pending" ? "Заказ в ожидании оплаты" : "Заказ успешно оформлен!"}
               </h1>
               <p className="text-gray-600">
                 Номер заказа: <strong>#{order.orderNumber || order.id}</strong>
@@ -163,7 +234,23 @@ function OrderConfirmationContent() {
           )}
         </div>
 
-        {order.paymentStatus === "pending" && (
+        {order.paymentStatus === "pending" && orderClosed && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+            <p className="text-sm font-medium text-gray-700 mb-1">Заказ закрыт</p>
+            <p className="text-sm text-gray-600 mb-3">
+              Время на оплату истекло. Вы можете повторить заказ с актуальными ценами.
+            </p>
+            <button
+              type="button"
+              onClick={handleReorder}
+              disabled={reordering}
+              className="inline-block bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {reordering ? "Загрузка..." : "Повторить заказ"}
+            </button>
+          </div>
+        )}
+        {order.paymentStatus === "pending" && !orderClosed && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
             <p className="text-sm font-medium text-amber-800 mb-1">Ожидает оплаты</p>
             <p className="text-sm text-amber-800 mb-3">
