@@ -18,8 +18,18 @@ export async function GET(
     }
 
     const currentUser = await getCurrentUser();
+    const providedToken = request.nextUrl.searchParams.get("token") || "";
 
-    if (!currentUser || order.userId !== currentUser.userId) {
+    const isOwner =
+      Boolean(currentUser && order.userId && order.userId === currentUser.userId);
+    const hasValidToken =
+      Boolean(
+        order.accessToken &&
+          providedToken &&
+          order.accessToken === providedToken
+      );
+
+    if (!isOwner && !hasValidToken) {
       return NextResponse.json(
         { error: "Доступ запрещен" },
         { status: 403 }

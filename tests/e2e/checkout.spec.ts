@@ -159,4 +159,15 @@ test.describe("Оформление заказа", () => {
     // Должна быть сумма в рублях
     await expect(page.getByText(/₽/)).toBeVisible();
   });
+
+  test("страница подтверждения email с next из чекаута показывает подсказку про пароль", async ({
+    page,
+  }) => {
+    const next = encodeURIComponent("/order-confirmation?id=test-order&token=test-token");
+    await page.goto(`/verify-email?email=test@example.com&next=${next}`);
+
+    await expect(
+      page.getByText(/пароль для входа в аккаунт указан в том же письме/i)
+    ).toBeVisible({ timeout: 5000 });
+  });
 });

@@ -47,34 +47,41 @@ async function getMaxExistingSequence(): Promise<number> {
  * Атомарно получает следующий порядковый номер заказа.
  * Счётчик хранится в таблице OrderCounter и только растёт —
  * удаление заказов на него не влияет.
+ *
+ * Используется SQL напрямую (без prisma.orderCounter), чтобы не зависеть от версии
+ * сгенерированного клиента; таблица создаётся миграцией `20260401120000_add_order_counter`.
  */
 async function getNextOrderSequence(): Promise<number> {
-  const existing = await prisma.orderCounter.findUnique({
-    where: { id: "order_seq" },
-  });
+  const existing = await prisma.$queryRawUnsafe<Array<{ value: number }>>(
+    `SELECT value FROM "OrderCounter" WHERE id = 'order_seq'`
+  );
 
-  if (existing) {
-    const updated = await prisma.orderCounter.update({
-      where: { id: "order_seq" },
-      data: { value: { increment: 1 } },
-    });
-    return updated.value;
+  if (existing.length > 0) {
+    await prisma.$executeRawUnsafe(
+      `UPDATE "OrderCounter" SET value = value + 1 WHERE id = 'order_seq'`
+    );
+    const after = await prisma.$queryRawUnsafe<Array<{ value: number }>>(
+      `SELECT value FROM "OrderCounter" WHERE id = 'order_seq'`
+    );
+    return after[0]!.value;
   }
 
   const maxSeq = await getMaxExistingSequence();
   const startValue = maxSeq + 1;
 
   try {
-    const created = await prisma.orderCounter.create({
-      data: { id: "order_seq", value: startValue },
-    });
-    return created.value;
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO "OrderCounter" (id, value) VALUES ('order_seq', ${startValue})`
+    );
+    return startValue;
   } catch {
-    const updated = await prisma.orderCounter.update({
-      where: { id: "order_seq" },
-      data: { value: { increment: 1 } },
-    });
-    return updated.value;
+    await prisma.$executeRawUnsafe(
+      `UPDATE "OrderCounter" SET value = value + 1 WHERE id = 'order_seq'`
+    );
+    const after = await prisma.$queryRawUnsafe<Array<{ value: number }>>(
+      `SELECT value FROM "OrderCounter" WHERE id = 'order_seq'`
+    );
+    return after[0]!.value;
   }
 }
 

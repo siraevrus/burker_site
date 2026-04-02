@@ -11,6 +11,7 @@ import {
   getRatesForOrder,
   type ExchangeRates,
 } from "@/lib/order-commission";
+import { appendAccessToken, getOrderApiUrl } from "@/lib/order-access";
 
 const paymentStatusLabels: Record<string, string> = {
   paid: "Оплачено",
@@ -23,6 +24,7 @@ const paymentStatusLabels: Record<string, string> = {
 function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("id");
+  const accessToken = searchParams.get("token");
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [rates, setRates] = useState<ExchangeRates | null>(null);
@@ -37,18 +39,18 @@ function OrderConfirmationContent() {
 
   const fetchOrder = useCallback(() => {
     if (!orderId) return;
-    fetch(`/api/orders/${orderId}`)
+    fetch(getOrderApiUrl(orderId, accessToken))
       .then((res) => res.json())
       .then((orderData) => {
         if (orderData.order) setOrder(orderData.order);
       })
       .catch(() => {});
-  }, [orderId]);
+  }, [orderId, accessToken]);
 
   useEffect(() => {
     if (orderId) {
       Promise.all([
-        fetch(`/api/orders/${orderId}`).then((res) => res.json()),
+        fetch(getOrderApiUrl(orderId, accessToken)).then((res) => res.json()),
         fetch("/api/exchange-rates").then((res) => res.json()),
       ])
         .then(([orderData, ratesData]) => {
@@ -67,7 +69,7 @@ function OrderConfirmationContent() {
     } else {
       setLoading(false);
     }
-  }, [orderId]);
+  }, [orderId, accessToken]);
 
   // После редиректа с банка (paid=1 — успех, без paid — неуспех) опрашиваем заказ через 2 с (вебхук может прийти с задержкой)
   useEffect(() => {
@@ -413,7 +415,7 @@ function OrderConfirmationContent() {
         <div className="flex gap-4 justify-center flex-wrap">
           {order.paymentStatus === "paid" && orderId ? (
             <Link
-              href={`/order/${orderId}/dashboard`}
+              href={appendAccessToken(`/order/${orderId}/dashboard`, accessToken)}
               className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors"
             >
               Сводка по заказу

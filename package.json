@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "CHOKIDAR_USEPOLLING=1 next dev --webpack",
     "build": "prisma generate && next build --webpack && mkdir -p .next/standalone/.next/server && cp -a .next/server/. .next/standalone/.next/server/ && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/ && mkdir -p .next/standalone/node_modules/.prisma && cp -r node_modules/.prisma .next/standalone/node_modules/ && mkdir -p .next/standalone/node_modules/@prisma && cp -r node_modules/@prisma .next/standalone/node_modules/",
     "build:clean": "rm -rf .next && prisma generate && next build --webpack && mkdir -p .next/standalone/.next/server && cp -a .next/server/. .next/standalone/.next/server/ && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/",

@@ -4,11 +4,21 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useStore } from "@/lib/store";
 
+function isSafeInternalNextPath(next: string | null): next is string {
+  if (!next || next.length < 2) return false;
+  if (!next.startsWith("/")) return false;
+  if (next.startsWith("//")) return false;
+  if (next.includes("://")) return false;
+  return true;
+}
+
 export default function EmailVerificationForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const loadUser = useStore((state) => state.loadUser);
   const email = searchParams.get("email") || "";
+  const nextAfterVerify = searchParams.get("next");
+  const fromCheckout = Boolean(nextAfterVerify);
 
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
@@ -116,9 +126,12 @@ export default function EmailVerificationForm() {
         return;
       }
 
-      // Успешная верификация - загружаем данные пользователя и редирект на главную
       await loadUser();
-      router.push("/");
+      if (isSafeInternalNextPath(nextAfterVerify)) {
+        router.push(nextAfterVerify);
+      } else {
+        router.push("/");
+      }
     } catch (error) {
       console.error("Verification error:", error);
       setError("Ошибка при верификации. Попробуйте позже.");
@@ -176,6 +189,12 @@ export default function EmailVerificationForm() {
         <p className="text-gray-600 mb-4">
           Мы отправили код подтверждения на <strong>{email}</strong>
         </p>
+        {fromCheckout ? (
+          <p className="text-sm text-gray-500 mb-4">
+            Пароль для входа в аккаунт указан в том же письме, что и код. После подтверждения вы
+            перейдёте к заказу.
+          </p>
+        ) : null}
       </div>
 
       {error && (

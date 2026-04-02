@@ -62,6 +62,45 @@ export async function sendVerificationCode(
 }
 
 /**
+ * Письмо после оформления заказа без входа: код подтверждения email и сгенерированный пароль для входа.
+ */
+export async function sendCheckoutAccountEmail(
+  email: string,
+  code: string,
+  plainPassword: string
+): Promise<boolean> {
+  if (!IS_PRODUCTION) {
+    console.log("\n📧 Быстрая регистрация:", email, "код:", code, "пароль:", plainPassword);
+  }
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">Подтвердите email и сохраните пароль</h2>
+      <p>Здравствуйте!</p>
+      <p>Вы оформили заказ на сайте. Для завершения регистрации аккаунта введите код подтверждения ниже. После подтверждения вы сможете войти, используя пароль из этого письма.</p>
+      <p style="margin: 16px 0 8px 0;"><strong>Код подтверждения email</strong></p>
+      <div style="background-color: #f5f5f5; padding: 20px; text-align: center; margin: 12px 0;">
+        <h1 style="color: #A13D42; font-size: 32px; letter-spacing: 5px; margin: 0;">${esc(code)}</h1>
+      </div>
+      <p style="font-size: 13px; color: #666;">Код действителен 15 минут.</p>
+      <p style="margin: 20px 0 8px 0;"><strong>Ваш пароль для входа</strong> (сохраните его; после подтверждения email войдите на сайте с этим паролем):</p>
+      <div style="background-color: #f9f9f9; padding: 16px; border: 1px solid #e0e0e0; font-family: monospace; font-size: 16px; word-break: break-all;">${esc(plainPassword)}</div>
+      <p style="font-size: 13px; color: #666; margin-top: 16px;">Если вы не оформляли заказ, проигнорируйте это письмо.</p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      ${EMAIL_FOOTER}
+    </div>
+  `;
+
+  const result = await sendEmailViaMailopost(
+    email,
+    "Подтверждение email и пароль для входа — Burker Watches",
+    html
+  );
+
+  return result.success;
+}
+
+/**
  * Отправка уведомления о новом заказе пользователю
  */
 export async function sendOrderConfirmation(

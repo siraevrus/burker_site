@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import {
+  generateSecurePassword,
+  generateVerificationCode,
+  getCurrentUser,
+  hashPassword,
+} from "@/lib/auth";
 import { createOrder } from "@/lib/orders";
 import { getExchangeRates } from "@/lib/exchange-rates";
-import { sendAdminOrderNotification, sendOrderPaymentLinkEmail } from "@/lib/email";
+import {
+  sendAdminOrderNotification,
+  sendCheckoutAccountEmail,
+  sendOrderPaymentLinkEmail,
+} from "@/lib/email";
 import { calculateShipping } from "@/lib/shipping";
 import { logError, logEvent } from "@/lib/ops-log";
 import {
@@ -13,6 +22,7 @@ import {
 } from "@/lib/tbank";
 import { getClientIp, getDeviceInfo } from "@/lib/request-info";
 import { formatRub } from "@/lib/utils";
+import { notifyNewRegistration } from "@/lib/telegram";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -259,9 +269,106 @@ export async function POST(request: NextRequest) {
     const ipAddress = getClientIp(request);
     const deviceInfo = getDeviceInfo(request);
 
+    const emailLower = email.toLowerCase();
+    let orderUserId: string | undefined = currentUser?.userId;
+    let needsEmailVerification = false;
+
+    if (!currentUser) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: emailLower },
+      });
+
+      if (existingUser?.emailVerified) {
+        return NextResponse.json(
+          {
+            error:
+              "Этот email уже зарегистрирован. Войдите в аккаунт, чтобы оформить заказ.",
+          },
+          { status: 400 }
+        );
+      }
+
+      const plainPassword = generateSecurePassword();
+      const passwordHash = await hashPassword(plainPassword);
+      const code = generateVerificationCode();
+      const expiresAt = new Date();
+      expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
+      const phoneDigits =
+        typeof phone === "string"
+          ? phone.replace(/\D/g, "").replace(/^8/, "7").slice(0, 11)
+          : "";
+      const phoneNormalized = phoneDigits.startsWith("7")
+        ? phoneDigits
+        : phoneDigits
+          ? "7" + phoneDigits
+          : null;
+
+      if (existingUser) {
+        await prisma.user.update({
+          where: { id: existingUser.id },
+          data: {
+            passwordHash,
+            firstName: firstName || null,
+            lastName: lastName || null,
+            middleName: middleName || null,
+            ...(phoneNormalized ? { phone: phoneNormalized } : {}),
+            ipAddress,
+            deviceInfo,
+          },
+        });
+        orderUserId = existingUser.id;
+      } else {
+        const newUser = await prisma.user.create({
+          data: {
+            email: emailLower,
+            passwordHash,
+            emailVerified: false,
+            firstName: firstName || null,
+            lastName: lastName || null,
+            middleName: middleName || null,
+            ...(phoneNormalized ? { phone: phoneNormalized } : {}),
+            ipAddress,
+            deviceInfo,
+          },
+        });
+        orderUserId = newUser.id;
+        await notifyNewRegistration({
+          email: newUser.email,
+          firstName: newUser.firstName,
+        });
+      }
+
+      await prisma.emailVerification.updateMany({
+        where: { email: emailLower, used: false },
+        data: { used: true },
+      });
+
+      await prisma.emailVerification.create({
+        data: {
+          email: emailLower,
+          code,
+          expiresAt,
+        },
+      });
+
+      const sent = await sendCheckoutAccountEmail(emailLower, code, plainPassword);
+      if (!sent) {
+        return NextResponse.json(
+          {
+            error:
+              "Не удалось отправить письмо с кодом подтверждения. Попробуйте позже или обратитесь в поддержку.",
+          },
+          { status: 500 }
+        );
+      }
+
+      needsEmailVerification = true;
+    }
+
     // Создание заказа (курсы сохраняем для точного расчёта комиссии в админке)
     const { order, accessToken } = await createOrder({
-      userId: currentUser?.userId,
+      userId: orderUserId,
       email: email.toLowerCase(),
       firstName,
       lastName,
@@ -521,7 +628,7 @@ export async function POST(request: NextRequest) {
       requestId,
       orderId: order.id,
       orderNumber: order.orderNumber || order.id,
-      userId: currentUser?.userId || null,
+      userId: order.userId || orderUserId || null,
       emailCustomerSent: emailNotification.customerEmailSent,
       emailAdminSent: emailNotification.adminEmailSent,
       emailError: emailNotification.error || null,
@@ -539,6 +646,7 @@ export async function POST(request: NextRequest) {
       paymentLink: paymentLink ?? undefined,
       paymentLinkAvailable,
       emailNotification,
+      needsEmailVerification,
     });
   } catch (error: any) {
     logError("order_create_error", {

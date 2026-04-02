@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
@@ -75,4 +76,25 @@ export async function getCurrentUser(): Promise<{ userId: string; email: string 
  */
 export function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+/** Одноразовый пароль для аккаунта после оформления заказа (буквы и цифры). */
+export function generateSecurePassword(length = 14): string {
+  const lower = "abcdefghijklmnopqrstuvwxyz";
+  const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const digits = "0123456789";
+  const all = lower + upper + digits;
+  const parts: string[] = [
+    lower[crypto.randomInt(lower.length)],
+    upper[crypto.randomInt(upper.length)],
+    digits[crypto.randomInt(digits.length)],
+  ];
+  for (let i = parts.length; i < length; i++) {
+    parts.push(all[crypto.randomInt(all.length)]);
+  }
+  for (let i = parts.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(i + 1);
+    [parts[i], parts[j]] = [parts[j], parts[i]];
+  }
+  return parts.join("");
 }

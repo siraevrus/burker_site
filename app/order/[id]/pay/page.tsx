@@ -1,14 +1,17 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { Order } from "@/lib/types";
 import { formatRub } from "@/lib/utils";
+import { appendAccessToken, getOrderApiUrl } from "@/lib/order-access";
 
-export default function OrderPayPage() {
+function OrderPayContent() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const orderId = typeof params.id === "string" ? params.id : null;
+  const accessToken = searchParams.get("token");
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +21,7 @@ export default function OrderPayPage() {
       setLoading(false);
       return;
     }
-    fetch(`/api/orders/${orderId}`)
+    fetch(getOrderApiUrl(orderId, accessToken))
       .then((res) => res.json())
       .then((data) => {
         if (data.order) setOrder(data.order);
@@ -29,7 +32,7 @@ export default function OrderPayPage() {
         setError("Ошибка загрузки заказа");
         setLoading(false);
       });
-  }, [orderId]);
+  }, [orderId, accessToken]);
 
   if (loading) {
     return (
@@ -71,13 +74,13 @@ export default function OrderPayPage() {
           <p className="text-gray-600 mb-6">Номер заказа: #{order.orderNumber || order.id}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              href={`/order/${order.id}/dashboard`}
+              href={appendAccessToken(`/order/${order.id}/dashboard`, accessToken)}
               className="inline-block bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800"
             >
               Сводка по заказу
             </Link>
             <Link
-              href={`/order-confirmation?id=${order.id}`}
+              href={appendAccessToken(`/order-confirmation?id=${order.id}`, accessToken)}
               className="inline-block border border-gray-300 px-6 py-3 rounded-md hover:bg-gray-50"
             >
               Подтверждение заказа
@@ -103,7 +106,7 @@ export default function OrderPayPage() {
             Оплата заказов подключена через СБП (Т-Банк), но ссылка на этот заказ не была создана. Обратитесь в поддержку или попробуйте оформить заказ позже.
           </p>
           <Link
-            href={`/order-confirmation?id=${order.id}`}
+            href={appendAccessToken(`/order-confirmation?id=${order.id}`, accessToken)}
             className="inline-block bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800"
           >
             Подтверждение заказа
@@ -137,11 +140,28 @@ export default function OrderPayPage() {
           </a>
         </div>
         <div className="text-center">
-          <Link href={`/order-confirmation?id=${order.id}`} className="text-gray-500 hover:underline text-sm">
+          <Link
+            href={appendAccessToken(`/order-confirmation?id=${order.id}`, accessToken)}
+            className="text-gray-500 hover:underline text-sm"
+          >
             Вернуться к подтверждению заказа
           </Link>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OrderPayPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-16 text-center">
+          <p>Загрузка...</p>
+        </div>
+      }
+    >
+      <OrderPayContent />
+    </Suspense>
   );
 }

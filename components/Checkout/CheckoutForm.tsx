@@ -393,6 +393,23 @@ export default function CheckoutForm({ user, rates = null, productSellingPriceEu
       // Очистка корзины
       clearCart();
 
+      const needsVerify = data.needsEmailVerification === true;
+      const accessTok = data.accessToken as string | undefined;
+      const oid = data.order?.id as string | undefined;
+      const customerEmail = formData.email;
+
+      if (needsVerify && oid && accessTok && customerEmail) {
+        const tokenParam = `&token=${encodeURIComponent(accessTok)}`;
+        const nextPath =
+          data.paymentLinkAvailable && oid
+            ? `/order/${oid}/pay?token=${encodeURIComponent(accessTok)}`
+            : `/order-confirmation?id=${oid}${tokenParam}`;
+        router.push(
+          `/verify-email?email=${encodeURIComponent(customerEmail)}&next=${encodeURIComponent(nextPath)}`
+        );
+        return;
+      }
+
       // Редирект: при наличии платёжной ссылки — на страницу оплаты, иначе — подтверждение заказа
       const tokenParam = data.accessToken ? `&token=${encodeURIComponent(data.accessToken)}` : "";
       if (data.paymentLinkAvailable && data.order?.id) {

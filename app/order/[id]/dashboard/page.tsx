@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { Order } from "@/lib/types";
@@ -11,6 +11,7 @@ import {
   getRatesForOrder,
   type ExchangeRates,
 } from "@/lib/order-commission";
+import { appendAccessToken, getOrderApiUrl } from "@/lib/order-access";
 
 const statusLabels: Record<string, string> = {
   accepted: "Заказ принят",
@@ -54,7 +55,9 @@ function formatDateOnly(d: Date | string | null | undefined): string {
 
 function OrderDashboardContent() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const orderId = typeof params.id === "string" ? params.id : null;
+  const accessToken = searchParams.get("token");
   const [order, setOrder] = useState<Order | null>(null);
   const [liveRates, setLiveRates] = useState<ExchangeRates | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,13 +65,13 @@ function OrderDashboardContent() {
 
   const fetchOrder = useCallback(() => {
     if (!orderId) return;
-    fetch(`/api/orders/${orderId}`)
+    fetch(getOrderApiUrl(orderId, accessToken))
       .then((res) => res.json())
       .then((data) => {
         if (data.order) setOrder(data.order);
       })
       .catch(() => {});
-  }, [orderId]);
+  }, [orderId, accessToken]);
 
   useEffect(() => {
     if (!orderId) {
@@ -76,7 +79,7 @@ function OrderDashboardContent() {
       return;
     }
     Promise.all([
-      fetch(`/api/orders/${orderId}`).then((res) => res.json()),
+      fetch(getOrderApiUrl(orderId, accessToken)).then((res) => res.json()),
       fetch("/api/exchange-rates").then((res) => res.json()),
     ])
       .then(([data, ratesData]) => {
@@ -99,7 +102,7 @@ function OrderDashboardContent() {
         setError("Ошибка загрузки");
         setLoading(false);
       });
-  }, [orderId]);
+  }, [orderId, accessToken]);
 
   useEffect(() => {
     if (!orderId || !order || order.paymentStatus !== "paid") return;
@@ -153,14 +156,14 @@ function OrderDashboardContent() {
             <div className="flex flex-wrap gap-3">
               {order.paymentLink ? (
                 <Link
-                  href={`/order/${order.id}/pay`}
+                  href={appendAccessToken(`/order/${order.id}/pay`, accessToken)}
                   className="inline-block bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 text-sm font-medium"
                 >
                   Перейти к оплате
                 </Link>
               ) : null}
               <Link
-                href={`/order-confirmation?id=${order.id}`}
+                href={appendAccessToken(`/order-confirmation?id=${order.id}`, accessToken)}
                 className="inline-block border border-amber-300 text-amber-900 px-6 py-2 rounded-md hover:bg-amber-100 text-sm font-medium"
               >
                 Страница заказа
@@ -359,7 +362,7 @@ function OrderDashboardContent() {
 
         <div className="flex flex-wrap gap-3 justify-center">
           <Link
-            href={`/order-confirmation?id=${order.id}`}
+            href={appendAccessToken(`/order-confirmation?id=${order.id}`, accessToken)}
             className="inline-block border border-gray-300 px-5 py-2.5 rounded-md hover:bg-gray-50 text-sm font-medium"
           >
             Подтверждение заказа
