@@ -329,6 +329,7 @@ export async function sendClosingFiscalReceipt(
       paymentType: FISCAL_CHECK_PAYMENT_PREPAYMENT,
       totalRub: totalAmount,
       positionsRub: [line1Rub, line2Rub, line3Rub],
+      orderPayments: order.content?.checkClose?.payments,
     });
 
     await agent.sendOrder(order);
