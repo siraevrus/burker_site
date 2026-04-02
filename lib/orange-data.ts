@@ -11,6 +11,7 @@ import { logError, logEvent } from "./ops-log";
 import {
   FISCAL_GROUP,
   FISCAL_CHECK_PAYMENT_PREPAYMENT,
+  FISCAL_PAYMENT_TYPE_CASHLESS,
   FISCAL_COMMISSION_LABEL,
   FISCAL_CLOSING_CDEK_INN,
   FISCAL_CLOSING_CDEK_SUPPLIER_NAME,
@@ -207,7 +208,7 @@ export async function sendFiscalReceipt(
         agentType: item.agentType,
       });
     }
-    order.addPayment({ type: FISCAL_CHECK_PAYMENT_PREPAYMENT, amount: params.totalAmount });
+    order.addPayment({ type: FISCAL_PAYMENT_TYPE_CASHLESS, amount: params.totalAmount });
 
     await agent.sendOrder(order);
 
