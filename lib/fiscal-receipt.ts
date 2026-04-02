@@ -6,8 +6,8 @@ export const FISCAL_PAYMENT_METHOD_FULL_PAYMENT = 4;
 /** Аванс (денежными средствами), ФФД 1.2 */
 export const FISCAL_PAYMENT_METHOD_ADVANCE = 3;
 export const FISCAL_PAYMENT_TYPE_CASHLESS = 2;
-/** В блоке оплат чека: зачёт предоплаты (аванса), ФФД 1.2 */
-export const FISCAL_CHECK_PAYMENT_PREPAYMENT = 3;
+/** В блоке оплат чека: зачёт предоплаты (аванса), ФФД 1.2, тип 14 по протоколу Orange Data */
+export const FISCAL_CHECK_PAYMENT_PREPAYMENT = 14;
 export const FISCAL_PAYMENT_SUBJECT_PRODUCT = 1;
 export const FISCAL_PAYMENT_SUBJECT_SERVICE = 4;
 export const FISCAL_PAYMENT_SUBJECT_AGENT_FEE = 11;
