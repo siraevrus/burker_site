@@ -3,9 +3,7 @@ import { isCronSecretValid } from "@/lib/cron-auth";
 import { importProducts } from "@/lib/import/import";
 import { saveImportHistory } from "@/lib/import/history";
 import { notifyImportResult } from "@/lib/telegram";
-
-const API_BASE = "https://parcing.burker-watches.ru";
-const API_JSON_PATH = "/api_json.php";
+import { getImportJsonFeedUrl } from "@/lib/import/feed-url";
 
 /**
  * API endpoint для cron job (внешние сервисы)
@@ -40,8 +38,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Запрос JSON с внешнего сервера (compact=1 — уменьшает размер ответа)
-    const response = await fetch(`${API_BASE}${API_JSON_PATH}?compact=1`, {
+    const feedUrl = getImportJsonFeedUrl();
+    const response = await fetch(feedUrl, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -52,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       throw new Error(
-        `Ошибка при запросе к серверу: ${response.status} ${response.statusText}`
+        `Ошибка при запросе к серверу (${feedUrl}): ${response.status} ${response.statusText}`
       );
     }
 

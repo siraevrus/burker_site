@@ -8,9 +8,7 @@ import "./load-env";
 import { fetchCbrRates } from "../lib/cbr-rates";
 import { transformJsonProduct } from "../lib/import/transform";
 import { validateProducts } from "../lib/import/validate";
-
-const API_BASE = "https://parcing.burker-watches.ru";
-const API_JSON_PATH = "/api_json.php";
+import { getImportJsonFeedUrl } from "../lib/import/feed-url";
 
 async function checkCbrRates() {
   console.log("\n=== 1. Курсы ЦБ РФ ===\n");
@@ -33,7 +31,7 @@ async function checkImport() {
     if (!apiKey) {
       throw new Error("API_JSON_KEY не задан в .env");
     }
-    const res = await fetch(`${API_BASE}${API_JSON_PATH}?compact=1`, {
+    const res = await fetch(getImportJsonFeedUrl(), {
       headers: {
         Accept: "application/json",
         "X-API-KEY": apiKey,
