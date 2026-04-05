@@ -111,6 +111,8 @@ export async function notifyNewOrder(data: {
   orderId: string;
   email: string;
   firstName: string;
+  lastName?: string;
+  middleName?: string;
   phone: string;
   totalAmount: number;
   itemsCount: number;
@@ -120,6 +122,9 @@ export async function notifyNewOrder(data: {
 }): Promise<boolean> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://burker-watches.ru";
   const orderLink = `${siteUrl.replace(/\/+$/, "")}/admin/orders/${data.orderId}`;
+  const fullName = [data.lastName, data.firstName, data.middleName]
+    .filter(Boolean)
+    .join(" ");
   const itemsList = data.items
     .map((item) => `• ${escapeHtml(item.productName)}${item.quantity > 1 ? ` × ${item.quantity}` : ""}`)
     .join("\n");
@@ -132,7 +137,7 @@ export async function notifyNewOrder(data: {
     `Номер: ${escapeHtml(data.orderNumber)}`,
     `Товар(ы):\n${itemsList || "—"}`,
     `Email: ${escapeHtml(data.email)}`,
-    `Имя: ${escapeHtml(data.firstName)}`,
+    `ФИО: ${escapeHtml(fullName || data.firstName)}`,
     `Телефон: ${escapeHtml(data.phone)}`,
     `Сумма: ${formatRub(data.totalAmount)} ₽`,
     `Товаров: ${data.itemsCount}`,

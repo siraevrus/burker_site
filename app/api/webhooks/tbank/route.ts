@@ -190,6 +190,8 @@ export async function POST(request: NextRequest) {
           orderId: order.id,
           email: order.email,
           firstName: order.firstName,
+          lastName: order.lastName,
+          middleName: order.middleName,
           phone: order.phone,
           totalAmount: order.totalAmount,
           itemsCount: order.items.length,
