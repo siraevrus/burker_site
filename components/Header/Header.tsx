@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import ProductImage from "@/components/ProductImage";
 import { useStore } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product } from "@/lib/types";
+import { generateProductPath } from "@/lib/utils";
+import { formatRub } from "@/lib/utils";
 
 interface MenuItem {
   label: string;
@@ -21,6 +23,9 @@ export default function Header() {
   const [headerHeight, setHeaderHeight] = useState(0);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [topBannerText, setTopBannerText] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [menuWatches, setMenuWatches] = useState<MenuItem[]>([]);
@@ -99,6 +104,36 @@ export default function Header() {
       };
     }
   }, []);
+
+  useEffect(() => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+
+    const trimmed = searchQuery.trim();
+    if (!trimmed || trimmed.length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    searchDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data.products || []);
+        }
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, [searchQuery]);
 
   const hasSaleProducts = products.some((p) => p.discount > 0);
   const watchesFeatured = menuWatches.slice(0, 4);
@@ -529,9 +564,10 @@ export default function Header() {
             style={{ backgroundColor: "#FCFAF8" }}
           >
             <div className="container mx-auto px-4 py-8">
+              {/* Строка ввода */}
               <div className="flex items-center gap-4">
                 <svg
-                  className="w-6 h-6 text-gray-400"
+                  className="w-6 h-6 text-gray-400 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -549,6 +585,8 @@ export default function Header() {
                     if (searchQuery.trim()) {
                       window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
                       setIsSearchOpen(false);
+                      setSearchQuery("");
+                      setSearchResults([]);
                     }
                   }}
                   className="flex-1 flex items-center gap-4"
@@ -569,7 +607,11 @@ export default function Header() {
                   />
                 </form>
                 <button
-                  onClick={() => setIsSearchOpen(false)}
+                  onClick={() => {
+                    setIsSearchOpen(false);
+                    setSearchQuery("");
+                    setSearchResults([]);
+                  }}
                   className="text-gray-400 hover:text-gray-600 transition-colors ml-auto"
                   aria-label="Закрыть поиск"
                 >
@@ -588,6 +630,129 @@ export default function Header() {
                   </svg>
                 </button>
               </div>
+
+              {/* Результаты поиска */}
+              <AnimatePresence>
+                {searchQuery.trim().length >= 2 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.15 }}
+                    className="mt-6"
+                  >
+                    {isSearching ? (
+                      <p
+                        className="text-gray-400 text-sm"
+                        style={{ fontFamily: '"Open Sans", sans-serif' }}
+                      >
+                        Поиск...
+                      </p>
+                    ) : searchResults.length === 0 ? (
+                      <p
+                        className="text-gray-400 text-sm"
+                        style={{ fontFamily: '"Open Sans", sans-serif' }}
+                      >
+                        Ничего не найдено
+                      </p>
+                    ) : (
+                      <>
+                        <p
+                          className="text-xs text-gray-400 uppercase tracking-widest mb-4"
+                          style={{ fontFamily: '"Open Sans", sans-serif' }}
+                        >
+                          Продукты &nbsp;{searchResults.length}
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                          {searchResults.map((product) => {
+                            const href = generateProductPath(product) ?? `/search?q=${encodeURIComponent(searchQuery.trim())}`;
+                            const hasDiscount = product.discount > 0 && product.originalPriceEur && product.originalPriceEur > (product.priceEur ?? product.price);
+                            return (
+                              <Link
+                                key={product.id}
+                                href={href}
+                                onClick={() => {
+                                  setIsSearchOpen(false);
+                                  setSearchQuery("");
+                                  setSearchResults([]);
+                                }}
+                                className="flex flex-col gap-2 group"
+                              >
+                                {/* Фото */}
+                                <div className="relative aspect-[3/4] bg-[#F5F3F0] overflow-hidden rounded">
+                                  {product.images?.[0] ? (
+                                    <ProductImage
+                                      src={product.images[0]}
+                                      alt={product.name}
+                                      fill
+                                      className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                </div>
+                                {/* Название */}
+                                <p
+                                  className="text-gray-800 text-xs leading-tight line-clamp-2 group-hover:text-[#A13D42] transition-colors"
+                                  style={{ fontFamily: '"Open Sans", sans-serif' }}
+                                >
+                                  {product.name}
+                                </p>
+                                {/* Цена */}
+                                <div className="flex flex-wrap items-baseline gap-1">
+                                  {hasDiscount ? (
+                                    <>
+                                      <span
+                                        className="text-[#A13D42] text-xs font-semibold"
+                                        style={{ fontFamily: '"Open Sans", sans-serif' }}
+                                      >
+                                        €{(product.priceEur ?? product.price).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                      </span>
+                                      <span
+                                        className="text-gray-400 text-xs line-through"
+                                        style={{ fontFamily: '"Open Sans", sans-serif' }}
+                                      >
+                                        €{(product.originalPriceEur!).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <span
+                                      className="text-gray-700 text-xs"
+                                      style={{ fontFamily: '"Open Sans", sans-serif' }}
+                                    >
+                                      €{(product.priceEur ?? product.price).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </span>
+                                  )}
+                                </div>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                        {searchResults.length >= 10 && (
+                          <div className="mt-5 border-t border-gray-100 pt-4">
+                            <Link
+                              href={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
+                              onClick={() => {
+                                setIsSearchOpen(false);
+                                setSearchQuery("");
+                                setSearchResults([]);
+                              }}
+                              className="text-xs text-[#A13D42] hover:underline"
+                              style={{ fontFamily: '"Open Sans", sans-serif' }}
+                            >
+                              Показать все результаты →
+                            </Link>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         )}
