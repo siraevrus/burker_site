@@ -328,10 +328,28 @@ export async function sendAdminOrderNotification(
   orderData: {
     email: string;
     firstName: string;
+    lastName: string;
+    middleName: string;
     phone: string;
-    address: string;
+    cdekAddress: string;
+    inn: string;
+    passportSeries: string;
+    passportNumber: string;
+    passportIssueDate: string;
+    passportIssuedBy: string;
     totalAmount: number;
-    itemsCount: number;
+    shippingCost: number;
+    promoDiscount?: number | null;
+    eurRate?: number | null;
+    rubRate?: number | null;
+    items: Array<{
+      productName: string;
+      productPrice: number;
+      quantity: number;
+      selectedColor: string;
+      originalPriceEur?: number | null;
+      commissionAmount?: number | null;
+    }>;
   }
 ): Promise<boolean> {
   if (!IS_PRODUCTION) {
@@ -344,17 +362,202 @@ export async function sendAdminOrderNotification(
   }
 
   const orderLink = `${SITE_URL}/admin/orders/${orderId}`;
+
+  // Строки позиций заказа
+  const itemsRows = orderData.items
+    .map(
+      (item, i) => `
+      <tr style="background: ${i % 2 === 0 ? "#fff" : "#fafafa"};">
+        <td style="padding: 8px 10px; border-bottom: 1px solid #eee;">${esc(item.productName)}</td>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #eee; text-align: center;">${esc(item.selectedColor)}</td>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #eee; text-align: right;">${formatRub(item.productPrice)} ₽</td>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #eee; text-align: right;">${formatRub(item.productPrice * item.quantity)} ₽</td>
+      </tr>`
+    )
+    .join("");
+
+  const itemsTotal = orderData.items.reduce(
+    (s, item) => s + item.productPrice * item.quantity,
+    0
+  );
+
+  // Расчёт вознаграждения комиссионера
+  let commissionRows = "";
+  let totalCommission = 0;
+  let hasCommission = false;
+
+  for (const item of orderData.items) {
+    if (item.commissionAmount != null) {
+      totalCommission += item.commissionAmount;
+      hasCommission = true;
+    } else if (
+      item.originalPriceEur != null &&
+      orderData.eurRate != null &&
+      orderData.rubRate != null
+    ) {
+      const costRub = (item.originalPriceEur / orderData.eurRate) * orderData.rubRate;
+      const commission = Math.max(0, (item.productPrice - costRub) * item.quantity);
+      totalCommission += commission;
+      hasCommission = true;
+    }
+  }
+
+  if (hasCommission) {
+    const promoDiscount = orderData.promoDiscount ?? 0;
+    const commissionAfterDiscount = Math.max(0, totalCommission - promoDiscount);
+
+    commissionRows = orderData.items
+      .map((item, i) => {
+        let commission: number | null = null;
+        let formula = "";
+        if (item.commissionAmount != null) {
+          commission = item.commissionAmount;
+          if (
+            item.originalPriceEur != null &&
+            orderData.eurRate != null &&
+            orderData.rubRate != null
+          ) {
+            const costRub = (item.originalPriceEur / orderData.eurRate) * orderData.rubRate;
+            formula = `(${formatRub(item.productPrice)} − ${formatRub(costRub)}) × ${item.quantity} = ${formatRub(commission)} ₽`;
+          } else {
+            formula = `${formatRub(commission)} ₽`;
+          }
+        } else if (
+          item.originalPriceEur != null &&
+          orderData.eurRate != null &&
+          orderData.rubRate != null
+        ) {
+          const costRub = (item.originalPriceEur / orderData.eurRate) * orderData.rubRate;
+          commission = Math.max(0, (item.productPrice - costRub) * item.quantity);
+          formula = `(${formatRub(item.productPrice)} − ${formatRub(costRub)}) × ${item.quantity} = ${formatRub(commission)} ₽`;
+        }
+        if (commission === null) return "";
+        return `
+        <tr style="background: ${i % 2 === 0 ? "#fff" : "#fafafa"};">
+          <td style="padding: 8px 10px; border-bottom: 1px solid #eee;">${esc(item.productName)}</td>
+          <td style="padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 12px; color: #555;">${formula}</td>
+          <td style="padding: 8px 10px; border-bottom: 1px solid #eee; text-align: right;">${formatRub(commission)} ₽</td>
+        </tr>`;
+      })
+      .join("");
+
+    const ratesNote =
+      orderData.eurRate != null && orderData.rubRate != null
+        ? `<p style="font-size: 12px; color: #888; margin: 4px 0 0 0;">Курсы на момент заказа: 1 EUR = ${(1 / orderData.eurRate).toFixed(4)} USD, 1 USD = ${orderData.rubRate.toFixed(4)} ₽</p>`
+        : "";
+
+    commissionRows = `
+      <h3 style="color: #333; margin: 28px 0 10px 0; font-size: 16px;">Расчёт вознаграждения комиссионера</h3>
+      <p style="font-size: 13px; color: #555; margin: 0 0 10px 0;">
+        Формула: (Цена продажи в ₽ − Себестоимость в ₽) × Количество<br>
+        Себестоимость в ₽ = Цена в EUR ÷ Курс EUR/USD × Курс USD/₽
+      </p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 8px;">
+        <thead>
+          <tr style="background: #f5f5f5;">
+            <th style="padding: 8px 10px; text-align: left; border-bottom: 2px solid #ddd;">Товар</th>
+            <th style="padding: 8px 10px; text-align: left; border-bottom: 2px solid #ddd;">Формула</th>
+            <th style="padding: 8px 10px; text-align: right; border-bottom: 2px solid #ddd;">Комиссия</th>
+          </tr>
+        </thead>
+        <tbody>${commissionRows}</tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="padding: 8px 10px; font-weight: bold; border-top: 2px solid #ddd;">Итого комиссия (до скидки)</td>
+            <td style="padding: 8px 10px; font-weight: bold; text-align: right; border-top: 2px solid #ddd;">${formatRub(totalCommission)} ₽</td>
+          </tr>
+          ${
+            promoDiscount > 0
+              ? `<tr>
+            <td colspan="2" style="padding: 8px 10px; color: #c0392b; border-bottom: 1px solid #eee;">Скидка по промокоду</td>
+            <td style="padding: 8px 10px; color: #c0392b; text-align: right; border-bottom: 1px solid #eee;">−${formatRub(promoDiscount)} ₽</td>
+          </tr>
+          <tr>
+            <td colspan="2" style="padding: 8px 10px; font-weight: bold;">Вознаграждение комиссионера (итого)</td>
+            <td style="padding: 8px 10px; font-weight: bold; text-align: right;">${formatRub(commissionAfterDiscount)} ₽</td>
+          </tr>`
+              : ""
+          }
+        </tfoot>
+      </table>
+      ${ratesNote}`;
+  }
+
   const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #333;">Новый заказ #${esc(orderNumber)}</h2>
-      <p><strong>Email:</strong> ${esc(orderData.email)}</p>
-      <p><strong>Имя:</strong> ${esc(orderData.firstName)}</p>
-      <p><strong>Телефон:</strong> ${esc(orderData.phone)}</p>
-      <p><strong>Адрес:</strong> ${esc(orderData.address)}</p>
-      <p><strong>Количество товаров:</strong> ${orderData.itemsCount}</p>
-      <p><strong>Сумма заказа:</strong> ${formatRub(orderData.totalAmount)} ₽</p>
-      <p><strong>Ссылка на заказ:</strong> <a href="${orderLink}">${orderLink}</a></p>
-      <p><a href="${orderLink}" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #A13D42; color: white; text-decoration: none; border-radius: 5px;">Просмотреть заказ #${orderNumber}</a></p>
+    <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; color: #333;">
+      <h2 style="color: #333; margin-bottom: 20px;">Новый заказ #${esc(orderNumber)}</h2>
+
+      <h3 style="color: #333; margin: 0 0 10px 0; font-size: 16px;">Данные покупателя</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">
+        <tbody>
+          <tr><td style="padding: 6px 10px; width: 200px; color: #666; border-bottom: 1px solid #f0f0f0;">Email</td><td style="padding: 6px 10px; border-bottom: 1px solid #f0f0f0;">${esc(orderData.email)}</td></tr>
+          <tr><td style="padding: 6px 10px; color: #666; border-bottom: 1px solid #f0f0f0;">Фамилия</td><td style="padding: 6px 10px; border-bottom: 1px solid #f0f0f0;">${esc(orderData.lastName)}</td></tr>
+          <tr><td style="padding: 6px 10px; color: #666; border-bottom: 1px solid #f0f0f0;">Имя</td><td style="padding: 6px 10px; border-bottom: 1px solid #f0f0f0;">${esc(orderData.firstName)}</td></tr>
+          <tr><td style="padding: 6px 10px; color: #666; border-bottom: 1px solid #f0f0f0;">Отчество</td><td style="padding: 6px 10px; border-bottom: 1px solid #f0f0f0;">${esc(orderData.middleName)}</td></tr>
+          <tr><td style="padding: 6px 10px; color: #666; border-bottom: 1px solid #f0f0f0;">Телефон</td><td style="padding: 6px 10px; border-bottom: 1px solid #f0f0f0;">${esc(orderData.phone)}</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="color: #333; margin: 0 0 10px 0; font-size: 16px;">Пункт выдачи СДЭК (ПВЗ)</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">
+        <tbody>
+          <tr><td style="padding: 6px 10px; border-bottom: 1px solid #f0f0f0;">${esc(orderData.cdekAddress)}</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="color: #333; margin: 0 0 10px 0; font-size: 16px;">Данные для таможенного оформления</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">
+        <tbody>
+          <tr><td style="padding: 6px 10px; width: 200px; color: #666; border-bottom: 1px solid #f0f0f0;">ИНН</td><td style="padding: 6px 10px; border-bottom: 1px solid #f0f0f0;">${esc(orderData.inn)}</td></tr>
+          <tr><td style="padding: 6px 10px; color: #666; border-bottom: 1px solid #f0f0f0;">Серия паспорта</td><td style="padding: 6px 10px; border-bottom: 1px solid #f0f0f0;">${esc(orderData.passportSeries)}</td></tr>
+          <tr><td style="padding: 6px 10px; color: #666; border-bottom: 1px solid #f0f0f0;">Номер паспорта</td><td style="padding: 6px 10px; border-bottom: 1px solid #f0f0f0;">${esc(orderData.passportNumber)}</td></tr>
+          <tr><td style="padding: 6px 10px; color: #666; border-bottom: 1px solid #f0f0f0;">Дата выдачи паспорта</td><td style="padding: 6px 10px; border-bottom: 1px solid #f0f0f0;">${esc(orderData.passportIssueDate)}</td></tr>
+          <tr><td style="padding: 6px 10px; color: #666; border-bottom: 1px solid #f0f0f0;">Кем выдан паспорт</td><td style="padding: 6px 10px; border-bottom: 1px solid #f0f0f0;">${esc(orderData.passportIssuedBy)}</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="color: #333; margin: 0 0 10px 0; font-size: 16px;">Состав заказа</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 8px;">
+        <thead>
+          <tr style="background: #f5f5f5;">
+            <th style="padding: 8px 10px; text-align: left; border-bottom: 2px solid #ddd;">Товар</th>
+            <th style="padding: 8px 10px; text-align: center; border-bottom: 2px solid #ddd;">Цвет</th>
+            <th style="padding: 8px 10px; text-align: center; border-bottom: 2px solid #ddd;">Кол-во</th>
+            <th style="padding: 8px 10px; text-align: right; border-bottom: 2px solid #ddd;">Цена</th>
+            <th style="padding: 8px 10px; text-align: right; border-bottom: 2px solid #ddd;">Сумма</th>
+          </tr>
+        </thead>
+        <tbody>${itemsRows}</tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" style="padding: 8px 10px; text-align: right; border-top: 2px solid #ddd;">Товары:</td>
+            <td style="padding: 8px 10px; text-align: right; border-top: 2px solid #ddd;">${formatRub(itemsTotal)} ₽</td>
+          </tr>
+          <tr>
+            <td colspan="4" style="padding: 4px 10px; text-align: right; color: #555;">Доставка:</td>
+            <td style="padding: 4px 10px; text-align: right;">${formatRub(orderData.shippingCost)} ₽</td>
+          </tr>
+          ${
+            (orderData.promoDiscount ?? 0) > 0
+              ? `<tr>
+            <td colspan="4" style="padding: 4px 10px; text-align: right; color: #c0392b;">Скидка по промокоду:</td>
+            <td style="padding: 4px 10px; text-align: right; color: #c0392b;">−${formatRub(orderData.promoDiscount!)} ₽</td>
+          </tr>`
+              : ""
+          }
+          <tr>
+            <td colspan="4" style="padding: 8px 10px; text-align: right; font-weight: bold; border-top: 1px solid #ddd;">Итого к оплате:</td>
+            <td style="padding: 8px 10px; text-align: right; font-weight: bold; border-top: 1px solid #ddd;">${formatRub(orderData.totalAmount)} ₽</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      ${commissionRows}
+
+      <p style="margin-top: 24px;">
+        <a href="${orderLink}" style="display: inline-block; padding: 10px 20px; background-color: #A13D42; color: white; text-decoration: none; border-radius: 5px;">Просмотреть заказ #${esc(orderNumber)}</a>
+      </p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
       ${EMAIL_FOOTER}
     </div>

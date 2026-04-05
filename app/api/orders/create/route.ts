@@ -611,10 +611,28 @@ export async function POST(request: NextRequest) {
       emailNotification.adminEmailSent = await sendAdminOrderNotification(orderNumber, order.id, {
         email: order.email,
         firstName: order.firstName,
+        lastName: order.lastName,
+        middleName: order.middleName,
         phone: order.phone,
-        address: order.address || order.cdekAddress,
+        cdekAddress: order.cdekAddress,
+        inn: order.inn,
+        passportSeries: order.passportSeries,
+        passportNumber: order.passportNumber,
+        passportIssueDate: order.passportIssueDate,
+        passportIssuedBy: order.passportIssuedBy,
         totalAmount: order.totalAmount,
-        itemsCount: order.items.length,
+        shippingCost: order.shippingCost,
+        promoDiscount: order.promoDiscount,
+        eurRate: order.eurRate,
+        rubRate: order.rubRate,
+        items: order.items.map((item) => ({
+          productName: item.productName,
+          productPrice: item.productPrice,
+          quantity: item.quantity,
+          selectedColor: item.selectedColor,
+          originalPriceEur: item.originalPriceEur,
+          commissionAmount: item.commissionAmount,
+        })),
       });
 
       // Telegram уведомление отправляется только после оплаты заказа (из webhook T-Bank)
