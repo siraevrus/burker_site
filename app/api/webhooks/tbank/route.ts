@@ -63,9 +63,9 @@ export async function POST(request: NextRequest) {
   const status =
     typeof rawStatus === "string" ? rawStatus.toUpperCase() : "";
 
-  // EACQ: CONFIRMED — итоговое подтверждение; AUTHORIZED — холдирование (T-Bank шлёт оба одновременно)
-  // Отправляем письмо только по CONFIRMED, чтобы избежать дублирования
-  const isPaid = success && status === "CONFIRMED";
+  // EACQ: CONFIRMED — итоговое подтверждение для карт; AUTHORIZED — финальный статус для СБП QR
+  // Засчитываем оба статуса как оплату, дублирование исключается проверкой wasPaid ниже
+  const isPaid = success && (status === "CONFIRMED" || status === "AUTHORIZED");
   const isCancelledOrExpired = [
     "REJECTED",
     "CANCELLED",
