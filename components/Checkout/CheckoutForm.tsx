@@ -70,9 +70,9 @@ export default function CheckoutForm({ user, rates = null, productSellingPriceEu
   const clearCart = useStore((state) => state.clearCart);
   const [shippingRates, setShippingRates] = useState<ShippingRateEntry[]>([]);
 
-  /** Только буквы (кириллица, латиница), пробел и дефис — для ФИО */
-  const lettersOnly = (value: string): string =>
-    value.replace(/[^a-zA-Zа-яА-ЯёЁ\s-]/g, "");
+  /** Только кириллица, пробел и дефис — для ФИО */
+  const cyrillicOnly = (value: string): string =>
+    value.replace(/[^а-яА-ЯёЁ\s-]/g, "");
 
   /** Только цифры, опционально ограничение длины */
   const digitsOnly = (value: string, maxLen?: number): string => {
@@ -485,8 +485,9 @@ export default function CheckoutForm({ user, rates = null, productSellingPriceEu
             id="lastName"
             type="text"
             value={formData.lastName}
-            onChange={(e) => setFormData({ ...formData, lastName: lettersOnly(e.target.value) })}
+            onChange={(e) => setFormData({ ...formData, lastName: cyrillicOnly(e.target.value) })}
             className="w-full border border-gray-300 rounded-md px-3 py-2"
+            placeholder="Только русские буквы"
             required
           />
         </div>
@@ -499,8 +500,9 @@ export default function CheckoutForm({ user, rates = null, productSellingPriceEu
             id="firstName"
             type="text"
             value={formData.firstName}
-            onChange={(e) => setFormData({ ...formData, firstName: lettersOnly(e.target.value) })}
+            onChange={(e) => setFormData({ ...formData, firstName: cyrillicOnly(e.target.value) })}
             className="w-full border border-gray-300 rounded-md px-3 py-2"
+            placeholder="Только русские буквы"
             required
           />
         </div>
@@ -513,8 +515,9 @@ export default function CheckoutForm({ user, rates = null, productSellingPriceEu
             id="middleName"
             type="text"
             value={formData.middleName}
-            onChange={(e) => setFormData({ ...formData, middleName: lettersOnly(e.target.value) })}
+            onChange={(e) => setFormData({ ...formData, middleName: cyrillicOnly(e.target.value) })}
             className="w-full border border-gray-300 rounded-md px-3 py-2"
+            placeholder="Только русские буквы"
             required
           />
         </div>
