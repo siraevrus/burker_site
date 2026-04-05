@@ -20,7 +20,11 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const PUBLIC_DIR = path.join(process.cwd(), "public", "products");
+// В standalone-режиме process.cwd() указывает на .next/standalone,
+// поэтому используем явный путь из переменной окружения или fallback
+const PUBLIC_DIR =
+  process.env.PRODUCTS_IMAGE_DIR ||
+  path.join(process.cwd(), "public", "products");
 
 function getLocalFilename(imageUrl: string, index: number): string {
   try {
