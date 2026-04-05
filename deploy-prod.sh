@@ -50,7 +50,7 @@ if [[ -n "$DIRTY" ]]; then
   while IFS= read -r line; do
     path="${line:3}"
     case "$path" in
-      public/promo/*|public/products/*|public/order-proofs/*|uploads/*|uploads/promo/*|public/yandex_*.html|ecosystem.config.js|backups|backups/|backups/*|orange_prod/*) ;;
+      public/promo/*|public/products/*|public/order-proofs/*|uploads/*|uploads/promo/*|public/yandex_*.html|ecosystem.config.js|backups|backups/|backups/*|orange_prod/*|.duckversions/|.duckversions/*|public/.duckversions/|public/.duckversions/*) ;;
       *) REMAINING="${REMAINING}${line}\n" ;;
     esac
   done <<< "$DIRTY"

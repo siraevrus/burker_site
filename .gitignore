@@ -21,6 +21,8 @@
 /build
 
 # misc
+.duckversions/
+public/.duckversions/
 .DS_Store
 *.pem
 !orange/files_for_test/cacert.pem
