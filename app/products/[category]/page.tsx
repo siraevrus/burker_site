@@ -7,7 +7,7 @@ import { Product } from "@/lib/types";
 import { getCanonicalUrl } from "@/lib/site-url";
 import { getCollectionLabel, getProductsBreadcrumbItems } from "@/lib/utils";
 import Breadcrumbs from "@/components/Breadcrumbs/Breadcrumbs";
-import ProductCard from "@/components/ProductCard/ProductCard";
+import ProductsCategoryPageClient from "./ProductsCategoryPageClient";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +41,8 @@ export default async function ProductsCategoryPage({
     products = await getWatchesProducts();
   } else if (category === "jewelry") {
     products = await getJewelryProducts();
+  } else {
+    notFound();
   }
 
   const categoryLabel = getCollectionLabel(category);
@@ -57,11 +59,10 @@ export default async function ProductsCategoryPage({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <ProductsCategoryPageClient
+          products={products}
+          category={category as "watches" | "jewelry"}
+        />
       )}
     </div>
   );
