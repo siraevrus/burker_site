@@ -185,11 +185,12 @@ export async function getProductsByCollection(
   return dbProducts.map((p) => mapProductFromDbWithRates(p, rates));
 }
 
-// Поиск товаров по названию (включая распроданные)
 export async function searchProducts(query: string): Promise<Product[]> {
   const allProducts = await getAllProductsForSearch();
-  return allProducts.filter((product) =>
-    product.name.toLowerCase().includes(query.toLowerCase())
+  return allProducts.filter(
+    (product) =>
+      product.name.toLowerCase().includes(query.toLowerCase()) &&
+      !product.soldOut
   );
 }
 
