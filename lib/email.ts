@@ -361,7 +361,7 @@ export async function sendAdminOrderNotification(
     return true;
   }
 
-  const orderLink = `${SITE_URL}/admin/orders/${orderId}`;
+  const orderLink = `${SITE_URL}/admin/orders?orderId=${orderId}`;
 
   // Строки позиций заказа
   const itemsRows = orderData.items
