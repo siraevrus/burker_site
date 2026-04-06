@@ -658,6 +658,7 @@ export async function sendOrderPurchasedEmail(
   }
 
   const siteUrl = SITE_URL;
+  console.log("[email] sendOrderPurchasedEmail:", { email, orderNumber, proofImageUrl, siteUrl, imageFullUrl: `${siteUrl}${proofImageUrl}` });
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

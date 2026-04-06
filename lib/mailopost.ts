@@ -39,6 +39,8 @@ export async function sendEmailViaMailopost(
     payment: "credit",
   };
 
+  console.log("[Mailopost] Отправка письма:", { to, subject: subject.slice(0, 80), from: FROM_EMAIL });
+
   try {
     const res = await fetch(`${API_URL}/email/messages`, {
       method: "POST",
@@ -56,15 +58,22 @@ export async function sendEmailViaMailopost(
         (data.errors as Array<{ detail?: string }>)?.[0]?.detail ||
         (data.detail as string) ||
         `HTTP ${res.status}`;
-      console.error("[Mailopost] Ошибка отправки:", res.status, errMsg, JSON.stringify(data));
+      console.error("[Mailopost] Ошибка отправки:", {
+        status: res.status,
+        error: errMsg,
+        response: JSON.stringify(data),
+        to,
+        subject: subject.slice(0, 80),
+      });
       return { success: false, error: errMsg };
     }
 
     const messageId = data.id as number | undefined;
+    console.log("[Mailopost] Письмо отправлено успешно:", { to, subject: subject.slice(0, 80), messageId });
     return { success: true, messageId };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("[Mailopost] Ошибка:", msg);
+    console.error("[Mailopost] Сетевая ошибка:", { error: msg, to, subject: subject.slice(0, 80) });
     return { success: false, error: msg };
   }
 }

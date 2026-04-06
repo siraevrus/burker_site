@@ -411,9 +411,19 @@ export async function PUT(
         logError("admin_order_email_not_sent", {
           requestId,
           orderId: order.id,
+          orderNumber,
           status,
           to: order.email,
           mailopostError: emailNotification.error,
+          hint: "Подробности смотри выше в логах [Mailopost]",
+        });
+      } else {
+        logEvent("admin_order_email_sent", {
+          requestId,
+          orderId: order.id,
+          orderNumber,
+          status,
+          to: order.email,
         });
       }
     } catch (emailError) {
