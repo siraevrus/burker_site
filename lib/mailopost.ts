@@ -15,6 +15,21 @@ export interface SendEmailResult {
   messageId?: number;
 }
 
+/** Текст для админки / пользователя (в логах остаётся полный ответ API). */
+export function userFacingMailopostError(httpStatus: number, apiDetail: string): string {
+  const d = (apiDetail || "").trim();
+  if (httpStatus === 402 || /deficit/i.test(d)) {
+    return "На счёте Mailopost недостаточно средств. Пополните баланс в личном кабинете Mailopost.";
+  }
+  if (d === "MAILOPOST_API_TOKEN не задан") {
+    return "Почта не настроена: не задан MAILOPOST_API_TOKEN.";
+  }
+  if (d) {
+    return `Mailopost: ${d}`;
+  }
+  return `Ошибка Mailopost (HTTP ${httpStatus}).`;
+}
+
 /**
  * Отправка письма через Mailopost API.
  */
@@ -26,7 +41,10 @@ export async function sendEmailViaMailopost(
 ): Promise<SendEmailResult> {
   if (!API_TOKEN) {
     console.warn("[Mailopost] API_TOKEN не настроен, письмо не отправлено:", { to, subject: subject.slice(0, 50) });
-    return { success: false, error: "MAILOPOST_API_TOKEN не задан" };
+    return {
+      success: false,
+      error: userFacingMailopostError(0, "MAILOPOST_API_TOKEN не задан"),
+    };
   }
 
   const body = {
@@ -65,7 +83,10 @@ export async function sendEmailViaMailopost(
         to,
         subject: subject.slice(0, 80),
       });
-      return { success: false, error: errMsg };
+      return {
+        success: false,
+        error: userFacingMailopostError(res.status, errMsg),
+      };
     }
 
     const messageId = data.id as number | undefined;
@@ -89,7 +110,10 @@ export async function sendEmailWithAttachment(
 ): Promise<SendEmailResult> {
   if (!API_TOKEN) {
     console.warn("[Mailopost] API_TOKEN не настроен, письмо с вложением не отправлено:", { to, subject: subject.slice(0, 50) });
-    return { success: false, error: "MAILOPOST_API_TOKEN не задан" };
+    return {
+      success: false,
+      error: userFacingMailopostError(0, "MAILOPOST_API_TOKEN не задан"),
+    };
   }
 
   const formData = new FormData();
@@ -120,7 +144,10 @@ export async function sendEmailWithAttachment(
         (data.detail as string) ||
         `HTTP ${res.status}`;
       console.error("[Mailopost] Ошибка отправки с вложением:", res.status, errMsg);
-      return { success: false, error: errMsg };
+      return {
+        success: false,
+        error: userFacingMailopostError(res.status, errMsg),
+      };
     }
 
     const messageId = data.id as number | undefined;

@@ -371,43 +371,65 @@ export async function PUT(
     let emailNotification: { sent: boolean; error?: string } = { sent: false };
     try {
       switch (status) {
-        case "purchased":
-          emailNotification.sent = await sendOrderPurchasedEmail(
+        case "purchased": {
+          const r = await sendOrderPurchasedEmail(
             order.email,
             orderNumber,
             order.firstName,
             purchaseProofImage
           );
+          emailNotification = {
+            sent: r.success,
+            error: r.success ? undefined : r.error,
+          };
           break;
-        case "in_transit_de":
-          emailNotification.sent = await sendOrderInTransitToWarehouseEmail(
+        }
+        case "in_transit_de": {
+          const r = await sendOrderInTransitToWarehouseEmail(
             order.email,
             orderNumber,
             order.firstName,
             sellerTrackNumber
           );
+          emailNotification = {
+            sent: r.success,
+            error: r.success ? undefined : r.error,
+          };
           break;
-        case "in_transit_ru":
-          emailNotification.sent = await sendOrderInTransitToRussiaEmail(
+        }
+        case "in_transit_ru": {
+          const r = await sendOrderInTransitToRussiaEmail(
             order.email,
             orderNumber,
             order.firstName,
             russiaTrackNumber
           );
+          emailNotification = {
+            sent: r.success,
+            error: r.success ? undefined : r.error,
+          };
           break;
-        case "delivered":
-          emailNotification.sent = await sendOrderDeliveredEmail(
+        }
+        case "delivered": {
+          const r = await sendOrderDeliveredEmail(
             order.email,
             orderNumber,
             order.firstName
           );
+          emailNotification = {
+            sent: r.success,
+            error: r.success ? undefined : r.error,
+          };
           break;
+        }
         default:
           emailNotification = { sent: true };
           break;
       }
       if (!emailNotification.sent) {
-        emailNotification.error = "Email не отправлен (Mailopost вернул ошибку)";
+        if (!emailNotification.error) {
+          emailNotification.error = "Email не отправлен (Mailopost вернул ошибку)";
+        }
         logError("admin_order_email_not_sent", {
           requestId,
           orderId: order.id,

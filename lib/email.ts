@@ -1,4 +1,8 @@
-import { sendEmailViaMailopost, sendEmailWithAttachment } from "./mailopost";
+import {
+  sendEmailViaMailopost,
+  sendEmailWithAttachment,
+  type SendEmailResult,
+} from "./mailopost";
 import { formatRub } from "./utils";
 
 // Конфигурация из переменных окружения
@@ -652,7 +656,7 @@ export async function sendOrderPurchasedEmail(
   orderNumber: string,
   firstName: string,
   proofImageUrl: string
-): Promise<boolean> {
+): Promise<SendEmailResult> {
   if (!IS_PRODUCTION) {
     console.log("🛒 Товар выкуплен #" + orderNumber);
   }
@@ -678,13 +682,11 @@ export async function sendOrderPurchasedEmail(
     </div>
   `;
 
-  const result = await sendEmailViaMailopost(
+  return sendEmailViaMailopost(
     email,
     `Заказ #${orderNumber} - товар выкуплен`,
     html
   );
-
-  return result.success;
 }
 
 /**
@@ -695,7 +697,7 @@ export async function sendOrderInTransitToWarehouseEmail(
   orderNumber: string,
   firstName: string,
   trackNumber: string
-): Promise<boolean> {
+): Promise<SendEmailResult> {
   if (!IS_PRODUCTION) {
     console.log("📦 В пути на склад #" + orderNumber);
   }
@@ -725,13 +727,11 @@ export async function sendOrderInTransitToWarehouseEmail(
     </div>
   `;
 
-  const result = await sendEmailViaMailopost(
+  return sendEmailViaMailopost(
     email,
     `Заказ #${orderNumber} - товар в пути на склад`,
     html
   );
-
-  return result.success;
 }
 
 /**
@@ -742,7 +742,7 @@ export async function sendOrderInTransitToRussiaEmail(
   orderNumber: string,
   firstName: string,
   trackNumber: string
-): Promise<boolean> {
+): Promise<SendEmailResult> {
   if (!IS_PRODUCTION) {
     console.log("🚀 В пути в Россию #" + orderNumber);
   }
@@ -772,13 +772,11 @@ export async function sendOrderInTransitToRussiaEmail(
     </div>
   `;
 
-  const result = await sendEmailViaMailopost(
+  return sendEmailViaMailopost(
     email,
     `Заказ #${orderNumber} - товар в пути в Россию`,
     html
   );
-
-  return result.success;
 }
 
 /**
@@ -788,7 +786,7 @@ export async function sendOrderDeliveredEmail(
   email: string,
   orderNumber: string,
   firstName: string
-): Promise<boolean> {
+): Promise<SendEmailResult> {
   if (!IS_PRODUCTION) {
     console.log("✅ Заказ доставлен #" + orderNumber);
   }
@@ -812,13 +810,11 @@ export async function sendOrderDeliveredEmail(
     </div>
   `;
 
-  const result = await sendEmailViaMailopost(
+  return sendEmailViaMailopost(
     email,
     `Заказ #${orderNumber} доставлен`,
     html
   );
-
-  return result.success;
 }
 
 /**
