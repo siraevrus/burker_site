@@ -80,17 +80,39 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
         images: string[];
         inStock: boolean;
         soldOut?: boolean;
+        disabled?: boolean;
         collection: string;
         subcategory?: string;
       }> = Array.isArray(data.products) ? data.products : [];
 
       const byId = new Map(freshProducts.map((p) => [p.id, p]));
 
-      clearCart();
-
+      const toAdd: Array<{
+        item: OrderItem;
+        fresh: (typeof freshProducts)[0];
+      }> = [];
       for (const item of order.items) {
         const fresh = byId.get(item.productId);
-        if (!fresh || fresh.soldOut || !fresh.inStock) continue;
+        if (
+          !fresh ||
+          fresh.disabled ||
+          fresh.soldOut ||
+          !fresh.inStock
+        ) {
+          continue;
+        }
+        toAdd.push({ item, fresh });
+      }
+
+      if (toAdd.length === 0) {
+        window.alert(
+          "Ни один товар из этого заказа сейчас недоступен (нет в наличии, распродан или снят с продажи)."
+        );
+        return;
+      }
+
+      clearCart();
+      for (const { item, fresh } of toAdd) {
         addToCart({
           id: fresh.id,
           name: fresh.name,
@@ -106,6 +128,12 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
           selectedColor: item.selectedColor,
           quantity: item.quantity,
         });
+      }
+
+      if (toAdd.length < order.items.length) {
+        window.alert(
+          `В корзину добавлено ${toAdd.length} из ${order.items.length} позиций. Остальные сейчас недоступны или сняты с продажи.`
+        );
       }
 
       router.push("/cart");
@@ -206,19 +234,6 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                   </svg>
                 </div>
               </button>
-
-              {!isExpanded && order.paymentStatus === "cancelled" && !orderClosed && (
-                <div className="px-6 py-2 border-t border-gray-100 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => handleReorder(order)}
-                    disabled={reorderingId === order.id}
-                    className="inline-block bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {reorderingId === order.id ? "Загрузка..." : "Повторить заказ"}
-                  </button>
-                </div>
-              )}
 
               {/* Раскрывающийся контент */}
               {isExpanded && (

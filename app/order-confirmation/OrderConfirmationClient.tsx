@@ -105,17 +105,39 @@ function OrderConfirmationContent() {
         images: string[];
         inStock: boolean;
         soldOut?: boolean;
+        disabled?: boolean;
         collection: string;
         subcategory?: string;
       }> = Array.isArray(data.products) ? data.products : [];
 
       const byId = new Map(freshProducts.map((p) => [p.id, p]));
 
-      clearCart();
-
+      const toAdd: Array<{
+        item: (typeof order.items)[0];
+        fresh: (typeof freshProducts)[0];
+      }> = [];
       for (const item of order.items) {
         const fresh = byId.get(item.productId);
-        if (!fresh || fresh.soldOut || !fresh.inStock) continue;
+        if (
+          !fresh ||
+          fresh.disabled ||
+          fresh.soldOut ||
+          !fresh.inStock
+        ) {
+          continue;
+        }
+        toAdd.push({ item, fresh });
+      }
+
+      if (toAdd.length === 0) {
+        window.alert(
+          "Ни один товар из этого заказа сейчас недоступен (нет в наличии, распродан или снят с продажи)."
+        );
+        return;
+      }
+
+      clearCart();
+      for (const { item, fresh } of toAdd) {
         addToCart({
           id: fresh.id,
           name: fresh.name,
@@ -131,6 +153,12 @@ function OrderConfirmationContent() {
           selectedColor: item.selectedColor,
           quantity: item.quantity,
         });
+      }
+
+      if (toAdd.length < order.items.length) {
+        window.alert(
+          `В корзину добавлено ${toAdd.length} из ${order.items.length} позиций. Остальные сейчас недоступны или сняты с продажи.`
+        );
       }
 
       router.push("/cart");
