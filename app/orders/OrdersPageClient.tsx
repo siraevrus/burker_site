@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { formatRub } from "@/lib/utils";
+import ProductImage from "@/components/ProductImage";
 import { useStore } from "@/lib/store";
 import { isOrderExpired } from "@/lib/order-utils";
 
@@ -173,7 +174,7 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                   </div>
                   <div className="flex items-center gap-4 flex-wrap">
                     <span
-                      className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                      className={`inline-block shrink-0 max-md:origin-right max-md:scale-[0.8] px-3 py-1 rounded-full text-sm font-medium ${
                         effectiveStatus === "paid"
                           ? "bg-green-100 text-green-800"
                           : effectiveStatus === "pending"
@@ -235,30 +236,55 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                   <div className="space-y-3 mb-6">
                     {order.items.map((item) => {
                       const itemCommission = getItemCommission(item, getRatesForOrder(order));
+                      const imgSrc =
+                        item.productImage || "/Isabell_gold_burgundy_1.webp";
+                      const thumb = (
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-md border border-gray-200 overflow-hidden bg-gray-50 relative">
+                          <ProductImage
+                            src={imgSrc}
+                            alt={item.productName}
+                            className="object-cover"
+                          />
+                        </div>
+                      );
                       return (
                         <div
                           key={item.id}
-                          className="border border-gray-200 rounded-lg p-4"
+                          className="border border-gray-200 rounded-lg p-4 flex gap-3 sm:gap-4"
                         >
-                          <div className="flex justify-between mb-2">
-                            <p className="font-medium">{item.productName}</p>
-                            <p className="font-semibold">
-                              {formatRub(item.productPrice * item.quantity)} ₽
-                            </p>
-                          </div>
-                          <div className="text-sm text-gray-600 space-y-1">
-                            <div className="flex justify-between">
-                              <span>Цена за шт.:</span>
-                              <span>{formatRub(item.productPrice)} ₽</span>
-                            </div>
-                            {item.selectedColor ? <p>Цвет: {item.selectedColor}</p> : null}
-                            <p>Кол-во: {item.quantity}</p>
-                            {itemCommission !== null && (
-                              <p className="text-gray-500 flex flex-wrap items-baseline gap-x-1">
-                                <span>Комиссия товара:</span>
-                                <span className="whitespace-nowrap flex-shrink-0">{formatRub(itemCommission)} ₽</span>
+                          {item.productHref ? (
+                            <Link
+                              href={item.productHref}
+                              className="flex-shrink-0 rounded-md hover:opacity-90 transition-opacity"
+                            >
+                              {thumb}
+                            </Link>
+                          ) : (
+                            thumb
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between gap-2 mb-2">
+                              <p className="font-medium min-w-0">{item.productName}</p>
+                              <p className="font-semibold flex-shrink-0">
+                                {formatRub(item.productPrice * item.quantity)} ₽
                               </p>
-                            )}
+                            </div>
+                            <div className="text-sm text-gray-600 space-y-1">
+                              <div className="flex justify-between gap-2">
+                                <span>Цена за шт.:</span>
+                                <span>{formatRub(item.productPrice)} ₽</span>
+                              </div>
+                              {item.selectedColor ? <p>Цвет: {item.selectedColor}</p> : null}
+                              <p>Кол-во: {item.quantity}</p>
+                              {itemCommission !== null && (
+                                <p className="text-gray-500 flex flex-wrap items-baseline gap-x-1">
+                                  <span>Комиссия товара:</span>
+                                  <span className="whitespace-nowrap flex-shrink-0">
+                                    {formatRub(itemCommission)} ₽
+                                  </span>
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );

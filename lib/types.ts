@@ -69,6 +69,10 @@ export interface OrderItem {
   commissionAmount?: number; // вознаграждение сервиса за позицию (на момент заказа)
   selectedColor: string;
   quantity: number;
+  /** Первое фото из каталога (подставляется при выборке заказов) */
+  productImage?: string;
+  /** Ссылка на карточку товара, если товар ещё в каталоге */
+  productHref?: string | null;
 }
 
 export interface Order {

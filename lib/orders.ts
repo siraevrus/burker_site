@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { prisma } from "./db";
 import { Order, OrderItem } from "./types";
+import { generateProductPath } from "./utils";
 
 /**
  * Генерирует читаемый номер заказа в формате:
@@ -147,6 +148,44 @@ export function mapOrderFromDb(dbOrder: any): Order {
   };
 }
 
+/** Подставляет в позиции заказа фото и ссылку на карточку из актуального каталога. */
+async function attachProductImagesToOrders(orders: Order[]): Promise<Order[]> {
+  const ids = new Set<string>();
+  for (const o of orders) {
+    for (const it of o.items) ids.add(it.productId);
+  }
+  if (ids.size === 0) return orders;
+
+  const products = await prisma.product.findMany({
+    where: { id: { in: [...ids] } },
+    select: { id: true, images: true, name: true, collection: true, subcategory: true },
+  });
+  const byId = new Map(products.map((p) => [p.id, p]));
+
+  return orders.map((o) => ({
+    ...o,
+    items: o.items.map((it): OrderItem => {
+      const p = byId.get(it.productId);
+      let productImage: string | undefined;
+      let productHref: string | null = null;
+      if (p) {
+        try {
+          const imgs = JSON.parse(p.images || "[]") as string[];
+          if (Array.isArray(imgs) && imgs[0]) productImage = imgs[0];
+        } catch {
+          /* ignore */
+        }
+        productHref = generateProductPath({
+          name: p.name,
+          collection: p.collection,
+          subcategory: p.subcategory,
+        });
+      }
+      return { ...it, productImage, productHref };
+    }),
+  }));
+}
+
 // Получить заказ по ID
 export async function getOrderById(id: string): Promise<Order | null> {
   const dbOrder = await prisma.order.findUnique({
@@ -169,7 +208,7 @@ export async function getUserOrders(userId: string): Promise<Order[]> {
     orderBy: { createdAt: "desc" },
   });
 
-  return dbOrders.map(mapOrderFromDb);
+  return attachProductImagesToOrders(dbOrders.map(mapOrderFromDb));
 }
 
 // Получить заказы по email (для гостевых заказов)
