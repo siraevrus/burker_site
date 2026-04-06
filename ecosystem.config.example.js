@@ -25,6 +25,8 @@ module.exports = {
         MAILOPOST_API_TOKEN: "",
         MAILOPOST_FROM_EMAIL: "noreply@burker-watches.ru",
         MAILOPOST_FROM_NAME: "Мира Брендс | Буркер",
+        // Опционально: см. lib/mailopost.ts (по умолчанию в коде credit_priority)
+        // MAILOPOST_PAYMENT: "subscriber_priority",
 
         SMTP_HOST: "smtp.msndr.net",
         SMTP_PORT: 465,

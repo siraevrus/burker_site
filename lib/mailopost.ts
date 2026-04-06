@@ -9,6 +9,15 @@ const API_TOKEN = process.env.MAILOPOST_API_TOKEN;
 const FROM_EMAIL = process.env.MAILOPOST_FROM_EMAIL || "noreply@burker-watches.ru";
 const FROM_NAME = process.env.MAILOPOST_FROM_NAME || "Мира Брендс | Буркер";
 
+/**
+ * Режим тарификации Mailopost (см. POST /email/messages, параметр payment).
+ * `credit` — только пакет «письма»; при 0 писем всегда 402 Deficit, даже если есть квота «подписчики».
+ * По умолчанию `credit_priority`: сначала письма, иначе подписчики (как в типовом тарифе после пополнения).
+ * Переопределение: MAILOPOST_PAYMENT=subscriber_priority | credit_priority | subscriber | credit
+ */
+const PAYMENT =
+  process.env.MAILOPOST_PAYMENT || "credit_priority";
+
 export interface SendEmailResult {
   success: boolean;
   error?: string;
@@ -19,7 +28,14 @@ export interface SendEmailResult {
 export function userFacingMailopostError(httpStatus: number, apiDetail: string): string {
   const d = (apiDetail || "").trim();
   if (httpStatus === 402 || /deficit/i.test(d)) {
-    return "На счёте Mailopost недостаточно средств. Пополните баланс в личном кабинете Mailopost.";
+    return (
+      "На счёте Mailopost недостаточно средств для отправки (402). " +
+      "Проверьте в личном кабинете пакет «письма» и квоту «подписчики», " +
+      "что API-токен от того же аккаунта, куда зачисляли оплату. " +
+      "В приложении используется режим payment=" +
+      PAYMENT +
+      " (переменная MAILOPOST_PAYMENT)."
+    );
   }
   if (d === "MAILOPOST_API_TOKEN не задан") {
     return "Почта не настроена: не задан MAILOPOST_API_TOKEN.";
@@ -54,10 +70,15 @@ export async function sendEmailViaMailopost(
     subject,
     html,
     text: text || html.replace(/<[^>]+>/g, ""),
-    payment: "credit",
+    payment: PAYMENT,
   };
 
-  console.log("[Mailopost] Отправка письма:", { to, subject: subject.slice(0, 80), from: FROM_EMAIL });
+  console.log("[Mailopost] Отправка письма:", {
+    to,
+    subject: subject.slice(0, 80),
+    from: FROM_EMAIL,
+    payment: PAYMENT,
+  });
 
   try {
     const res = await fetch(`${API_URL}/email/messages`, {
@@ -123,7 +144,7 @@ export async function sendEmailWithAttachment(
   formData.append("subject", subject);
   formData.append("html", html);
   formData.append("text", html.replace(/<[^>]+>/g, ""));
-  formData.append("payment", "credit");
+  formData.append("payment", PAYMENT);
   const blobContent = new Uint8Array(attachment.content);
   formData.append("attachments[]", new Blob([blobContent], { type: "application/pdf" }), attachment.filename);
 
