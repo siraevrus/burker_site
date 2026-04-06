@@ -207,6 +207,19 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                 </div>
               </button>
 
+              {!isExpanded && order.paymentStatus === "cancelled" && !orderClosed && (
+                <div className="px-6 py-2 border-t border-gray-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => handleReorder(order)}
+                    disabled={reorderingId === order.id}
+                    className="inline-block bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {reorderingId === order.id ? "Загрузка..." : "Повторить заказ"}
+                  </button>
+                </div>
+              )}
+
               {/* Раскрывающийся контент */}
               {isExpanded && (
                 <div className="px-6 py-4 border-t border-gray-200">
@@ -214,6 +227,20 @@ export default function OrdersPageClient({ orders }: OrdersPageClientProps) {
                     <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-between flex-wrap gap-2">
                       <span className="text-sm text-gray-600">Время на оплату истекло. Вы можете повторить заказ с актуальными ценами.</span>
                       <button
+                        onClick={() => handleReorder(order)}
+                        disabled={reorderingId === order.id}
+                        className="inline-block bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {reorderingId === order.id ? "Загрузка..." : "Повторить заказ"}
+                      </button>
+                    </div>
+                  ) : order.paymentStatus === "cancelled" ? (
+                    <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-between flex-wrap gap-2">
+                      <span className="text-sm text-gray-600">
+                        Платёж отменён. Вы можете оформить заказ повторно с актуальными ценами.
+                      </span>
+                      <button
+                        type="button"
                         onClick={() => handleReorder(order)}
                         disabled={reorderingId === order.id}
                         className="inline-block bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
