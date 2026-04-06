@@ -51,7 +51,7 @@ export async function importProducts(jsonData: any[]): Promise<ImportResult> {
       });
 
       if (existingProduct) {
-        // Обновление существующего товара (фото не трогаем — остаются локальные пути после скрипта загрузки)
+        // Обновление существующего товара; фото полностью перезаписываются ссылками из JSON (как при создании)
         // bestseller берём из JSON: 1 = бестселлер, 0 = нет
         const updateData: any = {
           name: productData.name,
@@ -62,6 +62,7 @@ export async function importProducts(jsonData: any[]): Promise<ImportResult> {
           originalPrice: productData.originalPrice,
           discount: productData.discount,
           colors: productData.colors,
+          images: productData.images,
           inStock: productData.inStock,
           soldOut: productData.soldOut,
           variant: productData.variant,
