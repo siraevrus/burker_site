@@ -80,7 +80,6 @@ export async function POST(request: NextRequest) {
       paidAt: row.paidAt ? row.paidAt.toISOString() : null,
       totalAmount: row.totalAmount,
       shippingCost: row.shippingCost,
-      requiresConfirmation: row.requiresConfirmation,
       cdekAddress: row.cdekAddress || null,
       cdekPointCode: row.cdekPointCode || null,
       address: row.address || null,

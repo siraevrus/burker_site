@@ -34,7 +34,6 @@ type StatusPayload = {
   paidAt: string | null;
   totalAmount: number;
   shippingCost: number;
-  requiresConfirmation: boolean;
   cdekAddress: string | null;
   cdekPointCode: string | null;
   address: string | null;
@@ -210,12 +209,6 @@ export default function StatusOrderClient() {
             </div>
           </dl>
 
-          {result.requiresConfirmation ? (
-            <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-              Вы просили связаться с вами для подтверждения заказа — мы учтём это при обработке.
-            </div>
-          ) : null}
-
           {result.items.length > 0 ? (
             <div>
               <h2 className="text-sm font-semibold text-gray-700 mb-3">Состав заказа</h2>
@@ -274,10 +267,6 @@ export default function StatusOrderClient() {
               </dl>
             </div>
           )}
-
-          <p className="text-xs text-gray-500">
-            Оплатить заказ или открыть полную сводку можно по ссылке из письма после оформления.
-          </p>
 
           <div className="flex flex-wrap gap-3 justify-center pt-2">
             <Link
