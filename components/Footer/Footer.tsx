@@ -116,6 +116,11 @@ export default function Footer() {
                   Форма обратной связи
                 </Link>
               </li>
+              <li>
+                <Link href="/status" className="hover:text-gray-600">
+                  Статус заказа
+                </Link>
+              </li>
               {customerServicePages.length > 0 &&
                 customerServicePages.map((page) => (
                   <li key={page.id}>

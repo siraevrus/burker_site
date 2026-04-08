@@ -431,6 +431,12 @@ export default function Header() {
                         {user.email}
                       </div>
                       <Link
+                        href="/status"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        Статус заказа
+                      </Link>
+                      <Link
                         href="/orders"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                       >
@@ -454,6 +460,9 @@ export default function Header() {
               </div>
             ) : (
               <div className="hidden md:flex items-center gap-4">
+                <Link href="/status" className="text-sm hover:text-gray-600">
+                  Статус заказа
+                </Link>
                 <Link href="/login" className="text-sm hover:text-gray-600">
                   Войти
                 </Link>
@@ -509,6 +518,13 @@ export default function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               Украшения
+            </Link>
+            <Link
+              href="/status"
+              className="py-3 px-2 text-base hover:bg-gray-100 rounded transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Статус заказа
             </Link>
             {user ? (
               <>
