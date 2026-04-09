@@ -67,6 +67,13 @@ server {
         internal;
     }
 
+    # --- Защита от сканеров (опционально) ---
+    # 1) В http { } подключите зоны: см. nginx-rate-limit.conf.example, затем раскомментируйте:
+    # limit_req zone=burker_general burst=100 nodelay;
+    # limit_conn addr 30;
+    # 2) Ранний 404 для типовых путей WP/.git/Confluence — см. nginx-security-locations.conf.example:
+    # include /etc/nginx/snippets/burker-security-locations.conf;
+
     # Next.js (standalone)
     location / {
         proxy_pass http://localhost:3010;

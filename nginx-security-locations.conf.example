@@ -1,0 +1,34 @@
+# Фрагмент для подключения внутри server { } основного vhost burker-watches.ru
+# Подключение: include /etc/nginx/snippets/burker-security-locations.conf;
+#
+# Размещать ПЕРЕД блоком location / { proxy_pass ... }, чтобы сработало раньше прокси на Node.
+#
+# Эффект: типичные зонды (WordPress, .git, Confluence и т.д.) получают 404 на уровне nginx
+# без нагрузки на Next.js. access_log off снижает шум в access-логе (по желанию уберите).
+
+# Жёстко отсекаем распространённые пути сканеров (ваш сайт на Next.js, этих URL нет)
+location ~* ^/(?:\.git|\.svn|\.hg)(?:/|$) {
+    return 404;
+    access_log off;
+}
+
+location ~* ^/(?:wp-admin|wp-includes|wp-content|wordpress)(?:/|$) {
+    return 404;
+    access_log off;
+}
+
+location ~* ^/(?:xmlrpc\.php|readme\.html|license\.txt|setup-config\.php)$ {
+    return 404;
+    access_log off;
+}
+
+location ~* createpage-entervariables\.action {
+    return 404;
+    access_log off;
+}
+
+# Попытки достать .env и похожие файлы в корне (часто URL-encoded)
+location ~* (?:^|/)\.env(?:[\./%]|$) {
+    return 404;
+    access_log off;
+}

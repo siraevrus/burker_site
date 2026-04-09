@@ -1,0 +1,12 @@
+# Подключить в блок http { } основного nginx (например /etc/nginx/nginx.conf
+# или отдельный файл в /etc/nginx/conf.d/rate-limit.conf внутри http { }).
+#
+# Затем в server { } для burker-watches.ru добавить:
+#   limit_req zone=burker_general burst=100 nodelay;
+#   limit_conn addr 30;
+#
+# Подбор rate: при обычном SPA одна страница даёт много параллельных запросов к статике и API —
+# поэтому burst завышен. При необходимости увеличьте rate или burst.
+
+limit_req_zone $binary_remote_addr zone=burker_general:10m rate=30r/s;
+limit_conn_zone $binary_remote_addr zone=addr:10m;
