@@ -36,6 +36,7 @@ export type Collection =
   | "Isabell"
   | "Julia"
   | "Ruby"
+  | "Victoria"
   | "all";
 
 export type Color = "золото" | "серебро" | "розовое золото" | "all";

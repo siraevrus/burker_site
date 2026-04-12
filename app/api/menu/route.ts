@@ -16,6 +16,8 @@ const WATCHES_ORDER = [
   "Macy Petite",
   "Isabell Petite",
   "Ruby Petite",
+  "Victoria",
+  "Victoria Petite",
 ];
 const JEWELRY_ORDER = ["Браслеты", "Ожерелье", "Серьги", "Кольца"];
 

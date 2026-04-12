@@ -76,6 +76,7 @@ describe("getCustomsCategory", () => {
     expect(getCustomsCategory({ collection: "Diana" })).toBe("watches");
     expect(getCustomsCategory({ collection: "Sophie" })).toBe("watches");
     expect(getCustomsCategory({ collection: "Macy" })).toBe("watches");
+    expect(getCustomsCategory({ collection: "Victoria" })).toBe("watches");
   });
 
   it("украшения → возвращает subcategory", () => {

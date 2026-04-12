@@ -17,6 +17,7 @@ export default function Filters() {
     "Isabell",
     "Julia",
     "Ruby",
+    "Victoria",
   ];
 
   const colors: Color[] = ["all", "золото", "серебро", "розовое золото"];

@@ -27,7 +27,7 @@ interface FaqData {
 // Ширина слайда ≈ колонка сетки (container + lg:grid-cols-4 + gap-5) + gap между слайдами
 const SCROLL_STEP = 320;
 
-const BRANDS = ["Macy", "Olivia", "Julia", "Isabell", "Ruby"];
+const BRANDS = ["Macy", "Olivia", "Julia", "Isabell", "Ruby", "Victoria"];
 
 export default function HomeClient({ products, bestsellers }: HomeClientProps) {
   /** Детерминированный старт для SSR = гидратация без расхождений; случайный бренд — только после mount. */
