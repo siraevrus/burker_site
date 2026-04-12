@@ -94,7 +94,7 @@ export default function PromoBannerGallery() {
 
   return (
     <section
-      className="relative overflow-hidden bg-gradient-to-r from-pink-100 to-red-100 h-[280px] md:h-[520px]"
+      className="relative overflow-hidden bg-[#FCFAF8] h-[280px] md:h-[520px]"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
