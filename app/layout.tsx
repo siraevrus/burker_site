@@ -4,7 +4,9 @@ import "./globals.css";
 import ConditionalLayout from "@/components/ConditionalLayout";
 import YandexMetrika from "@/components/YandexMetrika/YandexMetrika";
 import StoreHydration from "@/components/StoreHydration";
+import { CatalogMapsProvider } from "@/components/CatalogMapsProvider";
 import { CANONICAL_SITE_URL } from "@/lib/site-url";
+import { getCatalogMaps } from "@/lib/catalog-lines";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -70,11 +72,13 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const catalogMaps = await getCatalogMaps();
+
   return (
     <html lang="ru">
       <body
@@ -84,9 +88,11 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
-        <StoreHydration />
-        <YandexMetrika />
-        <ConditionalLayout>{children}</ConditionalLayout>
+        <CatalogMapsProvider maps={catalogMaps}>
+          <StoreHydration />
+          <YandexMetrika />
+          <ConditionalLayout>{children}</ConditionalLayout>
+        </CatalogMapsProvider>
       </body>
     </html>
   );

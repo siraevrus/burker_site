@@ -5,7 +5,8 @@ import {
 } from "@/lib/products";
 import { Product } from "@/lib/types";
 import { getCanonicalUrl } from "@/lib/site-url";
-import { getCollectionLabel, getProductsBreadcrumbItems } from "@/lib/utils";
+import { getCollectionLabel, getProductsBreadcrumbItems, buildSlugLabelMap } from "@/lib/utils";
+import { getCatalogMaps } from "@/lib/catalog-lines";
 import Breadcrumbs from "@/components/Breadcrumbs/Breadcrumbs";
 import ProductsCategoryPageClient from "./ProductsCategoryPageClient";
 import { notFound } from "next/navigation";
@@ -21,7 +22,9 @@ export async function generateMetadata({
   if (category !== "watches" && category !== "jewelry") {
     return { title: "Товары | Мира Брендс | Буркер" };
   }
-  const title = getCollectionLabel(category);
+  const maps = await getCatalogMaps();
+  const slugLabelMap = buildSlugLabelMap(maps);
+  const title = getCollectionLabel(category, slugLabelMap);
   return {
     title: `${title} | Мира Брендс | Буркер`,
     description: `Коллекция ${title} — часы и украшения Мира Брендс | Буркер`,
@@ -45,11 +48,13 @@ export default async function ProductsCategoryPage({
     notFound();
   }
 
-  const categoryLabel = getCollectionLabel(category);
+  const maps = await getCatalogMaps();
+  const slugLabelMap = buildSlugLabelMap(maps);
+  const categoryLabel = getCollectionLabel(category, slugLabelMap);
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Breadcrumbs items={getProductsBreadcrumbItems(category)} />
+      <Breadcrumbs items={getProductsBreadcrumbItems(category, slugLabelMap)} />
       <h1 className="text-4xl font-bold mb-8">{categoryLabel}</h1>
 
       {products.length === 0 ? (

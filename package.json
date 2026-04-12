@@ -23,6 +23,7 @@
     "check:cron": "tsx scripts/check-cron-feeds.ts",
     "test:create-user": "tsx scripts/create-test-user.ts",
     "test": "vitest run",
+    "test:catalog-lines": "tsx scripts/test-catalog-lines-crud.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",

@@ -28,6 +28,7 @@ const MENU_GROUPS = [
       { href: "/admin/orders", label: "Заказы" },
       { href: "/admin/orders/dashboard", label: "Статистика заказов" },
       { href: "/admin/import", label: "Импорт товаров" },
+      { href: "/admin/catalog-lines", label: "Линии каталога (бренды)" },
     ],
   },
   {

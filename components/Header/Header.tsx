@@ -6,6 +6,7 @@ import ProductImage from "@/components/ProductImage";
 import { useStore } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product } from "@/lib/types";
+import { useCatalogMaps } from "@/components/CatalogMapsProvider";
 import { generateProductPath } from "@/lib/utils";
 import { formatRub } from "@/lib/utils";
 
@@ -16,6 +17,7 @@ interface MenuItem {
 }
 
 export default function Header() {
+  const catalogMaps = useCatalogMaps();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isWatchesOpen, setIsWatchesOpen] = useState(false);
   const [isJewelryOpen, setIsJewelryOpen] = useState(false);
@@ -211,12 +213,15 @@ export default function Header() {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                     className="fixed left-0 right-0 bg-white shadow-lg p-6 z-50 overflow-y-auto"
-                    style={{ top: `${headerHeight}px`, maxHeight: "500px" }}
+                    style={{ top: `${headerHeight}px`, maxHeight: "520px" }}
                   >
                     <div className="container mx-auto">
                       <div className="grid grid-cols-[250px_1fr] gap-8">
                       {/* Левое меню - подкатегории из БД */}
-                      <div className="text-xl">
+                      <div
+                        className="leading-normal"
+                        style={{ fontSize: "calc(1.25rem + 2pt)" }}
+                      >
                         <Link
                           href="/products/watches"
                           className="block py-2 hover:text-gray-600 transition-colors font-semibold"
@@ -228,7 +233,12 @@ export default function Header() {
                           <Link
                             key={item.slug}
                             href={item.href}
-                            className={`block py-2 hover:text-gray-600 transition-colors ${item.label.includes("Petite") ? "text-sm text-gray-500" : ""}`}
+                            className={`block py-2 hover:text-gray-600 transition-colors ${item.label.includes("Petite") ? "text-gray-500" : ""}`}
+                            style={
+                              item.label.includes("Petite")
+                                ? { fontSize: "calc(0.875rem + 2pt)" }
+                                : undefined
+                            }
                             onClick={() => setIsWatchesOpen(false)}
                           >
                             {item.label}
@@ -247,7 +257,7 @@ export default function Header() {
                               className="group"
                               onClick={() => setIsWatchesOpen(false)}
                             >
-                              <div className="relative mb-2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{ height: "360px", width: "100%" }}>
+                              <div className="relative mb-2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{ height: "380px", width: "100%" }}>
                                 {firstProduct && firstProduct.images?.length > 0 ? (
                                   <ProductImage
                                     src={firstProduct.images[0]}
@@ -260,7 +270,10 @@ export default function Header() {
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs font-medium group-hover:text-gray-600 transition-colors">
+                              <p
+                                className="font-medium group-hover:text-gray-600 transition-colors"
+                                style={{ fontSize: "calc(0.75rem + 2pt)" }}
+                              >
                                 {item.label.toUpperCase()}
                               </p>
                             </Link>
@@ -287,12 +300,15 @@ export default function Header() {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                     className="fixed left-0 right-0 bg-white shadow-lg p-6 z-50 overflow-y-auto"
-                    style={{ top: `${headerHeight}px`, maxHeight: "500px" }}
+                    style={{ top: `${headerHeight}px`, maxHeight: "520px" }}
                   >
                     <div className="container mx-auto">
                       <div className="grid grid-cols-[250px_1fr] gap-8">
                       {/* Левое меню - подкатегории из БД */}
-                      <div className="text-xl">
+                      <div
+                        className="leading-normal"
+                        style={{ fontSize: "calc(1.25rem + 2pt)" }}
+                      >
                         <Link
                           href="/products/jewelry"
                           className="block py-2 hover:text-gray-600 transition-colors font-semibold"
@@ -325,7 +341,7 @@ export default function Header() {
                               className="group"
                               onClick={() => setIsJewelryOpen(false)}
                             >
-                              <div className="relative mb-2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{ height: "360px", width: "100%" }}>
+                              <div className="relative mb-2 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{ height: "380px", width: "100%" }}>
                                 {firstProduct && firstProduct.images?.length > 0 ? (
                                   <ProductImage
                                     src={firstProduct.images[0]}
@@ -338,7 +354,10 @@ export default function Header() {
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs font-medium group-hover:text-gray-600 transition-colors">
+                              <p
+                                className="font-medium group-hover:text-gray-600 transition-colors"
+                                style={{ fontSize: "calc(0.75rem + 2pt)" }}
+                              >
                                 {item.label.toUpperCase()}
                               </p>
                             </Link>
@@ -681,7 +700,7 @@ export default function Header() {
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                           {searchResults.map((product) => {
-                            const href = generateProductPath(product) ?? `/search?q=${encodeURIComponent(searchQuery.trim())}`;
+                            const href = generateProductPath(product, catalogMaps) ?? `/search?q=${encodeURIComponent(searchQuery.trim())}`;
                             const hasDiscount = product.discount > 0 && product.originalPriceEur && product.originalPriceEur > (product.priceEur ?? product.price);
                             return (
                               <Link

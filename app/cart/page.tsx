@@ -7,6 +7,7 @@ import { CartItem } from "@/lib/types";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import ProductImage from "@/components/ProductImage";
+import { useCatalogMaps } from "@/components/CatalogMapsProvider";
 import { generateProductPath, formatRub } from "@/lib/utils";
 
 const CUSTOMS_HINT =
@@ -32,6 +33,7 @@ function getItemCommission(
 }
 
 export default function CartPage() {
+  const maps = useCatalogMaps();
   const cart = useStore((state) => state.cart);
   const removeFromCart = useStore((state) => state.removeFromCart);
   const updateQuantity = useStore((state) => state.updateQuantity);
@@ -153,7 +155,7 @@ export default function CartPage() {
               >
                 {/* Product Image */}
                 <Link 
-                  href={generateProductPath(item) ?? "#"}
+                  href={generateProductPath(item, maps) ?? "#"}
                   className="w-[150px] h-[150px] bg-white border border-[#e5e6eb] rounded-md flex-shrink-0 relative overflow-hidden hover:opacity-90 transition-opacity cursor-pointer"
                 >
                   <ProductImage
@@ -171,7 +173,7 @@ export default function CartPage() {
                     </p>
                   )}
                   <Link 
-                    href={generateProductPath(item) ?? "#"}
+                    href={generateProductPath(item, maps) ?? "#"}
                     className="font-semibold text-lg mb-2 hover:text-gray-600 transition-colors block"
                   >
                     {item.name}

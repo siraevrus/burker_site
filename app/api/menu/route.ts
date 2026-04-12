@@ -1,25 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { SUBcategoryToSlug } from "@/lib/utils";
-
-/** Порядок подкатегорий — новые из БД добавляются в конец */
-const WATCHES_ORDER = [
-  "Diana",
-  "Diana Petite",
-  "Sophie",
-  "Olivia",
-  "Macy",
-  "Isabell",
-  "Julia",
-  "Ruby",
-  "Olivia Petite",
-  "Macy Petite",
-  "Isabell Petite",
-  "Ruby Petite",
-  "Victoria",
-  "Victoria Petite",
-];
-const JEWELRY_ORDER = ["Браслеты", "Ожерелье", "Серьги", "Кольца"];
+import { getCatalogMaps } from "@/lib/catalog-lines";
 
 export interface MenuItem {
   label: string;
@@ -34,7 +15,18 @@ export interface MenuResponse {
 
 export async function GET() {
   try {
-    const [watchSubs, jewelrySubs] = await Promise.all([
+    const [maps, watchLines, jewelryLines, watchSubs, jewelrySubs] = await Promise.all([
+      getCatalogMaps(),
+      prisma.catalogLine.findMany({
+        where: { kind: "watches", enabled: true },
+        orderBy: { sortOrder: "asc" },
+        select: { subcategory: true, slug: true },
+      }),
+      prisma.catalogLine.findMany({
+        where: { kind: "jewelry", enabled: true },
+        orderBy: { sortOrder: "asc" },
+        select: { subcategory: true, slug: true },
+      }),
       prisma.product.findMany({
         where: {
           collection: { not: "Украшения" },
@@ -66,44 +58,44 @@ export async function GET() {
 
     const watches: MenuItem[] = [];
     const added = new Set<string>();
-    for (const sub of WATCHES_ORDER) {
-      if (watchSubSet.has(sub) && SUBcategoryToSlug[sub]) {
+    for (const line of watchLines) {
+      if (watchSubSet.has(line.subcategory) && maps.subToSlug[line.subcategory]) {
         watches.push({
-          label: sub,
-          slug: SUBcategoryToSlug[sub],
-          href: `/products/watches/${SUBcategoryToSlug[sub]}`,
+          label: line.subcategory,
+          slug: line.slug,
+          href: `/products/watches/${line.slug}`,
         });
-        added.add(sub);
+        added.add(line.subcategory);
       }
     }
     for (const sub of watchSubSet) {
-      if (!added.has(sub) && SUBcategoryToSlug[sub]) {
+      if (!added.has(sub) && maps.subToSlug[sub]) {
         watches.push({
           label: sub,
-          slug: SUBcategoryToSlug[sub],
-          href: `/products/watches/${SUBcategoryToSlug[sub]}`,
+          slug: maps.subToSlug[sub],
+          href: `/products/watches/${maps.subToSlug[sub]}`,
         });
       }
     }
 
     const jewelry: MenuItem[] = [];
     const addedJ = new Set<string>();
-    for (const sub of JEWELRY_ORDER) {
-      if (jewelrySubSet.has(sub) && SUBcategoryToSlug[sub]) {
+    for (const line of jewelryLines) {
+      if (jewelrySubSet.has(line.subcategory) && maps.subToSlug[line.subcategory]) {
         jewelry.push({
-          label: sub,
-          slug: SUBcategoryToSlug[sub],
-          href: `/products/jewelry/${SUBcategoryToSlug[sub]}`,
+          label: line.subcategory,
+          slug: line.slug,
+          href: `/products/jewelry/${line.slug}`,
         });
-        addedJ.add(sub);
+        addedJ.add(line.subcategory);
       }
     }
     for (const sub of jewelrySubSet) {
-      if (!addedJ.has(sub) && SUBcategoryToSlug[sub]) {
+      if (!addedJ.has(sub) && maps.subToSlug[sub]) {
         jewelry.push({
           label: sub,
-          slug: SUBcategoryToSlug[sub],
-          href: `/products/jewelry/${SUBcategoryToSlug[sub]}`,
+          slug: maps.subToSlug[sub],
+          href: `/products/jewelry/${maps.subToSlug[sub]}`,
         });
       }
     }

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import ProductPageClient from "./ProductPageClient";
 import { CANONICAL_SITE_URL } from "@/lib/site-url";
 import { generateProductPath } from "@/lib/utils";
+import { getCatalogMaps } from "@/lib/catalog-lines";
 
 export const dynamic = "force-dynamic";
 
@@ -20,14 +21,17 @@ export async function generateMetadata({
   params: Promise<{ category: string; subcategory: string; productSlug: string }>;
 }): Promise<Metadata> {
   const { category, subcategory, productSlug } = await params;
-  const product = await getProductByPath(category, subcategory, productSlug);
+  const [product, maps] = await Promise.all([
+    getProductByPath(category, subcategory, productSlug),
+    getCatalogMaps(),
+  ]);
   if (!product) return { title: "Товар | Мира Брендс | Буркер" };
 
   const title = `${product.name} | Мира Брендс | Буркер`;
   const description =
     product.description?.replace(/<[^>]+>/g, "").slice(0, 160) ||
     `Купить ${product.name} в официальном магазине Мира Брендс | Буркер`;
-  const productPath = generateProductPath(product);
+  const productPath = generateProductPath(product, maps);
   const canonicalUrl = productPath ? `${baseUrl}${productPath}` : `${baseUrl}/products/${category}/${subcategory}/${productSlug}`;
   const imageUrl =
     product.images?.length > 0
@@ -64,14 +68,17 @@ export default async function ProductPage({
   params: Promise<{ category: string; subcategory: string; productSlug: string }>;
 }) {
   const { category, subcategory, productSlug } = await params;
-  const product = await getProductByPath(category, subcategory, productSlug);
-  const allProducts = await getAllProducts();
+  const [product, allProducts, maps] = await Promise.all([
+    getProductByPath(category, subcategory, productSlug),
+    getAllProducts(),
+    getCatalogMaps(),
+  ]);
 
   if (!product) {
     notFound();
   }
 
-  const productPath = generateProductPath(product);
+  const productPath = generateProductPath(product, maps);
   const productUrl = productPath ? `${baseUrl}${productPath}` : `${baseUrl}/products/${category}/${subcategory}/${productSlug}`;
   const imageUrls =
     product.images?.length > 0

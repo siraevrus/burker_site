@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { prisma } from "./db";
 import { Order, OrderItem } from "./types";
 import { generateProductPath } from "./utils";
+import { getCatalogMaps } from "./catalog-lines";
 
 /**
  * Генерирует читаемый номер заказа в формате:
@@ -161,6 +162,7 @@ async function attachProductImagesToOrders(orders: Order[]): Promise<Order[]> {
     select: { id: true, images: true, name: true, collection: true, subcategory: true },
   });
   const byId = new Map(products.map((p) => [p.id, p]));
+  const maps = await getCatalogMaps();
 
   return orders.map((o) => ({
     ...o,
@@ -175,11 +177,14 @@ async function attachProductImagesToOrders(orders: Order[]): Promise<Order[]> {
         } catch {
           /* ignore */
         }
-        productHref = generateProductPath({
-          name: p.name,
-          collection: p.collection,
-          subcategory: p.subcategory,
-        });
+        productHref = generateProductPath(
+          {
+            name: p.name,
+            collection: p.collection,
+            subcategory: p.subcategory,
+          },
+          maps
+        );
       }
       return { ...it, productImage, productHref };
     }),

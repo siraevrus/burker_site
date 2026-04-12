@@ -6,11 +6,14 @@ import ProductCard from "@/components/ProductCard/ProductCard";
 import PromoBannerGallery from "@/components/PromoBanner/PromoBanner";
 import { Product } from "@/lib/types";
 import { motion } from "framer-motion";
+import { useCatalogMaps } from "@/components/CatalogMapsProvider";
 import { generateProductPath } from "@/lib/utils";
 
 interface HomeClientProps {
   products: Product[];
   bestsellers: Product[];
+  /** Коллекции для вкладок на главной (из админки CatalogLine.showOnHome) */
+  homeBrands: string[];
 }
 
 interface FaqItem {
@@ -27,18 +30,19 @@ interface FaqData {
 // Ширина слайда ≈ колонка сетки (container + lg:grid-cols-4 + gap-5) + gap между слайдами
 const SCROLL_STEP = 320;
 
-const BRANDS = ["Macy", "Olivia", "Julia", "Isabell", "Ruby", "Victoria"];
-
-export default function HomeClient({ products, bestsellers }: HomeClientProps) {
+export default function HomeClient({ products, bestsellers, homeBrands }: HomeClientProps) {
+  const maps = useCatalogMaps();
+  const brands = homeBrands.length > 0 ? homeBrands : ["Macy"];
   /** Детерминированный старт для SSR = гидратация без расхождений; случайный бренд — только после mount. */
-  const [activeBrand, setActiveBrand] = useState(BRANDS[0]);
+  const [activeBrand, setActiveBrand] = useState(brands[0]);
   const bestsellersRef = useRef<HTMLDivElement>(null);
   const [faq, setFaq] = useState<FaqData | null>(null);
   const [faqOpenId, setFaqOpenId] = useState<string | null>(null);
 
   useEffect(() => {
-    setActiveBrand(BRANDS[Math.floor(Math.random() * BRANDS.length)]);
-  }, []);
+    if (brands.length === 0) return;
+    setActiveBrand(brands[Math.floor(Math.random() * brands.length)]);
+  }, [brands]);
 
   useEffect(() => {
     fetch("/api/faq")
@@ -57,8 +61,6 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
     const delta = direction === "left" ? -SCROLL_STEP : SCROLL_STEP;
     bestsellersRef.current.scrollBy({ left: delta, behavior: "smooth" });
   };
-
-  const brands = BRANDS;
 
   return (
     <div>
@@ -123,9 +125,9 @@ export default function HomeClient({ products, bestsellers }: HomeClientProps) {
             >
               <div className="flex gap-5">
                 {bestsellers
-                  .filter((p) => generateProductPath(p))
+                  .filter((p) => generateProductPath(p, maps))
                   .map((product, index) => {
-                    const productPath = generateProductPath(product)!;
+                    const productPath = generateProductPath(product, maps)!;
                     return (
                       <Link
                         key={product.id}

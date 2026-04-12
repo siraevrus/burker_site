@@ -1,7 +1,8 @@
 import { prisma } from "./db";
 import { Product } from "./types";
 import { getExchangeRates, convertPrice, ExchangeRates } from "./exchange-rates";
-import { generateProductSlug, SUBcategorySlugToName } from "./utils";
+import { generateProductSlug } from "./utils";
+import { getCatalogMaps } from "./catalog-lines";
 
 export { generateProductSlug };
 
@@ -135,7 +136,8 @@ export async function getProductByPath(
   subcategorySlug: string,
   productSlug: string
 ): Promise<Product | null> {
-  const subcategoryName = SUBcategorySlugToName[subcategorySlug.toLowerCase()];
+  const maps = await getCatalogMaps();
+  const subcategoryName = maps.slugToSub[subcategorySlug.toLowerCase()];
   if (!subcategoryName) return null;
 
   const isJewelry = categorySlug === "jewelry";

@@ -8,7 +8,13 @@ import { useStore, getCustomsCategory } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "@/components/ProductCard/ProductCard";
 import Breadcrumbs from "@/components/Breadcrumbs/Breadcrumbs";
-import { generateProductPath, getProductBreadcrumbItems, formatRub } from "@/lib/utils";
+import { useCatalogMaps } from "@/components/CatalogMapsProvider";
+import {
+  generateProductPath,
+  getProductBreadcrumbItems,
+  formatRub,
+  buildSlugLabelMap,
+} from "@/lib/utils";
 
 const CUSTOMS_HINT =
   "По таможенным правилам доставка одного типа товара не более 3 вещей в один заказ";
@@ -22,6 +28,8 @@ export default function ProductPageClient({
   product,
   allProducts,
 }: ProductPageClientProps) {
+  const maps = useCatalogMaps();
+  const slugLabelMap = useMemo(() => buildSlugLabelMap(maps), [maps]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [fullscreenImage, setFullscreenImage] = useState<number | null>(null);
@@ -119,7 +127,7 @@ export default function ProductPageClient({
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Breadcrumbs items={getProductBreadcrumbItems(product)} />
+      <Breadcrumbs items={getProductBreadcrumbItems(product, maps, slugLabelMap)} />
       {/* Плашка "Товар добавлен в корзину" */}
       <AnimatePresence>
         {showAddedToCartToast && (
@@ -307,7 +315,7 @@ export default function ProductPageClient({
               </h3>
               <div className="flex gap-2 flex-wrap">
                 <Link
-                  href={generateProductPath(product) ?? "#"}
+                  href={generateProductPath(product, maps) ?? "#"}
                   className="relative w-16 h-16 rounded-full border-2 border-black overflow-hidden"
                 >
                   <ProductImage
@@ -319,7 +327,7 @@ export default function ProductPageClient({
                 {colorVariants.slice(0, 3).map((variant) => (
                   <Link
                     key={variant.id}
-                    href={generateProductPath(variant) ?? "#"}
+                    href={generateProductPath(variant, maps) ?? "#"}
                     className="relative w-16 h-16 rounded-full border-2 border-gray-300 overflow-hidden hover:border-black transition-colors"
                   >
                     <ProductImage

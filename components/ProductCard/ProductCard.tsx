@@ -6,6 +6,7 @@ import { Product } from "@/lib/types";
 import { useStore, getCustomsCategory } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductImage from "@/components/ProductImage";
+import { useCatalogMaps } from "@/components/CatalogMapsProvider";
 import { generateProductPath, formatRub } from "@/lib/utils";
 
 const CUSTOMS_HINT =
@@ -18,6 +19,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, disableInternalLink }: ProductCardProps) {
+  const maps = useCatalogMaps();
   const addToCart = useStore((state) => state.addToCart);
   const getTotalQuantityByCategory = useStore((state) => state.getTotalQuantityByCategory);
   const [showCustomsHint, setShowCustomsHint] = useState(false);
@@ -141,7 +143,7 @@ export default function ProductCard({ product, disableInternalLink }: ProductCar
         </div>
       ) : (
         <Link
-          href={generateProductPath(product) ?? "#"}
+          href={generateProductPath(product, maps) ?? "#"}
           className="block cursor-pointer"
           aria-label={`Перейти на страницу товара: ${product.name}`}
         >

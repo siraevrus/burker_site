@@ -1,3 +1,16 @@
+import type { CatalogMaps } from "@/lib/catalog-maps";
+
+/** Подписи для slug (Часы / Украшения + линии каталога). */
+export function buildSlugLabelMap(maps: CatalogMaps): Record<string, string> {
+  return {
+    watches: "Часы",
+    jewelry: "Украшения",
+    ...Object.fromEntries(
+      Object.entries(maps.subToSlug).map(([sub, slug]) => [slug, sub])
+    ),
+  };
+}
+
 export function generateProductSlug(name: string): string {
   return name
     .toLowerCase()
@@ -10,44 +23,23 @@ export function getCategorySlug(collection: string): "watches" | "jewelry" {
   return collection === "Украшения" ? "jewelry" : "watches";
 }
 
-/** Маппинг subcategory → slug для URL (экспортируем для использования в products) */
-export const SUBcategoryToSlug: Record<string, string> = {
-  Diana: "diana",
-  "Diana Petite": "diana-petite",
-  Sophie: "sophie",
-  Olivia: "olivia",
-  Macy: "macy",
-  Isabell: "isabell",
-  Julia: "julia",
-  Ruby: "ruby",
-  Victoria: "victoria",
-  "Olivia Petite": "olivia-petite",
-  "Macy Petite": "macy-petite",
-  "Isabell Petite": "isabell-petite",
-  "Ruby Petite": "ruby-petite",
-  "Victoria Petite": "victoria-petite",
-  Браслеты: "bracelets",
-  Ожерелье: "necklaces",
-  Серьги: "earrings",
-  Кольца: "rings",
-};
-
-/** Обратный маппинг slug → subcategory (для getProductByPath) */
-export const SUBcategorySlugToName: Record<string, string> = Object.fromEntries(
-  Object.entries(SUBcategoryToSlug).map(([k, v]) => [v, k])
-);
+// Обратная совместимость для скриптов (предпочтительно данные из CatalogLine).
+export { LEGACY_SUBCATEGORY_TO_SLUG as SUBcategoryToSlug } from "@/lib/legacy-subcategory-slugs";
 
 /**
  * Строит путь на страницу товара: /products/{category}/{subcategory}/{productSlug}
  * Товары без subcategory не должны отображаться.
  */
-export function generateProductPath(product: {
-  name: string;
-  collection: string;
-  subcategory?: string | null;
-}): string | null {
+export function generateProductPath(
+  product: {
+    name: string;
+    collection: string;
+    subcategory?: string | null;
+  },
+  maps: CatalogMaps
+): string | null {
   if (!product.subcategory) return null;
-  const subSlug = SUBcategoryToSlug[product.subcategory];
+  const subSlug = maps.subToSlug[product.subcategory];
   if (!subSlug) return null;
   const categorySlug = getCategorySlug(product.collection);
   const productSlug = generateProductSlug(product.name);
@@ -58,7 +50,9 @@ export function generateProductPath(product: {
  * Возвращает breadcrumb-элементы для товара: Главная → Коллекция [→ Подкатегория] → Товар.
  */
 export function getProductBreadcrumbItems(
-  product: { name: string; collection: string; subcategory?: string }
+  product: { name: string; collection: string; subcategory?: string },
+  maps: CatalogMaps,
+  slugLabelMap: Record<string, string>
 ): { label: string; href?: string }[] {
   const items: { label: string; href?: string }[] = [
     { label: "Главная", href: "/" },
@@ -71,7 +65,7 @@ export function getProductBreadcrumbItems(
   });
 
   if (product.subcategory) {
-    const subSlug = SUBcategoryToSlug[product.subcategory];
+    const subSlug = maps.subToSlug[product.subcategory];
     if (subSlug) {
       items.push({
         label: product.subcategory,
@@ -85,21 +79,15 @@ export function getProductBreadcrumbItems(
   return items;
 }
 
-/** Маппинг slug коллекции → отображаемое название */
-const COLLECTION_SLUG_TO_LABEL: Record<string, string> = {
-  watches: "Часы",
-  jewelry: "Украшения",
-  ...Object.fromEntries(
-    Object.entries(SUBcategoryToSlug).map(([k, v]) => [v, k])
-  ),
-};
-
 /**
- * Возвращает отображаемое название коллекции по slug.
+ * Возвращает отображаемое название коллекции по slug (категория или подкатегория).
  */
-export function getCollectionLabel(slug: string): string {
+export function getCollectionLabel(
+  slug: string,
+  slugLabelMap: Record<string, string>
+): string {
   return (
-    COLLECTION_SLUG_TO_LABEL[slug] ||
+    slugLabelMap[slug] ||
     slug.charAt(0).toUpperCase() + slug.slice(1)
   );
 }
@@ -109,9 +97,10 @@ export function getCollectionLabel(slug: string): string {
  */
 export function getCollectionBreadcrumbItems(
   collectionSlug: string,
+  slugLabelMap: Record<string, string>,
   collectionLabel?: string
 ): { label: string; href?: string }[] {
-  const label = collectionLabel ?? getCollectionLabel(collectionSlug);
+  const label = collectionLabel ?? getCollectionLabel(collectionSlug, slugLabelMap);
   return [
     { label: "Главная", href: "/" },
     { label },
@@ -120,13 +109,13 @@ export function getCollectionBreadcrumbItems(
 
 /**
  * Breadcrumbs для /products: Главная → Категория [→ Подкатегория].
- * Для подкатегории категория получает href на /products/{category}.
  */
 export function getProductsBreadcrumbItems(
   categorySlug: string,
+  slugLabelMap: Record<string, string>,
   subcategorySlug?: string
 ): { label: string; href?: string }[] {
-  const categoryLabel = getCollectionLabel(categorySlug);
+  const categoryLabel = getCollectionLabel(categorySlug, slugLabelMap);
   const items: { label: string; href?: string }[] = [
     { label: "Главная", href: "/" },
     {
@@ -135,14 +124,13 @@ export function getProductsBreadcrumbItems(
     },
   ];
   if (subcategorySlug) {
-    items.push({ label: getCollectionLabel(subcategorySlug) });
+    items.push({ label: getCollectionLabel(subcategorySlug, slugLabelMap) });
   }
   return items;
 }
 
 /**
  * Российский номер для отображения: +7 и 10 цифр после (как нормализация в чекауте).
- * 8… → 7…; если первая цифра не 7 — добавляется 7; не более 11 цифр.
  */
 export function formatRuPhonePlus7(phone: string | null | undefined): string {
   const raw = (phone ?? "").trim();
