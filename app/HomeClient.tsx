@@ -14,6 +14,8 @@ interface HomeClientProps {
   bestsellers: Product[];
   /** Коллекции для вкладок на главной (из админки CatalogLine.showOnHome) */
   homeBrands: string[];
+  /** Заголовок секции бестселлеров (админка → Настройки → Главная страница) */
+  bestsellersSectionTitle: string;
 }
 
 interface FaqItem {
@@ -30,7 +32,12 @@ interface FaqData {
 // Ширина слайда ≈ колонка сетки (container + lg:grid-cols-4 + gap-5) + gap между слайдами
 const SCROLL_STEP = 320;
 
-export default function HomeClient({ products, bestsellers, homeBrands }: HomeClientProps) {
+export default function HomeClient({
+  products,
+  bestsellers,
+  homeBrands,
+  bestsellersSectionTitle,
+}: HomeClientProps) {
   const maps = useCatalogMaps();
   const brands = homeBrands.length > 0 ? homeBrands : ["Macy"];
   /** Детерминированный старт для SSR = гидратация без расхождений; случайный бренд — только после mount. */
@@ -104,7 +111,9 @@ export default function HomeClient({ products, bestsellers, homeBrands }: HomeCl
       {/* Бестселлеры */}
       <section className="pt-5 md:pt-8 pb-12 md:pb-16">
         <div className="container mx-auto px-4 relative">
-          <h2 className="text-xl font-semibold mb-2 md:mb-4 text-center uppercase">Бестселлеры</h2>
+          <h2 className="text-xl font-semibold mb-2 md:mb-4 text-center uppercase">
+            {bestsellersSectionTitle}
+          </h2>
           <div className="flex justify-center mb-6 md:mb-8">
             <div className="w-10 h-[3px] md:w-[35px]" style={{ backgroundColor: "#9a9794" }} />
           </div>

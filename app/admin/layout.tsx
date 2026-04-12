@@ -43,6 +43,7 @@ const MENU_GROUPS = [
   {
     label: "Настройки",
     items: [
+      { href: "/admin/settings/home-page", label: "Главная страница" },
       { href: "/admin/support/settings", label: "Чат (расписание)" },
       { href: "/admin/seo", label: "SEO" },
       { href: "/admin/shipping", label: "Стоимость доставки" },

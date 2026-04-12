@@ -84,6 +84,13 @@ model TopBanner {
   updatedAt DateTime @updatedAt
 }
 
+// Заголовки блоков главной (одна строка на сайт).
+model HomePageSettings {
+  id               String   @id @default("single")
+  bestsellersTitle String   @default("Бестселлеры")
+  updatedAt        DateTime @updatedAt
+}
+
 model User {
   id            String   @id @default(cuid())
   email         String   @unique

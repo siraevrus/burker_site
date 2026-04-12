@@ -1,5 +1,6 @@
 import { getAllProducts, getBestsellers } from "@/lib/products";
 import { getHomeBrandCollections } from "@/lib/catalog-lines";
+import { getBestsellersSectionTitle } from "@/lib/home-page-settings";
 import HomeClient from "./HomeClient";
 import { getMetadataForPath } from "@/lib/seo";
 
@@ -13,17 +14,20 @@ export async function generateMetadata() {
 }
 
 export default async function Home() {
-  const [allProducts, bestsellers, homeBrands] = await Promise.all([
-    getAllProducts(),
-    getBestsellers(20),
-    getHomeBrandCollections(),
-  ]);
+  const [allProducts, bestsellers, homeBrands, bestsellersSectionTitle] =
+    await Promise.all([
+      getAllProducts(),
+      getBestsellers(20),
+      getHomeBrandCollections(),
+      getBestsellersSectionTitle(),
+    ]);
 
   return (
     <HomeClient
       products={allProducts}
       bestsellers={bestsellers}
       homeBrands={homeBrands}
+      bestsellersSectionTitle={bestsellersSectionTitle}
     />
   );
 }
